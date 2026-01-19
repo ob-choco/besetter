@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "558049274219",
+    "project_id": "besetter-8d458",
+    "storage_bucket": "besetter-8d458.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:558049274219:android:3984f7c00486b412fc842e",
+        "android_client_info": {
+          "package_name": "com.olivebagel.besetter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2E_nBhtTKgciO_bx2rMfPRn4OM6K7DTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

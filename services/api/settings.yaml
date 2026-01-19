@@ -1,0 +1,43 @@
+mongodb:
+  url: "mongodb+srv://olivebagel:itismyfirsttimeofdeployment%401@cluster0.ir4sb4g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+  name: "olivebagel"
+
+google_cloud:
+  storage:
+    bucket_name: "besetter"
+    base_url: "https://storage.cloud.google.com/besetter"
+    account_info:
+      type: "service_account"
+      project_id: "regal-operand-451709-f4"
+      private_key_id: "4b66add27f7cea0dafec23235329431eb1a30f85"
+      private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCqFFuJvhWB7pWe\nnn5iIQpNmKlDHvY7qbDAyX+ZOw2zcOxxPOXek7MSl51aY+zRxbn3t+/SRDIuXHaX\na8dcGo6NK1I26POC1RGE7/s5C/78MPQs662p4W6OL8AvLg8jJzg9motm+mkRGww5\nzCVkL2eY8iBaZxwfbkvfEKqjIc+gRIllsCddagnTjvmRxc00ixHuho/94ij934oP\ntGZ5XNqDtUMUiSbq1QzEMca3vxtTx3Wk7Vo69ZNxcb61fmt2JeRnVzWepthygKny\n5ZsMX0bZYRUkW03DdC+v/j8QT7tPYzkK3mvmzkqLczs+A3w0oZwxh4t55Z334P6l\nKCrhNSIPAgMBAAECggEAJmc+XBXNqW8D3bMP+nxXZToJThyZoNMqE/3rj9/jshbX\nbKJBjUZwcsxFPXm+qYcp/KNNxX6cjhdWt84gT823TmzvvXJQOcR+ljPR2Am7Y5py\nKAp3Rhqe6gAiNwUBagCbFF3nCDOWscQXuJ09/CcwDzrszzzk/rva6d1LilZCGX/B\nPbXd8PmabviLX+F6tgVVUAaUjX2Z4XN/NIMVpfoyqJIqUhBShHLuvITRqOadzYI0\nf1W3iVx/6BvVL8MfQMDVA6/xD74947qXHukovRQr+OCRzlnImC6Ma+SdDJXzCsKK\nk+t36LoWiZ+xyQrZICBUM+FdabI26s5x7LfWoskiEQKBgQDtHMPhTYfOz/km3YOr\nKHZTCmxgKejj9b0hn3y8mrjNj+sSeFhhK1HEMfQnfOOhr4M3SWxoPX5OSAdmvhgX\njv0uKyEDjW7q14freiO8AlbvNVMnxccs6dYG0WYuzyLhlXhoxYF6VcJz0Xb07Id5\nC3dV4mYto19DCzEvBrR+sn9PawKBgQC3oKXEMkiEJZ0vzayM1EWKy61T2DoM5MAH\n5/6+tvVHV7LAMXDOPwVJevaNT/VGJ+HO/YdDCZwP1XKOS1ULjtw3hhCJ4rqmifmh\nAHNn+p7DBNG2ccnPXpAi8gVYpm4TmTpnQRJrdNkPTSHTOncG8ypE2jE5qdQ6PsRr\nZjts47zU7QKBgQCL6yqHvCmE1+LtlU/KY3EXZZI4WOLOCkfWHHgOD7s3ylJsLsnw\nZRC2Fsg9uQvWcGyc5l3rUUZESWrcrRYoaL9sTBUKNJ6cRB03znZhznugYrY0RRhY\nn5Alq9GBk8fAmGRaZxoVp5+8moF43E7BFgwQiS3EhqCDPoqCdpFyJkDMCwKBgBJH\nj7jkOIvPIsKres3aI8IZXHvIPp8h9mvTEGzz0Z70f/rZ8RzW8TPLZdfTads+BSCR\n5HEr97krymeX4DNyWUG9us+/Hk2N1qfMX7CuJjfLtwSudySJiVexOA8HIlYZHtNA\nixDfZOw9BWz9mPO8KS0Je3T+Dv5tWShH2QqR8S5RAoGAVqYE0eGTh5tEDbi3bg2g\n9OJow7PdsDXbHemCl3ZIXg2DdiBpX6PZcTpfc/z42fqiqac85u55IB+VaPfQoI4Z\nfbKxw5wCR/4QQiffee9UG5CLabH2YABGWkNbBlxnlFFBbowzC2PpVqxEhAZG4MLy\n9XE6NTNYpmf92Q3qgrv1sj4=\n-----END PRIVATE KEY-----\n"
+      client_email: "htjo-dev@regal-operand-451709-f4.iam.gserviceaccount.com"
+      client_id: "117619466609510178782"
+      auth_uri: "https://accounts.google.com/o/oauth2/auth"
+      token_uri: "https://oauth2.googleapis.com/token"
+      auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+      client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/htjo-dev%40regal-operand-451709-f4.iam.gserviceaccount.com"
+      universe_domain: "googleapis.com"
+
+authentication:
+  key: LetsM@keItFun!2024Sh0wT1me#Now!!
+
+oauth2:
+  apple:
+    team_id: "Y82F57J2YR"
+    bundle_id: "com.olivebagel.besetter"
+    service_id: "com.olivebagel.besetter-service"
+    key_id: "TR92244LUM"
+    private_key: |
+      -----BEGIN PRIVATE KEY-----
+      MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg/SZZ2LXaQNLT6XSe
+      MH3qnz3URHgiYj3UUxfqL9Owpk2gCgYIKoZIzj0DAQehRANCAATWi3QNLT+EUqEN
+      V5TaJ/jKwk0Fi2cmMrFI1+YBZWI5ei3O5tRDyCzdE6vxHKzXp15jADIyuAJ927QZ
+      e9vUPs9i
+      -----END PRIVATE KEY-----
+
+  google:
+    audience: "558049274219-gjqko022od0ked532il3idou27ovcfid.apps.googleusercontent.com"
+
+  line:
+    client_id: "2006504173"

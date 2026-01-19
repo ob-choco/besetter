@@ -1,0 +1,32 @@
+{
+  "default": {
+    "background": "./blue-bg.png",
+    "title": {
+      "color": "#000000",
+      "font_size": 80,
+      "font_weight": 900
+    },
+    "padding": 50
+  },
+
+  "data": [
+    {
+      "filter": "capture"
+    },
+    {
+      "filter": "spray-wall-editor"
+    },
+    {
+      "filter": "make"
+    },
+    {
+      "filter": "bouldering-editor"
+    },
+    {
+      "filter": "endurance-editor"
+    },
+    {
+      "filter": "main"
+    }
+  ]
+}
