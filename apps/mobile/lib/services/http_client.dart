@@ -2,8 +2,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'token_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_state.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../providers/auth_provider.dart';
+import '../main.dart' show container;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AuthorizedHttpClient {
@@ -25,10 +26,10 @@ class AuthorizedHttpClient {
 
     if (response.statusCode == 401) {
       final context = navigatorKey.currentContext;
+      await container.read(authProvider.notifier).logout();
+      navigatorKey.currentState
+          ?.pushNamedAndRemoveUntil('/', (route) => false);
       if (context != null) {
-        await context.read<AuthState>().logout();
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/', (route) => false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.sessionExpiredLogout)),
         );
@@ -75,14 +76,14 @@ class AuthorizedHttpClient {
     } catch (e) {
       // 토큰 갱신 실패 시 로그아웃 처리
       final context = navigatorKey.currentContext;
+      await container.read(authProvider.notifier).logout();
+
+      // 메인 화면으로 이동하면서 모든 스택 제거
+      navigatorKey.currentState
+          ?.pushNamedAndRemoveUntil('/', (route) => false);
+
+      // 스낵바로 알림
       if (context != null) {
-        await context.read<AuthState>().logout();
-
-        // 메인 화면으로 이동하면서 모든 스택 제거
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/', (route) => false);
-
-        // 스낵바로 알림
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.sessionExpiredLogout)),
         );

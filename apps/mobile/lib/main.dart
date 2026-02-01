@@ -21,6 +21,8 @@ const bool skipSplash = true;
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
+late ProviderContainer container;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -35,9 +37,12 @@ void main() async {
     javaScriptAppKey: '6c0285165dddccdae02bffe935c47e72',
   );
 
+  container = ProviderContainer();
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    UncontrolledProviderScope(
+      container: container,
+      child: const MyApp(),
     ),
   );
 }
