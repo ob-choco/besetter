@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
-import '../providers/auth_state.dart';
+import '../providers/auth_provider.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({Key? key}) : super(key: key);
 
   Future<void> _openSystemLanguageSettings() async {
@@ -23,7 +23,7 @@ class SettingsPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.settings),
@@ -41,19 +41,19 @@ class SettingsPage extends StatelessWidget {
             onTap: () {
               showDialog(
                 context: context,
-                builder: (context) {
+                builder: (dialogContext) {
                   return AlertDialog(
-                    title: Text(AppLocalizations.of(context)!.logout),
-                    content: Text(AppLocalizations.of(context)!.confirmLogout),
+                    title: Text(AppLocalizations.of(dialogContext)!.logout),
+                    content: Text(AppLocalizations.of(dialogContext)!.confirmLogout),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(AppLocalizations.of(context)!.cancel),
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(AppLocalizations.of(dialogContext)!.cancel),
                       ),
                       TextButton(
                         onPressed: () async {
                           try {
-                            await context.read<AuthState>().logout();
+                            await ref.read(authProvider.notifier).logout();
                             if (context.mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
                                 '/login',
@@ -70,7 +70,7 @@ class SettingsPage extends StatelessWidget {
                             }
                           }
                         },
-                        child: Text(AppLocalizations.of(context)!.confirm),
+                        child: Text(AppLocalizations.of(dialogContext)!.confirm),
                       ),
                     ],
                   );
