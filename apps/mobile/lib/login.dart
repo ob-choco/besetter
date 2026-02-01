@@ -3,26 +3,24 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import '../pages/terms_page.dart';
 import '../services/token_service.dart';
-import 'providers/auth_state.dart';
+import 'providers/auth_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
 
   static const String _host = 'https://besetter-api-371038003203.asia-northeast3.run.app';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -63,7 +61,7 @@ class LoginPage extends StatelessWidget {
                       width: 44,
                       height: 44,
                       child: GestureDetector(
-                        onTap: () => _handleAppleLogin(context),
+                        onTap: () => _handleAppleLogin(context, ref),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: const Image(
@@ -80,7 +78,7 @@ class LoginPage extends StatelessWidget {
                       width: 44,
                       height: 44,
                       child: GestureDetector(
-                        onTap: () => _handleGoogleLogin(context),
+                        onTap: () => _handleGoogleLogin(context, ref),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: SvgPicture.asset(
@@ -94,7 +92,7 @@ class LoginPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     GestureDetector(
-                      onTap: () => _handleLineLogin(context),
+                      onTap: () => _handleLineLogin(context, ref),
                       child: Container(
                         width: 44,
                         height: 44,
@@ -116,7 +114,7 @@ class LoginPage extends StatelessWidget {
                       width: 44,
                       height: 44,
                       child: GestureDetector(
-                        onTap: () => _handleKakaoLogin(context),
+                        onTap: () => _handleKakaoLogin(context, ref),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: SvgPicture.asset(
@@ -139,7 +137,7 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  Future<void> _handleAppleLogin(BuildContext context) async {
+  Future<void> _handleAppleLogin(BuildContext context, WidgetRef ref) async {
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -162,8 +160,7 @@ class LoginPage extends StatelessWidget {
           refreshToken: data['refreshToken'],
         );
 
-        final authState = context.read<AuthState>();
-        authState.login(
+        await ref.read(authProvider.notifier).login(
           '',
           data['accessToken'],
         );
@@ -187,15 +184,15 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  Future<void> _handleGoogleLogin(BuildContext context) async {
+  Future<void> _handleGoogleLogin(BuildContext context, WidgetRef ref) async {
     const List<String> scopes = <String>['email', 'openid', 'profile'];
 
-    GoogleSignIn _googleSignIn = GoogleSignIn(
+    GoogleSignIn googleSignIn = GoogleSignIn(
       scopes: scopes,
     );
 
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
       if (googleSignInAccount == null) {
         throw Exception('Failed to sign in');
       }
@@ -217,8 +214,7 @@ class LoginPage extends StatelessWidget {
           refreshToken: data['refreshToken'],
         );
 
-        final authState = context.read<AuthState>();
-        authState.login(
+        await ref.read(authProvider.notifier).login(
           '',
           data['accessToken'],
         );
@@ -243,7 +239,7 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  Future<void> _handleLineLogin(BuildContext context) async {
+  Future<void> _handleLineLogin(BuildContext context, WidgetRef ref) async {
     try {
       // LINE 로그인을 위한 nonce 값을 서버에서 가져옴
       final response = await http.post(
@@ -282,8 +278,7 @@ class LoginPage extends StatelessWidget {
           refreshToken: data['refreshToken'],
         );
 
-        final authState = context.read<AuthState>();
-        authState.login(
+        await ref.read(authProvider.notifier).login(
           result.userProfile?.displayName ?? '',
           data['accessToken'],
         );
@@ -309,11 +304,11 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  Future<void> _handleKakaoLogin(BuildContext context) async {
+  Future<void> _handleKakaoLogin(BuildContext context, WidgetRef ref) async {
     if (await isKakaoTalkInstalled()) {
       try {
         final result = await UserApi.instance.loginWithKakaoTalk();
-        await _handleKakaoLoginResult(context, result);
+        await _handleKakaoLoginResult(context, ref, result);
       } catch (error) {
 
         // 사용자가 카카오톡 설치 후 디바이스 권한 요청 화면에서 로그인을 취소한 경우,
@@ -324,21 +319,21 @@ class LoginPage extends StatelessWidget {
         // 카카오톡에 연결된 카카오계정이 없는 경우, 카카오계정으로 로그인
         try {
           final result = await UserApi.instance.loginWithKakaoAccount();
-          await _handleKakaoLoginResult(context, result);
+          await _handleKakaoLoginResult(context, ref, result);
         } catch (error) {
         }
       }
     } else {
       try {
         final result = await UserApi.instance.loginWithKakaoAccount();
-        await _handleKakaoLoginResult(context, result);
+        await _handleKakaoLoginResult(context, ref, result);
       } catch (error) {
         print('카카오계정으로 로그인 실패 $error');
       }
     }
   }
 
-  Future<void> _handleKakaoLoginResult(BuildContext context, OAuthToken result) async {
+  Future<void> _handleKakaoLoginResult(BuildContext context, WidgetRef ref, OAuthToken result) async {
     print(result);
     final signInResponse = await http.post(
       Uri.parse('$_host/authentications/sign-in/kakao'),
@@ -355,8 +350,7 @@ class LoginPage extends StatelessWidget {
         refreshToken: data['refreshToken'],
       );
 
-      final authState = context.read<AuthState>();
-      authState.login(
+      await ref.read(authProvider.notifier).login(
         '',
         data['accessToken'],
       );
