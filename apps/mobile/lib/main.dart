@@ -13,6 +13,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
+import 'providers/auth_provider.dart';
 
 
 // 개발 모드에서 스플래시 화면 스킵을 위한 상수
@@ -78,8 +79,25 @@ class MainMenuPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: authProvider 전환 후 수정
-    // 임시로 항상 LoginPage 표시
-    return const LoginPage();
+    final authAsync = ref.watch(authProvider);
+
+    return authAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, st) => Scaffold(
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (authState) {
+        if (!authState.isInitialized) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return UpgradeAlert(
+          child: authState.isLoggedIn ? const HomePage() : const LoginPage(),
+        );
+      },
+    );
   }
 }
