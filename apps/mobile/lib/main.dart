@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'start.dart';
 import 'login.dart';
 import 'pages/home.dart';
-import 'providers/auth_state.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'pages/image_list_page.dart';
 import 'services/http_client.dart';
@@ -14,8 +13,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
-import 'providers/image_state.dart' as image_provider;
-import 'providers/route_state.dart';
 
 
 // 개발 모드에서 스플래시 화면 스킵을 위한 상수
@@ -38,13 +35,8 @@ void main() async {
   );
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => AuthState()),
-        ChangeNotifierProvider(create: (context) => image_provider.ImageProvider()),
-        ChangeNotifierProvider(create: (context) => RouteProvider()),
-      ],
-      child: const MyApp(),
+    const ProviderScope(
+      child: MyApp(),
     ),
   );
 }
@@ -81,18 +73,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MainMenuPage extends StatelessWidget {
+class MainMenuPage extends ConsumerWidget {
   const MainMenuPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authState = context.watch<AuthState>();
-
-    // 초기화가 완료될 때까지 로딩 표시
-    if (!authState.isInitialized) {
-      return const CircularProgressIndicator();
-    }
-
-    return UpgradeAlert(child: authState.isLoggedIn ? const HomePage() : const LoginPage());
+  Widget build(BuildContext context, WidgetRef ref) {
+    // TODO: authProvider 전환 후 수정
+    // 임시로 항상 LoginPage 표시
+    return const LoginPage();
   }
 }
