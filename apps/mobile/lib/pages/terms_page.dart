@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/token_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../providers/auth_state.dart';
-import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-class TermsPage extends StatefulWidget {
+class TermsPage extends ConsumerStatefulWidget {
   final String? lineIdToken;
   final String? appleAuthorizationCode;
   final String? googleIdToken;
@@ -23,10 +23,10 @@ class TermsPage extends StatefulWidget {
       this.nonceId});
 
   @override
-  State<TermsPage> createState() => _TermsPageState();
+  ConsumerState<TermsPage> createState() => _TermsPageState();
 }
 
-class _TermsPageState extends State<TermsPage> {
+class _TermsPageState extends ConsumerState<TermsPage> {
   final Map<String, String> _terms = {
     'ko': 'https://truth-crafter-0c7.notion.site/1f2ad66660f1809ca756d8425c829e9a',
     'en': 'https://truth-crafter-0c7.notion.site/Terms-of-Use-1f2ad66660f18048b71eff109b16a3e0',
@@ -67,8 +67,7 @@ class _TermsPageState extends State<TermsPage> {
             accessToken: data['accessToken'],
             refreshToken: data['refreshToken'],
           );
-          final authState = context.read<AuthState>();
-          await authState.login(
+          await ref.read(authProvider.notifier).login(
             '',
             data['accessToken'],
           );
@@ -95,8 +94,7 @@ class _TermsPageState extends State<TermsPage> {
             accessToken: data['accessToken'],
             refreshToken: data['refreshToken'],
           );
-          final authState = context.read<AuthState>();
-          await authState.login(
+          await ref.read(authProvider.notifier).login(
             '',
             data['accessToken'],
           );
@@ -122,8 +120,7 @@ class _TermsPageState extends State<TermsPage> {
             accessToken: data['accessToken'],
             refreshToken: data['refreshToken'],
           );
-          final authState = context.read<AuthState>();
-          await authState.login(
+          await ref.read(authProvider.notifier).login(
             '',
             data['accessToken'],
           );
@@ -149,8 +146,7 @@ class _TermsPageState extends State<TermsPage> {
             accessToken: data['accessToken'],
             refreshToken: data['refreshToken'],
           );
-          final authState = context.read<AuthState>();
-          await authState.login(
+          await ref.read(authProvider.notifier).login(
             '',
             data['accessToken'],
           );
