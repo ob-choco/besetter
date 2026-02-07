@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'dart:convert';
 import '../models/polygon_data.dart';
 import 'editors/spray_wall_editor_page.dart';
-import '../services/http_client.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:provider/provider.dart';
-import '../providers/image_state.dart' as image_provider;
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../providers/images_provider.dart';
 
-class ImagePreviewPage extends StatelessWidget {
+class ImagePreviewPage extends ConsumerWidget {
   final File image;
   final String source;
 
@@ -20,7 +18,7 @@ class ImagePreviewPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.checkImage),
@@ -50,8 +48,6 @@ class ImagePreviewPage extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () async {
-                    final imageProvider = Provider.of<image_provider.ImageProvider>(context, listen: false);
-
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -77,7 +73,7 @@ class ImagePreviewPage extends StatelessWidget {
                     );
 
                     try {
-                      final PolygonData? polygonData = await imageProvider.createImage(image);
+                      final PolygonData? polygonData = await ref.read(imagesProvider.notifier).createImage(image);
 
                       if (context.mounted) {
                         Navigator.pop(context);
