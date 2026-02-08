@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/route_data.dart';
 import '../../services/http_client.dart';
@@ -125,6 +126,12 @@ class _RouteCardState extends ConsumerState<RouteCard> {
     }
   }
 
+  void _handleShare() {
+    const baseUrl = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+    final shareUrl = '$baseUrl/share/routes/${widget.route.id}';
+    Share.share(shareUrl);
+  }
+
   @override
   Widget build(BuildContext context) {
     final route = widget.route;
@@ -173,9 +180,19 @@ class _RouteCardState extends ConsumerState<RouteCard> {
                           SizedBox(
                             width: 24,
                             height: 24,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.share, size: 20),
+                              onPressed: _handleShare,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 24,
+                            height: 24,
                             child: PopupMenuButton<String>(
                               padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.menu, size: 20),
+                              icon: const Icon(Icons.more_vert, size: 20),
                               itemBuilder: (context) => [
                                 PopupMenuItem<String>(
                                   value: 'edit',
