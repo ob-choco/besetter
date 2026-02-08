@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from app.routers import authentications, hold_polygons, share
+from app.routers import authentications, hold_polygons, share, well_known
 from app.models.open_id_nonce import OpenIdNonce as OpenIdNonceModel
 from app.models.user import User as UserModel
 from app.models.hold_polygon import HoldPolygon as HoldPolygonModel
@@ -42,6 +42,7 @@ app.include_router(hold_polygons.router)
 app.include_router(images.router)
 app.include_router(routes.router)
 app.include_router(share.router)
+app.include_router(well_known.router)
 
 
 if __name__ == "__main__":
