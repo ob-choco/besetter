@@ -17,6 +17,7 @@ class RouteType(str, Enum):
 class Visibility(str, Enum):
     PUBLIC = "public"
     PRIVATE = "private"
+    UNLISTED = "unlisted"
 
 
 class BoulderingHold(BaseModel):
