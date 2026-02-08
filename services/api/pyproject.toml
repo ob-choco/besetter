@@ -1,2 +1,37 @@
+[project]
+name = "besetter-api"
+version = "0.1.0"
+description = "Besetter API Service"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.4",
+    "pydantic>=2.9.2",
+    "pydantic-settings>=2.6.0",
+    "uvicorn>=0.32.0",
+    "motor>=3.6.0",
+    "pymongo>=4.9.2",
+    "beanie>=1.27.0",
+    "aiohttp>=3.10.10",
+    "python-multipart>=0.0.17",
+    "python-jose[cryptography]>=3.3.0",
+    "pyhumps>=3.8.0",
+    "pytz>=2024.2",
+    "pillow>=11.0.0",
+    "shapely>=2.0.6",
+    "jsonpatch>=1.33",
+    "deepdiff>=8.1.0",
+    "pyjwt>=2.10.1",
+    "requests>=2.32.3",
+    "google-auth>=2.38.0",
+    "google-cloud-storage>=3.1.0",
+    "google-cloud-secret-manager>=2.23.3",
+    "pyyaml>=6.0.2",
+    "pydash>=8.0.5",
+    "jinja2>=3.1.0",
+]
+
 [tool.black]
 line-length = 120
+
+[dependency-groups]
+dev = []
