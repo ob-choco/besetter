@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'start.dart';
@@ -6,6 +7,7 @@ import 'pages/home.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'pages/image_list_page.dart';
 import 'services/http_client.dart';
+import 'services/deep_link_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -14,6 +16,8 @@ import 'firebase_options.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
 import 'providers/auth_provider.dart';
+import 'models/route_data.dart';
+import 'pages/viewers/route_viewer.dart';
 
 
 // 개발 모드에서 스플래시 화면 스킵을 위한 상수
@@ -79,11 +83,67 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MainMenuPage extends ConsumerWidget {
+class MainMenuPage extends ConsumerStatefulWidget {
   const MainMenuPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainMenuPage> createState() => _MainMenuPageState();
+}
+
+class _MainMenuPageState extends ConsumerState<MainMenuPage> {
+  @override
+  void initState() {
+    super.initState();
+    // 딥링크 초기화
+    DeepLinkService().init(
+      onRouteLink: (routeId) {
+        _handleRouteLink(routeId);
+      },
+    );
+    // 앱 시작 시 대기 중인 딥링크 처리
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pendingRouteId = DeepLinkService().consumePendingRouteId();
+      if (pendingRouteId != null) {
+        _handleRouteLink(pendingRouteId);
+      }
+    });
+  }
+
+  void _handleRouteLink(String routeId) {
+    final authAsync = ref.read(authProvider);
+    authAsync.whenData((authState) {
+      if (authState.isLoggedIn) {
+        _navigateToRoute(routeId);
+      } else {
+        // 로그인 필요 - pendingRouteId 저장 후 로그인 화면으로
+        DeepLinkService().pendingRouteId = routeId;
+        Navigator.of(context).pushNamed('/login');
+      }
+    });
+  }
+
+  Future<void> _navigateToRoute(String routeId) async {
+    // RouteViewer로 직접 이동
+    final response = await AuthorizedHttpClient.get('/routes/$routeId');
+    if (response.statusCode == 200) {
+      final routeData = RouteData.fromJson(
+        jsonDecode(utf8.decode(response.bodyBytes)),
+      );
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => RouteViewer(routeData: routeData),
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authAsync = ref.watch(authProvider);
 
     return authAsync.when(
@@ -99,6 +159,17 @@ class MainMenuPage extends ConsumerWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
+
+        // 로그인 완료 후 대기 중인 딥링크 처리
+        if (authState.isLoggedIn) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final pendingRouteId = DeepLinkService().consumePendingRouteId();
+            if (pendingRouteId != null) {
+              _navigateToRoute(pendingRouteId);
+            }
+          });
+        }
+
         return UpgradeAlert(
           child: authState.isLoggedIn ? const HomePage() : const LoginPage(),
         );
