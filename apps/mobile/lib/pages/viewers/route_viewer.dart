@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:math' as math;
 
 import '../../models/route_data.dart';
@@ -192,6 +193,10 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.viewRoute),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: _handleShare,
+          ),
           if (widget.routeData.type == RouteType.endurance)
             IconButton(
               icon: Icon(_showHoldOrder ? Icons.visibility : Icons.visibility_off),
@@ -537,5 +542,11 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
       }
     }
     return orderMap;
+  }
+
+  void _handleShare() {
+    const baseUrl = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+    final shareUrl = '$baseUrl/share/routes/${widget.routeData.id}';
+    Share.share(shareUrl);
   }
 }
