@@ -44,17 +44,16 @@
             opacity: 0.9;
             margin-bottom: 24px;
         }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 24px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .open-app-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 12px;
         }
         .store-buttons {
             display: flex;
@@ -64,8 +63,8 @@
         .store-button {
             display: inline-block;
             padding: 12px 24px;
-            background: white;
-            color: #333;
+            background: rgba(255,255,255,0.2);
+            color: white;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
@@ -74,9 +73,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="spinner"></div>
-        <h1>Besetter로 이동 중...</h1>
-        <p>앱이 설치되어 있지 않다면 아래 버튼을 눌러주세요.</p>
+        <h1>{{ title }}</h1>
+        <p>{{ description }}</p>
+        <a href="{{ deep_link_url }}" class="open-app-button">앱에서 열기</a>
+        <p>앱이 설치되어 있지 않다면 아래에서 다운로드하세요.</p>
         <div class="store-buttons">
             <a href="{{ app_store_url }}" class="store-button">App Store에서 다운로드</a>
             <a href="{{ play_store_url }}" class="store-button">Google Play에서 다운로드</a>
@@ -84,17 +84,13 @@
     </div>
 
     <script>
-        // 딥링크 시도 (fallback)
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-
-        setTimeout(() => {
-            if (isIOS) {
-                window.location.href = "{{ app_store_url }}";
-            } else if (isAndroid) {
-                window.location.href = "{{ play_store_url }}";
-            }
-        }, 2500);
+        (function() {
+            var deepLinkUrl = "{{ deep_link_url }}";
+            var key = 'dl_' + deepLinkUrl;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, '1');
+            window.location.href = deepLinkUrl;
+        })();
     </script>
 </body>
 </html>

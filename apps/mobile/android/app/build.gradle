@@ -32,7 +32,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders = [
-            LINE_CHANNEL_ID: "2006504173"
+            LINE_CHANNEL_ID: "2006504173",
+            KAKAO_NATIVE_APP_KEY: "2368c0bfac918406b9ea6fe8242d70f7",
+            applicationName: "android.app.Application"
         ]
     }
 

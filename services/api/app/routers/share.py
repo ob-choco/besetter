@@ -5,6 +5,7 @@ from beanie.odm.fields import PydanticObjectId
 from bson.errors import InvalidId
 
 from app.models.route import Route, Visibility
+from app.models.image import Image
 
 router = APIRouter(prefix="/share", tags=["share"])
 
@@ -35,6 +36,7 @@ async def share_route(request: Request, route_id: str):
 
     # 루트 조회
     route = await Route.get(object_id)
+    image = await Image.get(route.image_id) if route else None
 
     # 루트가 없거나 삭제된 경우
     if route is None or route.is_deleted:
@@ -70,11 +72,12 @@ async def share_route(request: Request, route_id: str):
 
     # 설명 생성
     description_parts = [route.grade]
-    if route.gym_name:
-        description_parts.append(route.gym_name)
+    if image and image.gym_name:
+        description_parts.append(image.gym_name)
     description = " · ".join(description_parts)
 
     share_url = str(request.url)
+    deep_link_url = f"besetter://share/routes/{route_id}"
 
     return templates.TemplateResponse(
         "share_route.html",
@@ -84,6 +87,7 @@ async def share_route(request: Request, route_id: str):
             "description": description,
             "image_url": str(route.image_url),
             "share_url": share_url,
+            "deep_link_url": deep_link_url,
             "app_store_url": APP_STORE_URL,
             "play_store_url": PLAY_STORE_URL,
         },

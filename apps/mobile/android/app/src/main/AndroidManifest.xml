@@ -12,7 +12,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep Link for route sharing -->
+            <!-- Deep Link for route sharing (Universal Links) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -21,6 +21,16 @@
                     android:scheme="https"
                     android:host="besetter-api-371038003203.asia-northeast3.run.app"
                     android:pathPrefix="/share/routes" />
+            </intent-filter>
+            <!-- Deep Link for route sharing (Custom URL scheme) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="besetter"
+                    android:host="share"
+                    android:pathPrefix="/routes" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
@@ -50,9 +60,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- "kakao${YOUR_NATIVE_APP_KEY}://oauth" 형식의 앱 실행 스킴 설정 -->
+                <!-- "kakao{NATIVE_APP_KEY}://oauth" 형식의 앱 실행 스킴 설정 -->
                 <!-- 카카오 로그인 Redirect URI -->
-                <data android:scheme="kakao${YOUR_NATIVE_APP_KEY}" android:host="oauth"/>
+                <data android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" android:host="oauth"/>
             </intent-filter>
         </activity>
     </application>

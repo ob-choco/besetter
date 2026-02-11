@@ -28,12 +28,24 @@ class DeepLinkService {
   }
 
   void _handleUri(Uri uri, Function(String routeId) onRouteLink) {
-    // /share/routes/{routeId} 형식 파싱
     final pathSegments = uri.pathSegments;
+    String? routeId;
+
+    // Universal Link: https://domain/share/routes/{routeId}
     if (pathSegments.length >= 3 &&
         pathSegments[0] == 'share' &&
         pathSegments[1] == 'routes') {
-      final routeId = pathSegments[2];
+      routeId = pathSegments[2];
+    }
+    // Custom scheme: besetter://share/routes/{routeId}
+    else if (uri.scheme == 'besetter' &&
+        uri.host == 'share' &&
+        pathSegments.length >= 2 &&
+        pathSegments[0] == 'routes') {
+      routeId = pathSegments[1];
+    }
+
+    if (routeId != null) {
       onRouteLink(routeId);
     }
   }
