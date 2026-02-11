@@ -12,11 +12,11 @@ class GuideBubble {
   final String? prefKey;
   
   OverlayEntry? _overlayEntry;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
-  Timer? _dismissTimer; // 추가
-  bool _isDisposed = false; // 추가
-  
+  AnimationController? _animationController;
+  Animation<double>? _animation;
+  Timer? _dismissTimer;
+  bool _isDisposed = false;
+
   GuideBubble({
     required this.context,
     required this.targetKey,
@@ -25,35 +25,33 @@ class GuideBubble {
     this.prefKey,
   });
 
-  void initialize(TickerProvider vsync) {
-    // 애니메이션 컨트롤러 초기화 (페이드 아웃을 위해 사용)
+  void _ensureInitialized() {
+    if (_animationController != null) return;
+    final overlay = Overlay.of(context);
     _animationController = AnimationController(
-      vsync: vsync,
-      duration: const Duration(milliseconds: 500), // 페이드 아웃 속도 조절
+      vsync: overlay,
+      duration: const Duration(milliseconds: 500),
     );
-
-    // 페이드 애니메이션 설정 (1.0 -> 0.0)
     _animation = Tween<double>(begin: 1.0, end: 0.0)
-        .animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+        .animate(CurvedAnimation(parent: _animationController!, curve: Curves.easeOut));
   }
 
   void dispose() {
     _isDisposed = true;
     _dismissTimer?.cancel();
-    // 애니메이션 컨트롤러가 이미 dispose되었을 수 있으므로, 애니메이션 없이 즉시 제거
     if (_overlayEntry != null) {
       _overlayEntry?.remove();
       _overlayEntry = null;
     }
-    _animationController.dispose(); // isDisposed 체크 없이 직접 호출
+    _animationController?.dispose();
   }
 
   void removeOverlay() {
-    if (_isDisposed || _overlayEntry == null) {
+    if (_isDisposed || _overlayEntry == null || _animationController == null) {
       return;
     }
 
-    _animationController.forward().then((_) {
+    _animationController!.forward().then((_) {
       if (!_isDisposed && _overlayEntry != null) {
         _overlayEntry?.remove();
         _overlayEntry = null;
@@ -70,8 +68,8 @@ class GuideBubble {
     if (_overlayEntry != null) {
       _overlayEntry?.remove();
       _overlayEntry = null;
-      if (!_isDisposed) { // dispose되지 않았을 때만 reset 호출
-        _animationController.reset();
+      if (!_isDisposed) {
+        _animationController?.reset();
       }
     }
   }
@@ -99,31 +97,30 @@ class GuideBubble {
   }
 
   void show() {
-    if (_isDisposed) return; // 추가: 이미 dispose된 경우 show 하지 않음
+    if (_isDisposed) return;
 
     final RenderBox? renderBox = targetKey.currentContext?.findRenderObject() as RenderBox?;
-    
+
     if (renderBox == null) return;
-    
+
+    _ensureInitialized();
+
     final position = renderBox.localToGlobal(Offset.zero);
-    
-    // 화면 크기 가져오기
+
     final screenSize = MediaQuery.of(context).size;
-    
+
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) => Positioned(
-        // 화면 중앙을 기준으로 버튼 위에 표시
-        top: position.dy + 55, // 버튼 위에 고정된 거리로 배치
-        // 화면 너비에 따라 상대적으로 위치 조정
-        left: screenSize.width * 0.5 - 50, // 화면 중앙에서 약간 왼쪽으로
+        top: position.dy + 55,
+        left: screenSize.width * 0.5 - 50,
         child: AnimatedBuilder(
-          animation: _animation,
+          animation: _animation!,
           builder: (context, child) {
-            if (_isDisposed) { // _animationController.isDisposed 체크 제거
-              return const SizedBox.shrink(); // dispose 시 빈 위젯 반환
+            if (_isDisposed) {
+              return const SizedBox.shrink();
             }
             return Opacity(
-              opacity: _animation.value,
+              opacity: _animation!.value,
               child: child,
             );
           },
