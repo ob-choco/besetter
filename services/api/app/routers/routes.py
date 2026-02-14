@@ -282,7 +282,7 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
     holds = route.bouldering_holds if route.type == RouteType.BOULDERING else route.endurance_holds
     polygon_ids = [hold.polygon_id for hold in holds] if holds else []
 
-    hold_polygon = await HoldPolygon.aggregate(
+    hold_polygon = await HoldPolygon.get_pymongo_collection().aggregate(
         [
             {"$match": {"imageId": route.image_id}},
             {
@@ -301,7 +301,7 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
                 }
             },
         ]
-    ).to_list()
+    ).to_list(length=None)
 
     hold_polygon = hold_polygon[0] if hold_polygon else None
 
