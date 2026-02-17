@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from app.routers import authentications, hold_polygons, share, well_known
@@ -43,6 +44,7 @@ app.include_router(images.router)
 app.include_router(routes.router)
 app.include_router(share.router)
 app.include_router(well_known.router)
+app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 
 if __name__ == "__main__":
