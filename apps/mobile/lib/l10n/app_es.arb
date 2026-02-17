@@ -128,5 +128,10 @@
   "lowImageResolution": "La resolución de la imagen es demasiado baja. Debe ser al menos 480x480.",
   "unsupportedImageRatio": "Proporción de imagen no compatible. Solo se admiten proporciones 1:1, 3:2, 4:3, 16:9.",
   "imageResolutionLimited": "La resolución de la imagen es demasiado grande.",
-  "recognizingHolds": "La IA🤖 está buscando dónde están los agarres. Puede tardar un poco, pero está trabajando duro, así que por favor espere."
+  "recognizingHolds": "La IA🤖 está buscando dónde están los agarres. Puede tardar un poco, pero está trabajando duro, así que por favor espere.",
+  "deleteAccount": "Eliminar cuenta",
+  "deleteAccountWarning": "Al eliminar tu cuenta, todos tus datos se eliminarán permanentemente. Para continuar, escribe 'delete' a continuación.",
+  "deleteAccountConfirmHint": "delete",
+  "accountDeleted": "Tu cuenta ha sido eliminada",
+  "failedDeleteAccount": "No se pudo eliminar la cuenta"
 }

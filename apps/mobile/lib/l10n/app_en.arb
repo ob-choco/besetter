@@ -127,5 +127,10 @@
   "lowImageResolution": "Image resolution is too low. It must be at least 480x480.",
   "unsupportedImageRatio": "Unsupported image ratio. Only 1:1, 3:2, 4:3, 16:9 ratios are supported.",
   "imageResolutionLimited": "Image resolution is too large.",
-  "recognizingHolds": "AI🤖 is searching for holds. It might take a while, but it's working hard, so please wait a moment."
+  "recognizingHolds": "AI🤖 is searching for holds. It might take a while, but it's working hard, so please wait a moment.",
+  "deleteAccount": "Delete Account",
+  "deleteAccountWarning": "Deleting your account will permanently remove all your data. To continue, please type 'delete' below.",
+  "deleteAccountConfirmHint": "delete",
+  "accountDeleted": "Your account has been deleted",
+  "failedDeleteAccount": "Failed to delete account"
 }

@@ -128,5 +128,10 @@
   "lowImageResolution": "이미지 해상도가 너무 낮습니다. 최소 480x480 이상이어야 합니다.",
   "unsupportedImageRatio": "지원되지 않는 이미지 비율입니다. 1:1, 3:2, 4:3, 16:9 비율만 지원합니다.",
   "imageResolutionLimited": "이미지 해상도가 너무 큽니다",
-  "recognizingHolds": "인공지능🤖이 홀드가 어디에 있는지 찾고있어요. 조금 오래 걸릴 수 있습니다만, 열심히 찾고 있으니 기다려주세요."
+  "recognizingHolds": "인공지능🤖이 홀드가 어디에 있는지 찾고있어요. 조금 오래 걸릴 수 있습니다만, 열심히 찾고 있으니 기다려주세요.",
+  "deleteAccount": "계정 삭제",
+  "deleteAccountWarning": "계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 계속하시려면 아래에 'delete'를 입력해주세요.",
+  "deleteAccountConfirmHint": "delete",
+  "accountDeleted": "계정이 삭제되었습니다",
+  "failedDeleteAccount": "계정 삭제에 실패했습니다"
 }

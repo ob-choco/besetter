@@ -127,5 +127,10 @@
   "lowImageResolution": "画像解像度が低すぎます。最低480x480以上必要です。",
   "unsupportedImageRatio": "サポートされていない画像比率です。1:1、3:2、4:3、16:9の比率のみサポートされています。",
   "imageResolutionLimited": "画像解像度が大きすぎます。",
-  "recognizingHolds": "AI🤖がホールドの位置を探しています。少し時間がかかりますが、一生懸命探していますので、お待ちください。"
+  "recognizingHolds": "AI🤖がホールドの位置を探しています。少し時間がかかりますが、一生懸命探していますので、お待ちください。",
+  "deleteAccount": "アカウント削除",
+  "deleteAccountWarning": "アカウントを削除すると、すべてのデータが完全に削除されます。続行するには、下に「delete」と入力してください。",
+  "deleteAccountConfirmHint": "delete",
+  "accountDeleted": "アカウントが削除されました",
+  "failedDeleteAccount": "アカウントの削除に失敗しました"
 }
