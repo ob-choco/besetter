@@ -85,7 +85,9 @@ async def share_route(request: Request, route_id: str):
             "request": request,
             "title": title,
             "description": description,
-            "image_url": str(route.image_url),
+            "image_url": str(route.image_url).replace(
+                "storage.cloud.google.com", "storage.googleapis.com"
+            ),
             "share_url": share_url,
             "deep_link_url": deep_link_url,
             "app_store_url": APP_STORE_URL,
