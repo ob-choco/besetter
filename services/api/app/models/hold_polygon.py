@@ -30,6 +30,8 @@ class HoldPolygon(Document):
     user_id: PydanticObjectId = Field(..., description="이미지를 업로드한 사용자의 ID")
     image_url: HttpUrl = Field(..., description="이미지 URL (비정규화)")
     polygons: List[HoldPolygonData] = Field(default_factory=list, description="이미지 내의 모든 폴리곤 데이터")
+    is_deleted: bool = Field(False, description="삭제 여부")
+    deleted_at: Optional[datetime] = Field(None, description="삭제 일시")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)
 

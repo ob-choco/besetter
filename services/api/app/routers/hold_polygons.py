@@ -141,15 +141,16 @@ async def get_hold_polygon(hold_polygon_id: str, current_user: User = Depends(ge
     hold_polygon = await HoldPolygon.find_one(
         HoldPolygon.id == ObjectId(hold_polygon_id),
         HoldPolygon.user_id == current_user.id,
+        HoldPolygon.is_deleted != True,
     )
+
+    if not hold_polygon:
+        raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
 
     blob_path = extract_blob_path_from_url(hold_polygon.image_url)
     if blob_path:
         signed_url = generate_signed_url(blob_path)
         hold_polygon.image_url = HttpUrl(signed_url)
-
-    if not hold_polygon:
-        raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
 
     return hold_polygon
 
@@ -173,10 +174,15 @@ async def update_hold_polygon(
     hold_polygon = await HoldPolygon.find_one(
         HoldPolygon.id == ObjectId(hold_polygon_id),
         HoldPolygon.user_id == current_user.id,
+        HoldPolygon.is_deleted != True,
     )
+
+    if not hold_polygon:
+        raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
+
     image = await Image.find_one(Image.id == hold_polygon.image_id)
 
-    if not hold_polygon or not image:
+    if not image:
         raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
 
     try:

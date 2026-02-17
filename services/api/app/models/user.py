@@ -74,6 +74,9 @@ class User(Document):
     apple: Optional[AppleUser] = None
     google: Optional[GoogleUser] = None
 
+    is_deleted: bool = False
+    deleted_at: Optional[datetime] = None
+
     created_at: datetime
     updated_at: datetime
 

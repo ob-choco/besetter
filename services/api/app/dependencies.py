@@ -32,7 +32,7 @@ async def get_current_user(
             )
             
         user = await User.find_one(User.id == ObjectId(claim.sub))
-        if not user:
+        if not user or user.is_deleted:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="유효하지 않은 토큰입니다",

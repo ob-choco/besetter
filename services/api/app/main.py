@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from logging import info
 from app.routers import images
 from app.routers import routes
+from app.routers import users
 from app.core.config import get
 
 
@@ -42,6 +43,7 @@ app.include_router(authentications.router)
 app.include_router(hold_polygons.router)
 app.include_router(images.router)
 app.include_router(routes.router)
+app.include_router(users.router)
 app.include_router(share.router)
 app.include_router(well_known.router)
 app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")

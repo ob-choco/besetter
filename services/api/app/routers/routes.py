@@ -75,7 +75,7 @@ async def create_route(request: CreateRouteRequest, current_user: User = Depends
     image = await Image.find_one(
         Image.id == ObjectId(request.image_id),
         Image.user_id == current_user.id,
-        Image.is_deleted == False,
+        Image.is_deleted != True,
     )
     if not image:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
@@ -188,7 +188,7 @@ async def get_routes(
     next: Optional[str] = None,
 ):
     # 쿼리 빌더 초기화
-    query = Route.find(Route.user_id == current_user.id, Route.is_deleted == False)
+    query = Route.find(Route.user_id == current_user.id, Route.is_deleted != True)
 
     # 정렬 옵션 처리
     sort_field, sort_order = sort.split(":")
@@ -272,7 +272,7 @@ class RouteCountResponse(BaseModel):
 
 @router.get("/count", response_model=RouteCountResponse)
 async def get_route_count(current_user: User = Depends(get_current_user)):
-    count = await Route.find(And(Route.user_id == current_user.id, Route.is_deleted == False)).count()
+    count = await Route.find(And(Route.user_id == current_user.id, Route.is_deleted != True)).count()
 
     return RouteCountResponse(total_count=count)
 
@@ -316,7 +316,7 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
 @router.get("/{route_id}", response_model=RouteDetailView)
 async def get_route(route_id: str, current_user: User = Depends(get_current_user)):
     route = await Route.find_one(
-        Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted == False
+        Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted != True
     )
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
@@ -346,7 +346,7 @@ class UpdateRouteRequest(BaseModel):
 async def update_route(route_id: str, request: UpdateRouteRequest, current_user: User = Depends(get_current_user)):
     # 기존 route 조회
     route = await Route.find_one(
-        Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted == False
+        Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted != True
     )
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")

@@ -83,7 +83,7 @@ async def get_images(
     next: Optional[str] = None
 ):
     # 쿼리 빌더 초기화
-    query = Image.find(Image.user_id == current_user.id)
+    query = Image.find(Image.user_id == current_user.id, Image.is_deleted != True)
     
     # 정렬 옵션 처리
     sort_field, sort_order = sort.split(':')
@@ -254,7 +254,7 @@ async def get_image(
         And(
             Image.id == object_id,
             Image.user_id == current_user.id,
-            Image.is_deleted == False
+            Image.is_deleted != True
         )
     ).project(ImageServiceView)
 
@@ -282,7 +282,7 @@ async def get_image_count(
     
     # include_deleted가 False인 경우에만 is_deleted 조건 추가
     if not query.include_deleted:
-        query_conditions.append(Image.is_deleted == False)
+        query_conditions.append(Image.is_deleted != True)
     
     count = await Image.find(
         And(*query_conditions)
