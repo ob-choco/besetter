@@ -59,6 +59,11 @@ class Route(Document):
 
     is_deleted: bool = Field(False, description="루트가 삭제되었는지 여부")
 
+    overlay_image_url: Optional[HttpUrl] = Field(None, description="오버레이 이미지 URL")
+    overlay_processing: bool = Field(False, description="오버레이 이미지 생성 작업 중 여부")
+    overlay_started_at: Optional[datetime] = Field(None, description="오버레이 작업 시작 시간")
+    overlay_completed_at: Optional[datetime] = Field(None, description="오버레이 작업 완료 시간")
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)
     deleted_at: Optional[datetime] = Field(None)

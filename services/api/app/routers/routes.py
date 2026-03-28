@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi import status
 from typing import List, Optional, Dict, Any
 
@@ -24,6 +24,7 @@ import base64
 from app.models import model_config
 from typing import Optional, List
 from deepdiff import DeepDiff
+from app.services.route_overlay import generate_route_overlay
 
 router = APIRouter(prefix="/routes", tags=["routes"])
 
@@ -71,7 +72,7 @@ class RouteDetailView(Route):
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=RouteDetailView)
-async def create_route(request: CreateRouteRequest, current_user: User = Depends(get_current_user)):
+async def create_route(request: CreateRouteRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user)):
     image = await Image.find_one(
         Image.id == ObjectId(request.image_id),
         Image.user_id == current_user.id,
@@ -107,6 +108,8 @@ async def create_route(request: CreateRouteRequest, current_user: User = Depends
         image_url=image.url,
         bouldering_holds=bouldering_holds if request.type == RouteType.BOULDERING else None,
         endurance_holds=endurance_holds if request.type == RouteType.ENDURANCE else None,
+        overlay_processing=True,
+        overlay_started_at=datetime.utcnow(),
     )
 
     created_route = await route.save()
@@ -114,7 +117,12 @@ async def create_route(request: CreateRouteRequest, current_user: User = Depends
     blob_path = extract_blob_path_from_url(created_route.image_url)
     if blob_path:
         created_route.image_url = HttpUrl(generate_signed_url(blob_path))
+    if created_route.overlay_image_url:
+        overlay_blob_path = extract_blob_path_from_url(created_route.overlay_image_url)
+        if overlay_blob_path:
+            created_route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
 
+    background_tasks.add_task(generate_route_overlay, created_route)
     return await _enrich_route_with_hold_polygon_data(created_route)
 
 
@@ -133,6 +141,9 @@ class RouteServiceView(BaseModel):
     image_id: ObjectId
     user_id: ObjectId
     image_url: str
+
+    overlay_image_url: Optional[str] = Field(None, description="오버레이 이미지 URL")
+    overlay_processing: bool = Field(False, description="오버레이 이미지 생성 작업 중 여부")
 
     created_at: datetime
     updated_at: Optional[datetime]
@@ -259,7 +270,11 @@ async def get_routes(
     for route in routes:
         blob_path = extract_blob_path_from_url(route.image_url)
         if blob_path:
-            route.image_url = HttpUrl(generate_signed_url(blob_path))
+            route.image_url = generate_signed_url(blob_path)
+        if route.overlay_image_url:
+            overlay_blob_path = extract_blob_path_from_url(route.overlay_image_url)
+            if overlay_blob_path:
+                route.overlay_image_url = generate_signed_url(overlay_blob_path)
 
     return RouteListResponse(data=routes, meta=RouteListMeta(next_token=next_token))
 
@@ -324,6 +339,10 @@ async def get_route(route_id: str, current_user: User = Depends(get_current_user
     blob_path = extract_blob_path_from_url(route.image_url)
     if blob_path:
         route.image_url = HttpUrl(generate_signed_url(blob_path))
+    if route.overlay_image_url:
+        overlay_blob_path = extract_blob_path_from_url(route.overlay_image_url)
+        if overlay_blob_path:
+            route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
 
     return await _enrich_route_with_hold_polygon_data(route)
 
@@ -343,7 +362,7 @@ class UpdateRouteRequest(BaseModel):
 
 
 @router.patch("/{route_id}", response_model=RouteDetailView)
-async def update_route(route_id: str, request: UpdateRouteRequest, current_user: User = Depends(get_current_user)):
+async def update_route(route_id: str, request: UpdateRouteRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user)):
     # 기존 route 조회
     route = await Route.find_one(
         Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted != True
@@ -379,13 +398,40 @@ async def update_route(route_id: str, request: UpdateRouteRequest, current_user:
     diff = DeepDiff(original_data, updated_data, exclude_paths=["root['updated_at']"])
 
     if diff:  # 변경사항이 있는 경우
+        # 홀드 관련 필드 변경 여부 확인
+        holds_changed = False
+        for change_type in diff:
+            for path in diff[change_type]:
+                if "bouldering_holds" in path or "endurance_holds" in path:
+                    holds_changed = True
+                    break
+            if holds_changed:
+                break
+
+        if holds_changed:
+            updated_route.overlay_processing = True
+            updated_route.overlay_started_at = datetime.utcnow()
+
         updated_route.updated_at = datetime.utcnow()
         await updated_route.save()
+
+        if holds_changed:
+            background_tasks.add_task(generate_route_overlay, updated_route)
+
+        if updated_route.overlay_image_url:
+            overlay_blob_path = extract_blob_path_from_url(updated_route.overlay_image_url)
+            if overlay_blob_path:
+                updated_route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
+
         return await _enrich_route_with_hold_polygon_data(updated_route)
 
     blob_path = extract_blob_path_from_url(route.image_url)
     if blob_path:
         route.image_url = HttpUrl(generate_signed_url(blob_path))
+    if route.overlay_image_url:
+        overlay_blob_path = extract_blob_path_from_url(route.overlay_image_url)
+        if overlay_blob_path:
+            route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
 
     # 변경사항이 없는 경우 기존 데이터 반환
     return await _enrich_route_with_hold_polygon_data(route)
