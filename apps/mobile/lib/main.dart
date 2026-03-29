@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'start.dart';
 import 'login.dart';
 import 'pages/home.dart';
+import 'pages/main_tab.dart';
 import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'pages/image_list_page.dart';
 import 'services/http_client.dart';
@@ -171,7 +172,7 @@ class _MainMenuPageState extends ConsumerState<MainMenuPage> {
         }
 
         return UpgradeAlert(
-          child: authState.isLoggedIn ? const HomePage() : const LoginPage(),
+          child: authState.isLoggedIn ? const MainTabPage() : const LoginPage(),
         );
       },
     );

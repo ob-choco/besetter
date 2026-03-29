@@ -10,11 +10,15 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class HoldEditorButton extends StatefulWidget {
   final GlobalKey buttonKey;
   final Function()? onTapDown;
+  final String? buttonLabel;
+  final IconData? buttonIcon;
 
   const HoldEditorButton({
     super.key,
     required this.buttonKey,
     this.onTapDown,
+    this.buttonLabel,
+    this.buttonIcon,
   });
 
   @override
@@ -217,14 +221,23 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
           color: const Color(0xFF007AFF),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          AppLocalizations.of(context)!.setRoute,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.buttonIcon != null) ...[
+              Icon(widget.buttonIcon, color: Colors.white, size: 24),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              widget.buttonLabel ?? AppLocalizations.of(context)!.setRoute,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

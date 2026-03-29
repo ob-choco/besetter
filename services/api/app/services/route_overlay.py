@@ -153,7 +153,46 @@ def _draw_top_mark(draw, points, scale):
     draw.text((text_x, text_y), "TOP", fill=(0, 0, 0, 255), font=font)
 
 
-def _render_overlay(img, route_type, holds_by_polygon_id, route_polygons):
+def _draw_order_marker(draw, points, orders, scale):
+    """endurance 홀드에 순서 번호 마커 그리기. 폴리곤 중앙에 빨간 테두리 흰 원 + 번호."""
+    if not points or not orders:
+        return
+
+    # 폴리곤 중심점 계산
+    center_x = sum(p[0] for p in points) / len(points)
+    center_y = sum(p[1] for p in points) / len(points)
+
+    circle_size = 18.0 * scale
+    circle_r = circle_size / 2
+    border_width = max(1, round(2.0 * scale))
+
+    font_size = max(8, round(10.0 * scale))
+    font = _load_font(font_size)
+
+    # 여러 순서가 있으면 약간 겹치며 나열
+    spacing = circle_size * 0.7
+    total_width = circle_size + (len(orders) - 1) * spacing
+    start_x = center_x - total_width / 2 + circle_r
+
+    for i, order in enumerate(orders):
+        cx = start_x + i * spacing
+        cy = center_y
+
+        # 흰 원 + 빨간 테두리
+        bbox = [cx - circle_r, cy - circle_r, cx + circle_r, cy + circle_r]
+        draw.ellipse(bbox, fill=(255, 255, 255, 204), outline=(244, 67, 54, 255), width=border_width)
+
+        # 순서 번호
+        text = str(order)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = text_bbox[2] - text_bbox[0]
+        text_h = text_bbox[3] - text_bbox[1]
+        text_x = cx - text_w / 2
+        text_y = cy - text_h / 2 - text_bbox[1]
+        draw.text((text_x, text_y), text, fill=(0, 0, 0, 255), font=font)
+
+
+def _render_overlay(img, route_type, holds_by_polygon_id, route_polygons, hold_order_map=None):
     """Pillow로 3개 레이어를 합성하여 오버레이 이미지를 생성한다."""
     scale = img.size[0] / 390.0
     stroke_width = max(2, round(2.0 * scale))
@@ -167,18 +206,19 @@ def _render_overlay(img, route_type, holds_by_polygon_id, route_polygons):
             highlight_draw.polygon(point_tuples, fill=NEON_LIME_HIGHLIGHT)
     result = PILImage.alpha_composite(img, highlight_layer)
 
-    # Layer 2: 타입별 fill color
-    fill_layer = PILImage.new("RGBA", result.size, (0, 0, 0, 0))
-    fill_draw = ImageDraw.Draw(fill_layer)
-    for polygon in route_polygons:
-        polygon_id = polygon["polygonId"]
-        hold = holds_by_polygon_id[polygon_id]
-        hold_type = hold.get("type", "normal") if route_type == "bouldering" else "normal"
-        fill_color = HOLD_FILL_COLORS.get(hold_type, DEFAULT_FILL_COLOR)
-        point_tuples = [(p[0], p[1]) for p in polygon["points"]]
-        if len(point_tuples) >= 3:
-            fill_draw.polygon(point_tuples, fill=fill_color)
-    result = PILImage.alpha_composite(result, fill_layer)
+    # Layer 2: 타입별 fill color (bouldering만)
+    if route_type == "bouldering":
+        fill_layer = PILImage.new("RGBA", result.size, (0, 0, 0, 0))
+        fill_draw = ImageDraw.Draw(fill_layer)
+        for polygon in route_polygons:
+            polygon_id = polygon["polygonId"]
+            hold = holds_by_polygon_id[polygon_id]
+            hold_type = hold.get("type", "normal")
+            fill_color = HOLD_FILL_COLORS.get(hold_type, DEFAULT_FILL_COLOR)
+            point_tuples = [(p[0], p[1]) for p in polygon["points"]]
+            if len(point_tuples) >= 3:
+                fill_draw.polygon(point_tuples, fill=fill_color)
+        result = PILImage.alpha_composite(result, fill_layer)
 
     # Layer 3: 테두리 + 홀드 속성
     stroke_layer = PILImage.new("RGBA", result.size, (0, 0, 0, 0))
@@ -191,15 +231,23 @@ def _render_overlay(img, route_type, holds_by_polygon_id, route_polygons):
                 p2_pt = point_tuples[(i + 1) % len(point_tuples)]
                 stroke_draw.line([p1_pt, p2_pt], fill=STROKE_COLOR, width=stroke_width)
 
-    for polygon in route_polygons:
-        polygon_id = polygon["polygonId"]
-        points = [(p[0], p[1]) for p in polygon["points"]]
-        hold = holds_by_polygon_id[polygon_id]
-        hold_type = hold.get("type", "normal") if route_type == "bouldering" else "normal"
-        if hold_type == "finishing":
-            _draw_top_mark(stroke_draw, points, scale)
-        else:
-            _draw_marking_tapes(stroke_draw, points, hold.get("markingCount"), scale)
+    if route_type == "bouldering":
+        for polygon in route_polygons:
+            polygon_id = polygon["polygonId"]
+            points = [(p[0], p[1]) for p in polygon["points"]]
+            hold = holds_by_polygon_id[polygon_id]
+            hold_type = hold.get("type", "normal")
+            if hold_type == "finishing":
+                _draw_top_mark(stroke_draw, points, scale)
+            else:
+                _draw_marking_tapes(stroke_draw, points, hold.get("markingCount"), scale)
+    elif route_type == "endurance" and hold_order_map:
+        for polygon in route_polygons:
+            polygon_id = polygon["polygonId"]
+            points = [(p[0], p[1]) for p in polygon["points"]]
+            orders = hold_order_map.get(polygon_id)
+            if orders:
+                _draw_order_marker(stroke_draw, points, orders, scale)
 
     result = PILImage.alpha_composite(result, stroke_layer)
     return result.convert("RGB")
@@ -244,8 +292,19 @@ async def generate_route_overlay(route: Route):
         resp.raise_for_status()
         img = PILImage.open(io.BytesIO(resp.content)).convert("RGBA")
 
-        # 5. 렌더링
-        result = _render_overlay(img, route.type.value, holds_by_polygon_id, route_polygons)
+        # 5. endurance 순서 맵 생성
+        hold_order_map = None
+        if route.type == RouteType.ENDURANCE and route.endurance_holds:
+            hold_order_map = {}
+            for i, hold in enumerate(route.endurance_holds):
+                order = i + 1
+                if hold.polygon_id in hold_order_map:
+                    hold_order_map[hold.polygon_id].append(order)
+                else:
+                    hold_order_map[hold.polygon_id] = [order]
+
+        # 6. 렌더링
+        result = _render_overlay(img, route.type.value, holds_by_polygon_id, route_polygons, hold_order_map)
 
         # 6. GCS 업로드
         output_buffer = io.BytesIO()
