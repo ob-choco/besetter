@@ -294,7 +294,6 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                             )
                           : BoulderingRouteHolds(
                               holds: _getHoldProperties(),
-                              croppedImages: _croppedImages,
                               onHighlightHolds: (holdIds) {
                                 setState(() {
                                   _highlightedHoldIds = holdIds;
@@ -308,182 +307,150 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                               },
                             ),
                     ),
-                  // 탭바와 탭 컨텐츠
+                  const SizedBox(height: 16),
                   Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 등급 정보를 더 강조하는 상단 섹션
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                // 등급 표시
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.routeData.gradeType,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.routeData.grade,
-                                        style: const TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // 색상과 점수를 함께 표시
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    if (widget.routeData.gradeColor != null)
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: Color(int.parse('0x${widget.routeData.gradeColor}')),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.grey.shade200,
-                                            width: 3,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.1),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    if (widget.routeData.gradeScore != null) ...[
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.primary,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          '${widget.routeData.gradeScore}',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    height: 1,
+                    color: Colors.grey.shade300,
+                  ),
+                  const SizedBox(height: 16),
+                  // Route information
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Grade Section
+                        Container(
+                          padding: const EdgeInsets.only(top: 6, bottom: 16),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: const Color(0xFFABADAE).withOpacity(0.2),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          
-                          // 암장 정보 섹션
-                          if (widget.routeData.gymName != null)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade200),
-                                borderRadius: BorderRadius.circular(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (widget.routeData.gradeColor != null) ...[
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: Color(int.parse(widget.routeData.gradeColor!, radix: 16)),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                        ],
+                                        Text(
+                                          'CURRENT GRADE',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0052D0),
+                                            letterSpacing: 2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.routeData.grade,
+                                      style: TextStyle(
+                                        fontSize: 48,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF2C2F30),
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.location_on,
-                                        size: 20,
-                                        color: Theme.of(context).colorScheme.primary,
+                                        Icons.trending_up,
+                                        size: 12,
+                                        color: Color(0xFF465C7D),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          widget.routeData.gymName!,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${_getGradeLevel()['name']!} Level'.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF465C7D),
+                                          letterSpacing: 0.5,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  if (widget.routeData.wallName != null) ...[
-                                    const SizedBox(height: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 28),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.landscape,
-                                            size: 16,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            widget.routeData.wallName!,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  Text(
+                                    _getGradeLevel()['description']!,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF595C5D),
                                     ),
-                                  ],
-                                  if (widget.routeData.wallExpirationDate != null) ...[
-                                    const SizedBox(height: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 28),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.event,
-                                            size: 16,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            '~${widget.routeData.wallExpirationDate!.toString().split(' ')[0]}',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        // Meta Information
+                        if (widget.routeData.gymName != null)
+                          _buildMetaRow(
+                            icon: Icons.location_on_outlined,
+                            label: 'GYM',
+                            value: widget.routeData.gymName!,
+                          ),
+                        if (widget.routeData.wallName != null) ...[
+                          const SizedBox(height: 24),
+                          _buildMetaRow(
+                            icon: Icons.grid_view_rounded,
+                            label: 'SECTOR',
+                            value: widget.routeData.wallName!,
+                          ),
                         ],
-                      ),
+                        if (widget.routeData.wallExpirationDate != null) ...[
+                          const SizedBox(height: 24),
+                          _buildExpiryRow(),
+                        ],
+                        // Description
+                        if (widget.routeData.description != null && widget.routeData.description!.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFEFF1F2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              widget.routeData.description!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF595C5D),
+                                height: 1.625,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
+                      ],
                     ),
                   ),
                 ],
@@ -493,6 +460,171 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
               child: CircularProgressIndicator(),
             ),
     );
+  }
+
+  Widget _buildMetaRow({required IconData icon, required String label, required String value}) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Icon(icon, size: 20, color: Color(0xFF465C7D)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF595C5D),
+                letterSpacing: 0.5,
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2C2F30),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpiryRow() {
+    final expiryDate = widget.routeData.wallExpirationDate!;
+    final daysLeft = expiryDate.difference(DateTime.now()).inDays;
+    final dateStr = '${_monthName(expiryDate.month)} ${expiryDate.day}, ${expiryDate.year}';
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF465C7D)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ROUTE EXPIRY',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF595C5D),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Text(
+                dateStr,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C2F30),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (daysLeft >= 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFB5151).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            child: Text(
+              '$daysLeft DAYS LEFT',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF9F0519),
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _monthName(int month) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[month - 1];
+  }
+
+  Map<String, String> _getGradeLevel() {
+    final gradeType = widget.routeData.gradeType;
+    final grade = widget.routeData.grade;
+
+    switch (gradeType) {
+      case 'vScale':
+        final n = int.tryParse(grade.replaceFirst('V', '')) ?? 0;
+        if (n <= 1) return {'name': 'Beginner', 'description': 'First steps into climbing'};
+        if (n <= 3) return {'name': 'Novice', 'description': 'Building foundations'};
+        if (n <= 5) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
+        if (n <= 7) return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
+        if (n <= 9) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
+        if (n <= 11) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
+        if (n <= 13) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
+        if (n <= 15) return {'name': 'World Class', 'description': 'Among the best in history'};
+        return {'name': 'Legendary', 'description': 'Pushing human limits'};
+
+      case 'yds':
+        final numPart = grade.split('.').length > 1 ? grade.split('.')[1].replaceAll(RegExp(r'[a-d]'), '') : '0';
+        final n = int.tryParse(numPart) ?? 0;
+        if (n <= 7) return {'name': 'Beginner', 'description': 'First steps into climbing'};
+        if (n <= 9) return {'name': 'Novice', 'description': 'Building foundations'};
+        if (n == 10) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
+        if (n == 11) return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
+        if (n == 12) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
+        if (n == 13) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
+        if (n == 14) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
+        return {'name': 'World Class', 'description': 'Among the best in history'};
+
+      case 'french':
+        final n = int.tryParse(grade[0]) ?? 3;
+        if (n <= 5) return {'name': 'Beginner', 'description': 'First steps into climbing'};
+        if (n == 6) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
+        if (n == 7) {
+          if (grade.startsWith('7c')) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
+          return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
+        }
+        if (n == 8) {
+          if (grade.startsWith('8c')) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
+          return {'name': 'Elite', 'description': 'Top 1% worldwide'};
+        }
+        return {'name': 'World Class', 'description': 'Among the best in history'};
+
+      case 'fontScale':
+        final n = int.tryParse(grade[0]) ?? 3;
+        if (n <= 5) return {'name': 'Beginner', 'description': 'First steps into climbing'};
+        if (n == 6) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
+        if (n == 7) {
+          if (grade.startsWith('7c')) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
+          return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
+        }
+        if (n == 8) {
+          if (grade.startsWith('8c')) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
+          return {'name': 'Elite', 'description': 'Top 1% worldwide'};
+        }
+        return {'name': 'World Class', 'description': 'Among the best in history'};
+
+      default:
+        return {'name': 'Unknown', 'description': ''};
+    }
   }
 
   // 홀드 속성 맵 생성 메서드 추가

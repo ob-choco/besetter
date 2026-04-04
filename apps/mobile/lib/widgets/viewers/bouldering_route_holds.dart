@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:ui' as ui;
 import '../../models/route_data.dart';
 
 class BoulderingRouteHolds extends StatefulWidget {
   final Map<int, BoulderingHold> holds;
-  final Map<int, ui.Image?> croppedImages;
   final Function(List<int>) onHighlightHolds;
   final String? selectedType;
   final Function(String?)? onTypeSelected;
@@ -13,7 +11,6 @@ class BoulderingRouteHolds extends StatefulWidget {
   const BoulderingRouteHolds({
     Key? key,
     required this.holds,
-    required this.croppedImages,
     required this.onHighlightHolds,
     this.selectedType,
     this.onTypeSelected,

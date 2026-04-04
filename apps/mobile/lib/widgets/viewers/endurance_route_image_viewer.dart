@@ -63,7 +63,9 @@ class EnduranceRouteImageViewer extends StatelessWidget {
                         fit: BoxFit.contain,
                       ),
                       ...polygons.where((polygon) => polygon.isDeleted != true).map((polygon) {
-                        final isHighlighted = highlightedHoldIds.isEmpty || 
+                        final isHighlighted = highlightedHoldIds.isEmpty ||
+                            highlightedHoldIds.contains(polygon.polygonId);
+                        final isActiveHighlight = highlightedHoldIds.isNotEmpty &&
                             highlightedHoldIds.contains(polygon.polygonId);
                         return EnduranceRoutePolygon(
                           polygon: polygon,
@@ -73,6 +75,7 @@ class EnduranceRouteImageViewer extends StatelessWidget {
                           selectedOrder: selectedOrder,
                           onOrderTap: onOrderTap,
                           isHighlighted: isHighlighted,
+                          isActiveHighlight: isActiveHighlight,
                           transformationController: transformationController,
                           showHoldOrder: showHoldOrder,
                         );

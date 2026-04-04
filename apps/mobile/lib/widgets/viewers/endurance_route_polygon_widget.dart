@@ -103,6 +103,7 @@ class EnduranceRoutePolygon extends StatelessWidget {
   final Map<int, List<int>> selectedOrder;
   final Function(int, int)? onOrderTap;
   final bool isHighlighted;
+  final bool isActiveHighlight;
   final TransformationController transformationController;
   final bool showHoldOrder;
 
@@ -115,6 +116,7 @@ class EnduranceRoutePolygon extends StatelessWidget {
     required this.selectedOrder,
     required this.onOrderTap,
     required this.isHighlighted,
+    this.isActiveHighlight = false,
     required this.transformationController,
     required this.showHoldOrder,
   }) : super(key: key);
@@ -201,16 +203,17 @@ class EnduranceRoutePolygon extends StatelessWidget {
   Widget _buildSingleOrderCircle(int order) {
     final scale = transformationController.value.getMaxScaleOnAxis();
     final size = 18 / scale;
+    final isLime = isActiveHighlight;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: isLime ? neonLimeColor.withOpacity(0.9) : Colors.white.withOpacity(0.8),
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.red,
+          color: isLime ? neonLimeColor : Colors.red,
           width: 2 / scale,
         ),
       ),
@@ -218,9 +221,9 @@ class EnduranceRoutePolygon extends StatelessWidget {
         child: Text(
           order.toString(),
           style: TextStyle(
-            color: Colors.black.withOpacity(1.0),
+            color: Colors.black,
             fontSize: 10 / scale,
-            fontWeight: FontWeight.normal,
+            fontWeight: isLime ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
