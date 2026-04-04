@@ -46,6 +46,9 @@ class RouteData {
   final String? wallName;
   final DateTime? wallExpirationDate;
 
+  final String? overlayImageUrl;
+  final bool overlayProcessing;
+
   final List<Polygon>? polygons;
 
   RouteData({
@@ -67,6 +70,8 @@ class RouteData {
     this.gymName,
     this.wallName,
     this.wallExpirationDate,
+    this.overlayImageUrl,
+    this.overlayProcessing = false,
     this.polygons,
   });
 
@@ -98,6 +103,8 @@ class RouteData {
       gymName: json['gymName'],
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null ? DateTime.parse(json['wallExpirationDate']) : null,
+      overlayImageUrl: json['overlayImageUrl'],
+      overlayProcessing: json['overlayProcessing'] ?? false,
       polygons: json['polygons'] != null
           ? (json['polygons'] as List).map((polygon) => Polygon.fromJson(polygon as Map<String, dynamic>)).toList()
           : null,
@@ -123,6 +130,8 @@ class RouteData {
         'gymName': gymName,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),
+        'overlayImageUrl': overlayImageUrl,
+        'overlayProcessing': overlayProcessing,
         'polygons': polygons?.map((polygon) => polygon.toJson()).toList(),
       };
 }

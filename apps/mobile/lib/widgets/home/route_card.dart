@@ -1,15 +1,15 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/route_data.dart';
 import '../../services/http_client.dart';
 import '../../providers/routes_provider.dart';
 import '../../pages/viewers/route_viewer.dart';
 import '../../pages/editors/route_editor_page.dart';
-import '../authorized_network_image.dart';
 
 class RouteCard extends ConsumerStatefulWidget {
   final RouteData route;
@@ -29,15 +29,12 @@ class _RouteCardState extends ConsumerState<RouteCard> {
   bool _isLoading = false;
 
   void _setLoading(bool value) {
-    if (mounted) {
-      setState(() => _isLoading = value);
-    }
+    if (mounted) setState(() => _isLoading = value);
   }
 
   Future<void> _navigateToViewer() async {
     widget.onInteraction?.call();
     _setLoading(true);
-
     try {
       final response = await AuthorizedHttpClient.get('/routes/${widget.route.id}');
       if (response.statusCode == 200) {
@@ -45,9 +42,7 @@ class _RouteCardState extends ConsumerState<RouteCard> {
         if (!mounted) return;
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => RouteViewer(routeData: routeData),
-          ),
+          MaterialPageRoute(builder: (context) => RouteViewer(routeData: routeData)),
         );
       }
     } catch (e) {
@@ -75,7 +70,7 @@ class _RouteCardState extends ConsumerState<RouteCard> {
           ),
         ),
       );
-      ref.invalidate(routesProvider);
+      ref.invalidate(routesProvider());
       ref.invalidate(routesTotalCountProvider);
     } catch (e) {
       if (!mounted) return;
@@ -105,22 +100,16 @@ class _RouteCardState extends ConsumerState<RouteCard> {
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     _setLoading(true);
     try {
-      final success = await ref.read(routesProvider.notifier).deleteRoute(widget.route.id);
+      final success = await ref.read(routesProvider().notifier).deleteRoute(widget.route.id);
       if (!mounted) return;
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.routeDeleted)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.failedDeleteRoute)),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(success
+            ? AppLocalizations.of(context)!.routeDeleted
+            : AppLocalizations.of(context)!.failedDeleteRoute)),
+      );
     } finally {
       _setLoading(false);
     }
@@ -135,158 +124,185 @@ class _RouteCardState extends ConsumerState<RouteCard> {
   @override
   Widget build(BuildContext context) {
     final route = widget.route;
+    final imageUrl = route.overlayImageUrl ?? route.imageUrl;
+    final gradeColor = route.gradeColor != null
+        ? Color(int.parse(route.gradeColor!.replaceFirst('#', ''), radix: 16))
+        : Colors.blue;
 
-    return Stack(
-      children: [
-        Card(
-          elevation: 2,
-          child: InkWell(
-            onTap: _navigateToViewer,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: _navigateToViewer,
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 오버레이 이미지
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: AspectRatio(
+                  aspectRatio: 342 / 427.5,
+                  child: Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: AuthorizedNetworkImage(
-                            imageUrl: route.imageUrl,
-                            fit: BoxFit.cover,
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[300]),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 48),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                      // 난이도 뱃지
+                      Positioned(
+                        top: 18,
+                        left: 24,
                         child: Container(
-                          height: 60,
-                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5.5),
+                          decoration: BoxDecoration(
+                            color: gradeColor,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           child: Text(
-                            '${route.grade} ${route.type == RouteType.bouldering ? AppLocalizations.of(context)!.bouldering : AppLocalizations.of(context)!.endurance}',
+                            route.grade,
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.share, size: 20),
-                              onPressed: _handleShare,
+                      // 오버레이 처리 중 라벨
+                      if (route.overlayProcessing)
+                        Positioned(
+                          top: 18,
+                          right: 24,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: PopupMenuButton<String>(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.more_vert, size: 20),
-                              itemBuilder: (context) => [
-                                PopupMenuItem<String>(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.edit),
-                                      const SizedBox(width: 8),
-                                      Text(AppLocalizations.of(context)!.doEdit),
-                                    ],
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
                                   ),
                                 ),
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.delete),
-                                      const SizedBox(width: 8),
-                                      Text(AppLocalizations.of(context)!.doDelete),
-                                    ],
-                                  ),
+                                SizedBox(width: 6),
+                                Text(
+                                  '이미지 생성 중',
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
                                 ),
                               ],
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _handleEdit();
-                                } else if (value == 'delete') {
-                                  _handleDelete();
-                                }
-                              },
                             ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              // 하단 정보
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 16, 0, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 제목
+                          Text(
+                            route.title ?? route.grade,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          // 위치 정보
+                          if (route.gymName != null || route.wallName != null)
+                            Text(
+                              [route.gymName, route.wallName].whereType<String>().join(' \u2022 '),
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          const SizedBox(height: 2),
+                          // 상대 시간
+                          Text(
+                            timeago.format(route.createdAt),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.grey[200],
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (route.gymName != null && route.wallName != null)
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 16,
-                                color: Colors.grey[700],
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '${route.gymName} - ${route.wallName}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[700],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
+                    ),
+                    // 공유 + 더보기 버튼
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.share_outlined, size: 20),
+                          onPressed: _handleShare,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                         ),
-                      if (route.gymName == null || route.wallName == null)
-                        const Spacer(),
-                      Text(
-                        DateFormat.yMd(AppLocalizations.of(context)!.localeName)
-                            .add_jm()
-                            .format(route.createdAt),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_horiz, size: 20),
+                          padding: EdgeInsets.zero,
+                          itemBuilder: (context) => [
+                            PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.edit, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(AppLocalizations.of(context)!.doEdit),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.delete, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(AppLocalizations.of(context)!.doDelete),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onSelected: (value) {
+                            if (value == 'edit') _handleEdit();
+                            if (value == 'delete') _handleDelete();
+                          },
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        if (_isLoading)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(),
+          // 로딩 오버레이
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black38,
+                child: const Center(child: CircularProgressIndicator()),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

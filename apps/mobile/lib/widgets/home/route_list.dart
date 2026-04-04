@@ -16,7 +16,7 @@ class RouteList extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final routesAsync = ref.watch(routesProvider);
+    final routesAsync = ref.watch(routesProvider());
 
     useEffect(() {
       void onScroll() {
@@ -26,7 +26,7 @@ class RouteList extends HookConsumerWidget {
         if (controller.position.pixels >= controller.position.maxScrollExtent * 0.8) {
           final state = routesAsync.valueOrNull;
           if (state != null && state.nextToken != null && !state.isLoadingMore) {
-            ref.read(routesProvider.notifier).fetchMore();
+            ref.read(routesProvider().notifier).fetchMore();
           }
         }
       }

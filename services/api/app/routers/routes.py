@@ -197,9 +197,14 @@ async def get_routes(
     sort: str = Query("createdAt:desc", description="정렬 기준 (예: createdAt:desc)"),
     limit: int = Query(10, ge=1, le=100),
     next: Optional[str] = None,
+    type: Optional[RouteType] = Query(None, description="루트 타입 필터 (bouldering, endurance)"),
 ):
     # 쿼리 빌더 초기화
     query = Route.find(Route.user_id == current_user.id, Route.is_deleted != True)
+
+    # 타입 필터
+    if type:
+        query = query.find(Route.type == type)
 
     # 정렬 옵션 처리
     sort_field, sort_order = sort.split(":")

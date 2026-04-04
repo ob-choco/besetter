@@ -34,15 +34,18 @@ class RoutesState {
 @riverpod
 class Routes extends _$Routes {
   @override
-  Future<RoutesState> build() async {
+  Future<RoutesState> build({String? type}) async {
     return _fetchInitial();
   }
 
   Future<RoutesState> _fetchInitial() async {
-    final queryParams = {
+    final queryParams = <String, String>{
       'sort': 'createdAt:desc',
-      'limit': '4',
+      'limit': '10',
     };
+    if (type != null) {
+      queryParams['type'] = type!;
+    }
     final uri = Uri.parse('/routes').replace(queryParameters: queryParams);
     final response = await AuthorizedHttpClient.get(uri.toString());
 
@@ -69,11 +72,14 @@ class Routes extends _$Routes {
     state = AsyncData(current.copyWith(isLoadingMore: true));
 
     try {
-      final queryParams = {
+      final queryParams = <String, String>{
         'sort': 'createdAt:desc',
-        'limit': '4',
+        'limit': '10',
         'next': current.nextToken!,
       };
+      if (type != null) {
+        queryParams['type'] = type!;
+      }
       final uri = Uri.parse('/routes').replace(queryParameters: queryParams);
       final response = await AuthorizedHttpClient.get(uri.toString());
 
