@@ -81,6 +81,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
   HoldEditMode _editMode = HoldEditMode.none; // 편집 모드 상태 변수 추가
 
   bool _isSaving = false;
+  bool _showGlassOverlay = true;
 
   @override
   void initState() {
@@ -260,6 +261,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     if (!mounted) return;
 
     setState(() {
+      _showGlassOverlay = false;
       // 현재 편집 중인 addingHold가 있다면 편집 모드 해제
       if (_editMode == HoldEditMode.addingHold) {
         for (var hold in _addingHolds) {
@@ -573,6 +575,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     if (_editMode == HoldEditMode.readyToAdd) {
       // readyToAdd 상태에서만 처리
       setState(() {
+        _showGlassOverlay = false;
         // 기존 홀드들 편집 모드 해제
         for (var hold in _addingHolds) {
           hold.isEditing = false;
@@ -737,6 +740,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
 
   void _handleAddingHoldTap(AddingHold tappedHold) {
     setState(() {
+      _showGlassOverlay = false;
       // 현재 선택된 폴리곤이 있다면 선택 해제
       _selectedPolygonId = null;
 
@@ -751,6 +755,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
   // 빈 영역 탭 핸들러 추가
   void _handleBackgroundTap() {
     setState(() {
+      _showGlassOverlay = false;
       // 모든 홀드의 편집 모드 해제
       for (var hold in _addingHolds) {
         hold.isEditing = false;
@@ -975,6 +980,66 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (_showGlassOverlay)
+                                    Positioned(
+                                      bottom: 24,
+                                      left: 24,
+                                      right: 24,
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _showGlassOverlay = false),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: BackdropFilter(
+                                            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(17),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF5F6F7).withOpacity(0.6),
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: Colors.white.withOpacity(0.2),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          'ACTIVE EDITING',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Color(0xFF595C5D),
+                                                            letterSpacing: 1.1,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          'Tap holds to toggle selection',
+                                                          style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Color(0xFF2C2F30),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.close_rounded,
+                                                    size: 20,
+                                                    color: Color(0xFF595C5D),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),

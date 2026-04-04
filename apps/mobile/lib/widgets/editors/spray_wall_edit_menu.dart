@@ -109,6 +109,15 @@ class _SprayWallEditMenuState extends State<SprayWallEditMenu> {
                         SizedBox(width: 2),
                       ],
                     ),
+                  )
+                else
+                  Text(
+                    'No hold selected',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey.withOpacity(0.6),
+                    ),
                   ),
               ],
             ),

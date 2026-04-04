@@ -33,46 +33,85 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: imagesLoaded
-          ? Container(
-              alignment: Alignment.topLeft,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade300,
-                    width: 1.0,
-                  ),
-                ),
-              ),
-              child: SizedBox(
-                height: 540,
-                child: selectedHolds.isEmpty
-                    ? Padding(
-                        padding: EdgeInsets.only(top: 16),
-                        child: Text(
-                          AppLocalizations.of(context)!.createEnduranceRouteInstruction,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                          textAlign: TextAlign.center,
-                        ))
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (int column = 0; column * 10 < selectedHolds.length; column++) _buildColumn(column),
-                          ],
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Sequence Details',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2C2F30),
                         ),
                       ),
-              ),
+                      Text(
+                        '${selectedHolds.length} holds total',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  alignment: Alignment.topLeft,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  child: SizedBox(
+                    height: 540,
+                    child: selectedHolds.isEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: Text(
+                              AppLocalizations.of(context)!.createEnduranceRouteInstruction,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (int column = 0; column * 10 < selectedHolds.length; column++)
+                                  _buildColumn(column, (column + 1) * 10 >= selectedHolds.length),
+                                if (selectedHolds.isNotEmpty && selectedHolds.length % 10 == 0)
+                                  Container(
+                                    width: 164,
+                                    margin: EdgeInsets.only(right: 16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [_buildDashedPlaceholder()],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ],
             )
           : Center(child: Text(AppLocalizations.of(context)!.loading)),
     );
   }
 
-  Widget _buildColumn(int column) {
+  Widget _buildColumn(int column, bool isLastColumn) {
     final itemsInColumn = selectedHolds.skip(column * 10).take(10).toList();
 
     return Container(
@@ -88,6 +127,8 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
               .map((entry) => _buildHoldItem(entry.value, entry.key + 1 + column * 10))
               .whereType<Widget>()
               .toList(),
+          if (isLastColumn && itemsInColumn.length < 10)
+            _buildDashedPlaceholder(),
         ],
       ),
     );
@@ -135,19 +176,40 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
     return null;
   }
 
+  Widget _buildDashedPlaceholder() {
+    return Container(
+      height: 45,
+      margin: EdgeInsets.symmetric(vertical: 4),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+          color: Colors.grey.shade300,
+          strokeWidth: 2,
+          dashWidth: 6,
+          dashSpace: 4,
+          borderRadius: 8,
+        ),
+        child: Container(),
+      ),
+    );
+  }
+
   Widget _buildItemRow(int itemIndex, ui.Image croppedImage, double width, double height) {
     final hold = selectedHolds[itemIndex - 1];
     String handIconPath;
 
+    double handIconSize;
     switch (hold.gripHand) {
       case GripHand.left:
         handIconPath = 'assets/icons/left_hand.svg';
+        handIconSize = 32;
         break;
       case GripHand.right:
         handIconPath = 'assets/icons/right_hand.svg';
+        handIconSize = 32;
         break;
       default:
         handIconPath = 'assets/icons/dot_hand.svg';
+        handIconSize = 12;
     }
 
     return Container(
@@ -177,16 +239,16 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 12),
+          Spacer(),
           GestureDetector(
             onTap: () => onGripHandTap(itemIndex - 1),
             child: SvgPicture.asset(
               handIconPath,
-              width: 40,
-              height: 40,
+              width: handIconSize,
+              height: handIconSize,
             ),
           ),
-          SizedBox(width: 12),
+          Spacer(),
           Draggable<int>(
             data: itemIndex - 1,
             feedback: Material(
@@ -214,4 +276,49 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+  final double borderRadius;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashWidth).clamp(0.0, metric.length);
+        dashPath.addPath(metric.extractPath(distance, end), Offset.zero);
+        distance += dashWidth + dashSpace;
+      }
+    }
+
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -134,22 +134,55 @@ class _EnduranceHoldEditMenuState extends State<EnduranceHoldEditMenu> {
                     ),
                   ),
                 if (!(widget.editMode == HoldEditMode.replace || widget.editMode == HoldEditMode.add))
-                  Container(
-                    width: 48,
-                    height: 48,
-                    margin: EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: widget.editMode == HoldEditMode.edit ? Colors.grey : Colors.grey.withOpacity(0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(4),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: widget.editMode == HoldEditMode.edit ? Colors.grey : Colors.grey.withOpacity(0.3),
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: widget.editMode == HoldEditMode.edit && widget.croppedImage != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: RawImage(
+                                    image: widget.croppedImage,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        if (widget.editMode == HoldEditMode.edit && selectedOrder != null)
+                          Positioned(
+                            right: -8,
+                            top: -8,
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: Color(0xFF0052D0),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  selectedOrder.toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    child: widget.editMode == HoldEditMode.edit && widget.croppedImage != null
-                        ? RawImage(
-                            image: widget.croppedImage,
-                            fit: BoxFit.cover,
-                          )
-                        : null,
                   ),
                 if (widget.editMode == HoldEditMode.edit)
                   IconButton(
