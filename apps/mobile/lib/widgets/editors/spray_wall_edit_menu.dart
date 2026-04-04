@@ -112,7 +112,7 @@ class _SprayWallEditMenuState extends State<SprayWallEditMenu> {
                   )
                 else
                   Text(
-                    'No hold selected',
+                    AppLocalizations.of(context)!.noHoldSelected,
                     style: TextStyle(
                       fontSize: 14,
                       fontStyle: FontStyle.italic,

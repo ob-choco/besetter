@@ -1014,7 +1014,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         Text(
-                                                          'ACTIVE EDITING',
+                                                          AppLocalizations.of(context)!.activeEditing,
                                                           style: TextStyle(
                                                             fontSize: 11,
                                                             fontWeight: FontWeight.w600,
@@ -1023,7 +1023,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
                                                           ),
                                                         ),
                                                         Text(
-                                                          'Tap holds to toggle selection',
+                                                          AppLocalizations.of(context)!.tapHoldsToToggleSelection,
                                                           style: TextStyle(
                                                             fontSize: 16,
                                                             fontWeight: FontWeight.bold,

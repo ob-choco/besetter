@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/token_service.dart';
 import '../widgets/confetti.dart';
 import '../widgets/hold_editor_button.dart';
@@ -24,9 +25,9 @@ class HomePage extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Your Climbing Walls',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)!.yourClimbingWalls,
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -40,10 +41,10 @@ class HomePage extends HookConsumerWidget {
               child: WallImageCarousel(),
             ),
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               child: HoldEditorButton(
                 buttonKey: editorButtonKey,
-                buttonLabel: 'Take Wall Photo',
+                buttonLabel: AppLocalizations.of(context)!.takeWallPhoto,
                 buttonIcon: Icons.camera_alt,
               ),
             ),

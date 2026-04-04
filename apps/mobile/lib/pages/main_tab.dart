@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'home.dart';
 import 'routes_page.dart';
 import 'setting.dart';
@@ -26,18 +27,18 @@ class MainTabPage extends HookConsumerWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex.value,
         onTap: (index) => currentIndex.value = index,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: AppLocalizations.of(context)!.navHome,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Routes',
+            icon: const Icon(Icons.list),
+            label: AppLocalizations.of(context)!.navRoutes,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu),
-            label: 'Menu',
+            icon: const Icon(Icons.menu),
+            label: AppLocalizations.of(context)!.navMenu,
           ),
         ],
       ),

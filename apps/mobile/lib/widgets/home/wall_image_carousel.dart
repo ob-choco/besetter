@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../providers/images_provider.dart';
 import 'wall_card.dart';
 
@@ -16,9 +17,9 @@ class WallImageCarousel extends ConsumerWidget {
         height: 400,
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, st) => const SizedBox(
+      error: (e, st) => SizedBox(
         height: 400,
-        child: Center(child: Text('Error loading images')),
+        child: Center(child: Text(AppLocalizations.of(context)!.errorLoadingImages)),
       ),
       data: (images) {
         if (images.isEmpty) {
@@ -58,7 +59,7 @@ class WallImageCarousel extends ConsumerWidget {
             Icon(Icons.photo_camera_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No wall photos yet',
+              AppLocalizations.of(context)!.noWallPhotosYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -91,7 +92,7 @@ class WallImageCarousel extends ConsumerWidget {
               Icon(Icons.add_circle_outline, size: 48, color: Colors.grey[600]),
               const SizedBox(height: 12),
               Text(
-                'View More',
+                AppLocalizations.of(context)!.viewMore,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

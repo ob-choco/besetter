@@ -14,6 +14,7 @@ import '../../widgets/viewers/endurance_route_image_viewer.dart';
 import '../../widgets/viewers/endurance_route_holds.dart';
 import '../../widgets/viewers/bouldering_route_holds.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 
 class RouteViewer extends StatefulWidget {
@@ -351,7 +352,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                                           const SizedBox(width: 6),
                                         ],
                                         Text(
-                                          'CURRENT GRADE',
+                                          AppLocalizations.of(context)!.currentGrade,
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -387,7 +388,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '${_getGradeLevel()['name']!} Level'.toUpperCase(),
+                                        AppLocalizations.of(context)!.levelLabel(_getGradeLevel(context)['name']!).toUpperCase(),
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w600,
@@ -398,7 +399,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                                     ],
                                   ),
                                   Text(
-                                    _getGradeLevel()['description']!,
+                                    _getGradeLevel(context)['description']!,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF595C5D),
@@ -414,14 +415,14 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                         if (widget.routeData.gymName != null)
                           _buildMetaRow(
                             icon: Icons.location_on_outlined,
-                            label: 'GYM',
+                            label: AppLocalizations.of(context)!.gymLabel,
                             value: widget.routeData.gymName!,
                           ),
                         if (widget.routeData.wallName != null) ...[
                           const SizedBox(height: 24),
                           _buildMetaRow(
                             icon: Icons.grid_view_rounded,
-                            label: 'SECTOR',
+                            label: AppLocalizations.of(context)!.sectorLabel,
                             value: widget.routeData.wallName!,
                           ),
                         ],
@@ -502,7 +503,8 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
   Widget _buildExpiryRow() {
     final expiryDate = widget.routeData.wallExpirationDate!;
     final daysLeft = expiryDate.difference(DateTime.now()).inDays;
-    final dateStr = '${_monthName(expiryDate.month)} ${expiryDate.day}, ${expiryDate.year}';
+    final locale = AppLocalizations.of(context)!.localeName;
+    final dateStr = DateFormat.yMMMMd(locale).format(expiryDate);
 
     return Row(
       children: [
@@ -519,7 +521,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ROUTE EXPIRY',
+                AppLocalizations.of(context)!.routeExpiry,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -546,7 +548,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
               borderRadius: BorderRadius.circular(9999),
             ),
             child: Text(
-              '$daysLeft DAYS LEFT',
+              AppLocalizations.of(context)!.daysLeft(daysLeft),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -559,72 +561,75 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
     );
   }
 
-  String _monthName(int month) {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    return months[month - 1];
-  }
-
-  Map<String, String> _getGradeLevel() {
+  Map<String, String> _getGradeLevel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final gradeType = widget.routeData.gradeType;
     final grade = widget.routeData.grade;
+
+    final levels = {
+      'beginner': {'name': l10n.gradeBeginner, 'description': l10n.gradeBeginnerDesc},
+      'novice': {'name': l10n.gradeNovice, 'description': l10n.gradeNoviceDesc},
+      'intermediate': {'name': l10n.gradeIntermediate, 'description': l10n.gradeIntermediateDesc},
+      'advanced': {'name': l10n.gradeAdvanced, 'description': l10n.gradeAdvancedDesc},
+      'expert': {'name': l10n.gradeExpert, 'description': l10n.gradeExpertDesc},
+      'elite': {'name': l10n.gradeElite, 'description': l10n.gradeEliteDesc},
+      'pro': {'name': l10n.gradePro, 'description': l10n.gradeProDesc},
+      'worldClass': {'name': l10n.gradeWorldClass, 'description': l10n.gradeWorldClassDesc},
+      'legendary': {'name': l10n.gradeLegendary, 'description': l10n.gradeLegendaryDesc},
+    };
+
+    String levelKey;
 
     switch (gradeType) {
       case 'vScale':
         final n = int.tryParse(grade.replaceFirst('V', '')) ?? 0;
-        if (n <= 1) return {'name': 'Beginner', 'description': 'First steps into climbing'};
-        if (n <= 3) return {'name': 'Novice', 'description': 'Building foundations'};
-        if (n <= 5) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
-        if (n <= 7) return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
-        if (n <= 9) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
-        if (n <= 11) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
-        if (n <= 13) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
-        if (n <= 15) return {'name': 'World Class', 'description': 'Among the best in history'};
-        return {'name': 'Legendary', 'description': 'Pushing human limits'};
+        if (n <= 1) levelKey = 'beginner';
+        else if (n <= 3) levelKey = 'novice';
+        else if (n <= 5) levelKey = 'intermediate';
+        else if (n <= 7) levelKey = 'advanced';
+        else if (n <= 9) levelKey = 'expert';
+        else if (n <= 11) levelKey = 'elite';
+        else if (n <= 13) levelKey = 'pro';
+        else if (n <= 15) levelKey = 'worldClass';
+        else levelKey = 'legendary';
+        break;
 
       case 'yds':
         final numPart = grade.split('.').length > 1 ? grade.split('.')[1].replaceAll(RegExp(r'[a-d]'), '') : '0';
         final n = int.tryParse(numPart) ?? 0;
-        if (n <= 7) return {'name': 'Beginner', 'description': 'First steps into climbing'};
-        if (n <= 9) return {'name': 'Novice', 'description': 'Building foundations'};
-        if (n == 10) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
-        if (n == 11) return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
-        if (n == 12) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
-        if (n == 13) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
-        if (n == 14) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
-        return {'name': 'World Class', 'description': 'Among the best in history'};
+        if (n <= 7) levelKey = 'beginner';
+        else if (n <= 9) levelKey = 'novice';
+        else if (n == 10) levelKey = 'intermediate';
+        else if (n == 11) levelKey = 'advanced';
+        else if (n == 12) levelKey = 'expert';
+        else if (n == 13) levelKey = 'elite';
+        else if (n == 14) levelKey = 'pro';
+        else levelKey = 'worldClass';
+        break;
 
       case 'french':
         final n = int.tryParse(grade[0]) ?? 3;
-        if (n <= 5) return {'name': 'Beginner', 'description': 'First steps into climbing'};
-        if (n == 6) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
-        if (n == 7) {
-          if (grade.startsWith('7c')) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
-          return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
-        }
-        if (n == 8) {
-          if (grade.startsWith('8c')) return {'name': 'Pro', 'description': 'Top 0.1% worldwide'};
-          return {'name': 'Elite', 'description': 'Top 1% worldwide'};
-        }
-        return {'name': 'World Class', 'description': 'Among the best in history'};
+        if (n <= 5) levelKey = 'beginner';
+        else if (n == 6) levelKey = 'intermediate';
+        else if (n == 7) levelKey = grade.startsWith('7c') ? 'expert' : 'advanced';
+        else if (n == 8) levelKey = grade.startsWith('8c') ? 'pro' : 'elite';
+        else levelKey = 'worldClass';
+        break;
 
       case 'fontScale':
         final n = int.tryParse(grade[0]) ?? 3;
-        if (n <= 5) return {'name': 'Beginner', 'description': 'First steps into climbing'};
-        if (n == 6) return {'name': 'Intermediate', 'description': 'Top 50% of climbers'};
-        if (n == 7) {
-          if (grade.startsWith('7c')) return {'name': 'Expert', 'description': 'Top 10% of climbers'};
-          return {'name': 'Advanced', 'description': 'Top 25% of climbers'};
-        }
-        if (n == 8) {
-          if (grade.startsWith('8c')) return {'name': 'Elite', 'description': 'Top 1% worldwide'};
-          return {'name': 'Elite', 'description': 'Top 1% worldwide'};
-        }
-        return {'name': 'World Class', 'description': 'Among the best in history'};
+        if (n <= 5) levelKey = 'beginner';
+        else if (n == 6) levelKey = 'intermediate';
+        else if (n == 7) levelKey = grade.startsWith('7c') ? 'expert' : 'advanced';
+        else if (n == 8) levelKey = 'elite';
+        else levelKey = 'worldClass';
+        break;
 
       default:
-        return {'name': 'Unknown', 'description': ''};
+        levelKey = 'beginner';
     }
+
+    return levels[levelKey]!;
   }
 
   // 홀드 속성 맵 생성 메서드 추가

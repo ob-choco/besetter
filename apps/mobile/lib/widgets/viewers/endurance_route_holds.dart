@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../../models/route_data.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class EnduranceRouteHolds extends StatefulWidget {
   final List<EnduranceHold> holds;
@@ -109,7 +110,7 @@ class _EnduranceRouteHoldsState extends State<EnduranceRouteHolds>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Hold Sequence',
+                AppLocalizations.of(context)!.holdSequence,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -117,7 +118,7 @@ class _EnduranceRouteHoldsState extends State<EnduranceRouteHolds>
                 ),
               ),
               Text(
-                '${widget.holds.length} Holds Total',
+                AppLocalizations.of(context)!.holdsTotalCapitalized(widget.holds.length),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,

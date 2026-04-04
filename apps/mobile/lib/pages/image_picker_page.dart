@@ -228,8 +228,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           if (isLimitedAccess && Platform.isIOS)
             IconButton(
               icon: Icon(Icons.add_photo_alternate_outlined),
-              // tooltip: l10n.addMorePhotos ?? 'Add more photos',
-              tooltip: 'Add more photos',
+              tooltip: AppLocalizations.of(context)!.addMorePhotos,
               onPressed: () async {
                 await PhotoManager.presentLimited();
                 await checkPermissionAndLoadImages();
@@ -283,8 +282,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               Text(l10n.setImagePermissionInSettings, textAlign: TextAlign.center),
               SizedBox(height: 16),
               ElevatedButton(
-                // child: Text(l10n.openSettings ?? 'Open Settings'),
-                child: Text('Open Settings'),
+                child: Text(AppLocalizations.of(context)!.openSettings),
                 onPressed: () {
                   PhotoManager.openSetting();
                 },

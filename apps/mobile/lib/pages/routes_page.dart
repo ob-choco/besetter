@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/routes_provider.dart';
 import '../widgets/home/route_card.dart';
 
@@ -23,13 +24,13 @@ class RoutesPage extends HookConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 48, 24, 0),
                   child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(fontSize: 36, color: Colors.black),
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 36, color: Colors.black),
                       children: [
                         TextSpan(text: 'Your\n'),
                         TextSpan(
-                          text: 'Routes',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          text: AppLocalizations.of(context)!.routesTitle,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -73,11 +74,11 @@ class RoutesPage extends HookConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Failed to load routes'),
+                        Text(AppLocalizations.of(context)!.failedToLoadRoutes),
                         const SizedBox(height: 8),
                         ElevatedButton(
                           onPressed: () => ref.invalidate(routesProvider(type: selectedFilter.value)),
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context)!.retry),
                         ),
                       ],
                     ),
@@ -85,11 +86,11 @@ class RoutesPage extends HookConsumerWidget {
                 ),
                 data: (routesState) {
                   if (routesState.routes.isEmpty) {
-                    return const SliverFillRemaining(
+                    return SliverFillRemaining(
                       child: Center(
                         child: Text(
-                          'No routes yet',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          AppLocalizations.of(context)!.noRoutesYet,
+                          style: const TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       ),
                     );

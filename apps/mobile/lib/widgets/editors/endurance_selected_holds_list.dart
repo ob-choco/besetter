@@ -42,7 +42,7 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Sequence Details',
+                        AppLocalizations.of(context)!.sequenceDetails,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -50,7 +50,7 @@ class EnduranceSelectedHoldsList extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${selectedHolds.length} holds total',
+                        AppLocalizations.of(context)!.holdsTotal(selectedHolds.length),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,

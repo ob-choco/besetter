@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/image_data.dart';
 import '../../models/polygon_data.dart';
 import '../../services/http_client.dart';
@@ -37,7 +38,7 @@ class _WallCardState extends ConsumerState<WallCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load data')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadData)),
         );
       }
     } finally {
@@ -121,27 +122,23 @@ class _WallCardState extends ConsumerState<WallCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Recent Wall Photos',
+                Text(
+                  widget.image.gymName ?? AppLocalizations.of(context)!.enterGymInfoGuide,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: widget.image.gymName != null ? Colors.white : Colors.white70,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: widget.image.gymName != null ? FontWeight.bold : FontWeight.normal,
+                    fontStyle: widget.image.gymName != null ? FontStyle.normal : FontStyle.italic,
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (widget.image.gymName != null)
-                  Text(
-                    'Gym Name: ${widget.image.gymName}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
                 if (widget.image.wallName != null)
                   Text(
-                    'Wall: ${widget.image.wallName}',
+                    widget.image.wallName!,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 Text(
-                  'Date: $dateStr',
+                  dateStr,
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
@@ -149,12 +146,12 @@ class _WallCardState extends ConsumerState<WallCard> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     _ActionButton(
-                      label: 'Edit Wall',
+                      label: AppLocalizations.of(context)!.editWall,
                       onTap: _onEditWall,
                     ),
                     const SizedBox(width: 8),
                     _ActionButton(
-                      label: 'Create Route',
+                      label: AppLocalizations.of(context)!.createRoute,
                       icon: Icons.arrow_outward,
                       onTap: _onCreateRoute,
                     ),
@@ -248,9 +245,9 @@ class _CreateRouteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Create Route',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.createRoute,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
