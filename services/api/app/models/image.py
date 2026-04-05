@@ -56,6 +56,7 @@ class Image(Document):
     gym_name: Optional[str] = Field(None, description="암장 이름")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
+    place_id: Optional[PydanticObjectId] = Field(None, description="연결된 Place ID")
 
     class Settings:
         name = "images"

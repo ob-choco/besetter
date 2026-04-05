@@ -1,12 +1,17 @@
+import io
 import math
+import os
+import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
 from beanie.odm.fields import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi import status
+from PIL import Image as PILImage
 from pydantic import BaseModel, Field
 
+from app.core.gcs import bucket, get_base_url
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
@@ -67,6 +72,13 @@ class PlaceView(BaseModel):
     thumbnail_url: Optional[str]
     created_by: PydanticObjectId
     distance: Optional[float] = None
+
+
+class PlaceImageUploadResponse(BaseModel):
+    model_config = model_config
+
+    image_url: str
+    thumbnail_url: str
 
 
 # ---------------------------------------------------------------------------
@@ -258,3 +270,62 @@ async def create_place_suggestion(
         changes=created.changes,
         created_at=created.created_at,
     )
+
+
+@router.post("/{place_id}/image", response_model=PlaceImageUploadResponse)
+async def upload_place_image(
+    place_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    place = await Place.get(place_id)
+    if place is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
+
+    file_ext = os.path.splitext(file.filename or "")[1].lower()
+    if file_ext not in (".jpg", ".jpeg", ".png"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Only jpg/jpeg/png files are supported",
+        )
+
+    if place.type == "private-gym":
+        if str(place.created_by) != str(current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the creator can upload an image for a private gym",
+            )
+    else:
+        # gym: only allowed if no image exists yet
+        if place.image_url is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This place already has an image. Please use the suggestion feature to propose a new one.",
+            )
+
+    content = await file.read()
+    unique_name = str(uuid.uuid4())
+
+    # Upload original image
+    blob = bucket.blob(f"place_images/{unique_name}{file_ext}")
+    content_type = "image/png" if file_ext == ".png" else "image/jpeg"
+    blob.upload_from_string(data=content, content_type=content_type)
+    image_url = f"{get_base_url()}/place_images/{unique_name}{file_ext}"
+
+    # Generate and upload 200x200 thumbnail
+    img = PILImage.open(io.BytesIO(content))
+    img = img.convert("RGB")
+    img.thumbnail((200, 200))
+    thumb_buffer = io.BytesIO()
+    img.save(thumb_buffer, format="JPEG", quality=85)
+    thumb_buffer.seek(0)
+
+    thumb_blob = bucket.blob(f"place_images/{unique_name}_thumb.jpg")
+    thumb_blob.upload_from_string(data=thumb_buffer.read(), content_type="image/jpeg")
+    thumbnail_url = f"{get_base_url()}/place_images/{unique_name}_thumb.jpg"
+
+    place.image_url = image_url
+    place.thumbnail_url = thumbnail_url
+    await place.save()
+
+    return PlaceImageUploadResponse(image_url=image_url, thumbnail_url=thumbnail_url)
