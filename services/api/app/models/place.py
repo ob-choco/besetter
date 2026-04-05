@@ -78,7 +78,7 @@ class PlaceSuggestion(Document):
     reviewed_at: Optional[datetime] = Field(None, description="검토 시간")
 
     class Settings:
-        name = "place_suggestions"
+        name = "placeSuggestions"
         indexes = [
             IndexModel([("place_id", ASCENDING)]),
             IndexModel([("status", ASCENDING)]),
