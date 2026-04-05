@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from beanie.odm.fields import PydanticObjectId
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi import status
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field
@@ -115,31 +115,73 @@ def _place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
 # ---------------------------------------------------------------------------
 
 
+def _upload_place_image(content: bytes, file_ext: str) -> tuple[str, str]:
+    """Upload original + thumbnail to GCS, return (image_url, thumbnail_url)."""
+    unique_name = str(uuid.uuid4())
+
+    # Original
+    blob = bucket.blob(f"place_images/{unique_name}{file_ext}")
+    content_type = "image/png" if file_ext == ".png" else "image/jpeg"
+    blob.upload_from_string(data=content, content_type=content_type)
+    image_url = f"{get_base_url()}/place_images/{unique_name}{file_ext}"
+
+    # Thumbnail (200x200)
+    img = PILImage.open(io.BytesIO(content))
+    img = img.convert("RGB")
+    img.thumbnail((200, 200))
+    thumb_buffer = io.BytesIO()
+    img.save(thumb_buffer, format="JPEG", quality=85)
+    thumb_buffer.seek(0)
+
+    thumb_blob = bucket.blob(f"place_images/{unique_name}_thumb.jpg")
+    thumb_blob.upload_from_string(data=thumb_buffer.read(), content_type="image/jpeg")
+    thumbnail_url = f"{get_base_url()}/place_images/{unique_name}_thumb.jpg"
+
+    return image_url, thumbnail_url
+
+
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=PlaceView)
 async def create_place(
-    request: CreatePlaceRequest,
+    name: str = Form(...),
+    type: str = Form("gym"),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
 ):
-    if request.type not in ("gym", "private-gym"):
+    if type not in ("gym", "private-gym"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="type must be 'gym' or 'private-gym'",
         )
 
-    if request.type == "gym" and (request.latitude is None or request.longitude is None):
+    if type == "gym" and (latitude is None or longitude is None):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="latitude and longitude are required for type 'gym'",
         )
 
+    # 이미지 처리
+    image_url = None
+    thumbnail_url = None
+    if image is not None and image.filename:
+        file_ext = os.path.splitext(image.filename)[1].lower()
+        if file_ext not in (".jpg", ".jpeg", ".png"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Only jpg/jpeg/png files are supported",
+            )
+        content = await image.read()
+        image_url, thumbnail_url = _upload_place_image(content, file_ext)
+
     place = Place(
-        name=request.name,
-        normalized_name=normalize_name(request.name),
-        type=request.type,
-        latitude=request.latitude,
-        longitude=request.longitude,
-        image_url=None,
-        thumbnail_url=None,
+        name=name,
+        normalized_name=normalize_name(name),
+        type=type,
+        latitude=latitude,
+        longitude=longitude,
+        image_url=image_url,
+        thumbnail_url=thumbnail_url,
         created_by=current_user.id,
         created_at=datetime.now(tz=timezone.utc),
     )
@@ -272,60 +314,3 @@ async def create_place_suggestion(
     )
 
 
-@router.post("/{place_id}/image", response_model=PlaceImageUploadResponse)
-async def upload_place_image(
-    place_id: str,
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-):
-    place = await Place.get(place_id)
-    if place is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
-
-    file_ext = os.path.splitext(file.filename or "")[1].lower()
-    if file_ext not in (".jpg", ".jpeg", ".png"):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Only jpg/jpeg/png files are supported",
-        )
-
-    if place.type == "private-gym":
-        if str(place.created_by) != str(current_user.id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the creator can upload an image for a private gym",
-            )
-    else:
-        # gym: only allowed if no image exists yet
-        if place.image_url is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This place already has an image. Please use the suggestion feature to propose a new one.",
-            )
-
-    content = await file.read()
-    unique_name = str(uuid.uuid4())
-
-    # Upload original image
-    blob = bucket.blob(f"place_images/{unique_name}{file_ext}")
-    content_type = "image/png" if file_ext == ".png" else "image/jpeg"
-    blob.upload_from_string(data=content, content_type=content_type)
-    image_url = f"{get_base_url()}/place_images/{unique_name}{file_ext}"
-
-    # Generate and upload 200x200 thumbnail
-    img = PILImage.open(io.BytesIO(content))
-    img = img.convert("RGB")
-    img.thumbnail((200, 200))
-    thumb_buffer = io.BytesIO()
-    img.save(thumb_buffer, format="JPEG", quality=85)
-    thumb_buffer.seek(0)
-
-    thumb_blob = bucket.blob(f"place_images/{unique_name}_thumb.jpg")
-    thumb_blob.upload_from_string(data=thumb_buffer.read(), content_type="image/jpeg")
-    thumbnail_url = f"{get_base_url()}/place_images/{unique_name}_thumb.jpg"
-
-    place.image_url = image_url
-    place.thumbnail_url = thumbnail_url
-    await place.save()
-
-    return PlaceImageUploadResponse(image_url=image_url, thumbnail_url=thumbnail_url)

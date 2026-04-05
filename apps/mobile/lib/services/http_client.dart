@@ -174,7 +174,7 @@ class AuthorizedHttpClient {
   // Multipart POST 요청
   static Future<http.Response> multipartPost(
     String path,
-    String filePath, {
+    String? filePath, {
     String fieldName = 'file',
     Map<String, String>? fields,
   }) async {
@@ -186,13 +186,15 @@ class AuthorizedHttpClient {
 
       request.headers['Authorization'] = 'Bearer $token';
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          fieldName,
-          filePath,
-          filename: filePath.split('/').last,
-        ),
-      );
+      if (filePath != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fieldName,
+            filePath,
+            filename: filePath.split('/').last,
+          ),
+        );
+      }
 
       if (fields != null) {
         request.fields.addAll(fields);

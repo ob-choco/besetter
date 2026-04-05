@@ -183,17 +183,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
         type: _isPrivate ? 'private-gym' : 'gym',
         latitude: _registerPinPosition?.latitude,
         longitude: _registerPinPosition?.longitude,
+        imagePath: _registerImage?.path,
       );
-
-      // 이미지가 있으면 업로드
-      if (_registerImage != null) {
-        try {
-          await PlaceService.uploadImage(place.id, _registerImage!.path);
-        } catch (_) {
-          // 이미지 업로드 실패해도 암장 등록은 성공
-        }
-      }
-
       if (mounted) Navigator.pop(context, place);
     } catch (e) {
       if (mounted) {

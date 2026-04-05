@@ -37,19 +37,27 @@ class PlaceService {
     }
   }
 
+  /// Create a place with optional image. Uses multipart/form-data.
   static Future<PlaceData> createPlace({
     required String name,
     double? latitude,
     double? longitude,
     required String type,
+    String? imagePath,
   }) async {
-    final body = <String, dynamic>{
+    final fields = <String, String>{
       'name': name,
       'type': type,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
+      if (latitude != null) 'latitude': latitude.toString(),
+      if (longitude != null) 'longitude': longitude.toString(),
     };
-    final response = await AuthorizedHttpClient.post('/places', body: body);
+
+    final response = await AuthorizedHttpClient.multipartPost(
+      '/places',
+      imagePath,
+      fieldName: 'image',
+      fields: fields,
+    );
 
     if (response.statusCode == 201) {
       return PlaceData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
@@ -94,26 +102,6 @@ class PlaceService {
 
     if (response.statusCode != 201) {
       throw Exception('Failed to create suggestion. Status: ${response.statusCode}');
-    }
-  }
-
-  static Future<Map<String, String>> uploadImage(
-    String placeId,
-    String filePath,
-  ) async {
-    final response = await AuthorizedHttpClient.multipartPost(
-      '/places/$placeId/image',
-      filePath,
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return {
-        'imageUrl': data['imageUrl'] as String,
-        'thumbnailUrl': data['thumbnailUrl'] as String,
-      };
-    } else {
-      throw Exception('Failed to upload image. Status: ${response.statusCode}');
     }
   }
 }
