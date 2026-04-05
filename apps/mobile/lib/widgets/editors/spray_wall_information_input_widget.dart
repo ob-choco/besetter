@@ -1,43 +1,35 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/place_data.dart';
 import '../animations/shake_animation_widget.dart';
-
-// enum VisibilityLevel {
-//   private,
-//   public,
-//   friendsOnly,
-//   linkOnly,
-// }
+import 'place_selection_sheet.dart';
 
 class SprayWallInformationInput extends StatefulWidget {
-  final TextEditingController gymNameController;
+  final PlaceData? selectedPlace;
+  final Function(PlaceData?) onPlaceChanged;
+  final double? exifLatitude;
+  final double? exifLongitude;
   final TextEditingController wallNameController;
-  final Function(String) onGymNameChanged;
   final Function(String) onWallNameChanged;
   final Function(DateTime?)? onWallExpirationDateChanged;
-  // final Function(VisibilityLevel)? onVisibilityLevelChanged;
-  final String? gymNameError;
   final String? wallNameError;
   final DateTime? wallExpirationDate;
-  // final VisibilityLevel visibilityLevel;
   final bool isGymInfoInvalid;
   final bool isDateInvalid;
 
   const SprayWallInformationInput({
     Key? key,
-    required this.gymNameController,
+    required this.selectedPlace,
+    required this.onPlaceChanged,
+    this.exifLatitude,
+    this.exifLongitude,
     required this.wallNameController,
-    required this.onGymNameChanged,
     required this.onWallNameChanged,
     this.onWallExpirationDateChanged,
-    // this.onVisibilityLevelChanged,
-    this.gymNameError,
     this.wallNameError,
     this.wallExpirationDate,
-    // this.visibilityLevel = VisibilityLevel.private,
     this.isGymInfoInvalid = false,
     this.isDateInvalid = false,
   }) : super(key: key);
@@ -47,10 +39,20 @@ class SprayWallInformationInput extends StatefulWidget {
 }
 
 class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
-  Future<void> _showGymInfoModal() async {
-    final TextEditingController tempGymNameController = TextEditingController(text: widget.gymNameController.text);
+  Future<void> _showPlaceSelection() async {
+    final place = await PlaceSelectionSheet.show(
+      context,
+      latitude: widget.exifLatitude,
+      longitude: widget.exifLongitude,
+      currentPlace: widget.selectedPlace,
+    );
+    if (place != null) {
+      widget.onPlaceChanged(place);
+    }
+  }
+
+  Future<void> _showWallNameModal() async {
     final TextEditingController tempWallNameController = TextEditingController(text: widget.wallNameController.text);
-    String? tempGymNameError;
     String? tempWallNameError;
 
     await showModalBottomSheet(
@@ -69,23 +71,13 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      AppLocalizations.of(context)!.climbingGymInfo,
+                      AppLocalizations.of(context)!.wallLocation,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 16),
-                    TextField(
-                      controller: tempGymNameController,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.gymName,
-                        hintText: AppLocalizations.of(context)!.enterGymName,
-                        errorText: tempGymNameError,
-                      ),
-                      onChanged: (_) => setModalState(() => tempGymNameError = null),
-                    ),
-                    SizedBox(height: 8),
                     TextField(
                       controller: tempWallNameController,
                       decoration: InputDecoration(
@@ -106,23 +98,14 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
                         SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () {
-                            bool modalIsValid = true;
-                            if (tempGymNameController.text.trim().isEmpty) {
-                              setModalState(() => tempGymNameError = AppLocalizations.of(context)!.enterGymName);
-                              modalIsValid = false;
-                            }
                             if (tempWallNameController.text.trim().isEmpty) {
                               setModalState(() => tempWallNameError = AppLocalizations.of(context)!.enterWallLocation);
-                              modalIsValid = false;
+                              return;
                             }
 
-                            if (modalIsValid) {
-                              widget.gymNameController.text = tempGymNameController.text.trim();
-                              widget.wallNameController.text = tempWallNameController.text.trim();
-                              widget.onGymNameChanged(widget.gymNameController.text);
-                              widget.onWallNameChanged(widget.wallNameController.text);
-                              Navigator.pop(context);
-                            }
+                            widget.wallNameController.text = tempWallNameController.text.trim();
+                            widget.onWallNameChanged(widget.wallNameController.text);
+                            Navigator.pop(context);
                           },
                           child: Text(AppLocalizations.of(context)!.confirm),
                         ),
@@ -161,25 +144,43 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasGymInfo = widget.gymNameController.text.isNotEmpty && widget.wallNameController.text.isNotEmpty;
+    final bool hasPlace = widget.selectedPlace != null;
+    final bool hasWallName = widget.wallNameController.text.isNotEmpty;
     final bool hasDateInfo = widget.wallExpirationDate != null;
 
     return Column(
       children: [
         ShakeAnimationWidget(
           shakeTrigger: widget.isGymInfoInvalid,
-          child: ListTile(
-            title: Text(AppLocalizations.of(context)!.climbingGymInfo),
-            subtitle: Text(
-              hasGymInfo
-                  ? '${widget.gymNameController.text} - ${widget.wallNameController.text}'
-                  : AppLocalizations.of(context)!.selectAndEnter,
-              style: TextStyle(
-                color: widget.isGymInfoInvalid ? Colors.red : null,
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.climbingGymInfo),
+                subtitle: Text(
+                  hasPlace
+                      ? '\u2713 ${widget.selectedPlace!.name}'
+                      : AppLocalizations.of(context)!.selectAndEnter,
+                  style: TextStyle(
+                    color: widget.isGymInfoInvalid && !hasPlace ? Colors.red : null,
+                  ),
+                ),
+                trailing: Icon(Icons.chevron_right),
+                onTap: _showPlaceSelection,
               ),
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: _showGymInfoModal,
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.wallLocation),
+                subtitle: Text(
+                  hasWallName
+                      ? widget.wallNameController.text
+                      : AppLocalizations.of(context)!.selectAndEnter,
+                  style: TextStyle(
+                    color: widget.isGymInfoInvalid && !hasWallName ? Colors.red : null,
+                  ),
+                ),
+                trailing: Icon(Icons.chevron_right),
+                onTap: _showWallNameModal,
+              ),
+            ],
           ),
         ),
         Divider(height: 1),
@@ -214,16 +215,6 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
             onTap: () => _selectDate(context),
           ),
         ),
-        // Divider(height: 1),
-        // SwitchListTile(
-        //   title: Text('전체 공개'),
-        //   value: widget.visibilityLevel == VisibilityLevel.public,
-        //   onChanged: (bool value) {
-        //     if (widget.onVisibilityLevelChanged != null) {
-        //       widget.onVisibilityLevelChanged!(value ? VisibilityLevel.public : VisibilityLevel.private);
-        //     }
-        //   },
-        // ),
       ],
     );
   }

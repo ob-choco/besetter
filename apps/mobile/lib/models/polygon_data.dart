@@ -3,6 +3,7 @@ class PolygonData {
   final List<Polygon> polygons;
   final String imageId;
   final String imageUrl;
+  final String? placeId;
   final String? gymName;
   final String? wallName;
   final DateTime? wallExpirationDate;
@@ -12,6 +13,7 @@ class PolygonData {
     required this.polygons,
     required this.imageId,
     required this.imageUrl,
+    this.placeId,
     this.gymName,
     this.wallName,
     this.wallExpirationDate,
@@ -25,6 +27,7 @@ class PolygonData {
           .toList(),
       imageId: json['imageId'],
       imageUrl: json['imageUrl'],
+      placeId: json['placeId'],
       gymName: json['gymName'],
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null 
@@ -38,6 +41,7 @@ class PolygonData {
         'polygons': polygons.map((p) => p.toJson()).toList(),
         'imageId': imageId,
         'imageUrl': imageUrl,
+        'placeId': placeId,
         'gymName': gymName,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),

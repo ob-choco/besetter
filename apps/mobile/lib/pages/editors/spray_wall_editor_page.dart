@@ -9,6 +9,8 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 import '../../models/polygon_data.dart';
+import '../../models/place_data.dart';
+import '../../services/exif_service.dart';
 import '../../services/http_client.dart';
 import '../../widgets/editors/spray_wall_edit_menu.dart';
 import '../../widgets/editors/spray_wall_polygon_widget.dart';
@@ -69,9 +71,10 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
   double? _initialRadius;
   Offset? _initialDragPosition;
 
-  final TextEditingController _gymNameController = TextEditingController();
+  PlaceData? _selectedPlace;
+  double? _exifLatitude;
+  double? _exifLongitude;
   final TextEditingController _wallNameController = TextEditingController();
-  String? _gymNameError;
   String? _wallNameError;
   DateTime? _wallExpirationDate;
   bool _isGymInfoInvalid = false; // Gym 정보 유효성 상태 추가
@@ -92,16 +95,15 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     _loadImage();
     setState(() {
       _polygons = widget.polygonData.polygons;
-      _gymNameController.text = widget.polygonData.gymName ?? '';
       _wallNameController.text = widget.polygonData.wallName ?? '';
       _wallExpirationDate = widget.polygonData.wallExpirationDate;
     });
+    _extractExifGps();
   }
 
   @override
   void dispose() {
     _scaleTimer?.cancel();
-    _gymNameController.dispose();
     _wallNameController.dispose();
     _isDisposed = true;
     super.dispose();
@@ -161,6 +163,18 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     _croppedImages = List<ui.Image?>.filled(_polygons.length, null, growable: true);
     for (int i = 0; i < _polygons.length; i++) {
       await _cropPolygonImage(_polygons[i], i);
+    }
+  }
+
+  Future<void> _extractExifGps() async {
+    if (widget.imageFile != null) {
+      final gps = await ExifService.extractGpsFromFile(widget.imageFile!);
+      if (gps != null && mounted) {
+        setState(() {
+          _exifLatitude = gps.latitude;
+          _exifLongitude = gps.longitude;
+        });
+      }
     }
   }
 
@@ -326,18 +340,17 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     });
 
     try {
-      final initialGymName = widget.polygonData.gymName ?? '';
+      final initialPlaceId = widget.polygonData.placeId;
       final initialWallName = widget.polygonData.wallName ?? '';
       final initialWallExpirationDate = widget.polygonData.wallExpirationDate;
 
-      final currentGymName = _gymNameController.text.trim();
       final currentWallName = _wallNameController.text.trim();
 
-      if (currentGymName != initialGymName) {
+      if (_selectedPlace != null && _selectedPlace!.id != initialPlaceId) {
         _jsonPatchOperations.add({
           "op": "replace",
-          "path": "/gymName",
-          "value": currentGymName,
+          "path": "/placeId",
+          "value": _selectedPlace!.id,
         });
       }
 
@@ -625,16 +638,12 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     bool gymInfoInvalid = false;
     bool dateInvalid = false; // 날짜 관련 유효성 검사 필요 시 추가
 
-    if (_gymNameController.text.trim().isEmpty) {
-      _gymNameError = AppLocalizations.of(context)!.enterGymName;
+    if (_selectedPlace == null) {
       isValid = false;
       gymInfoInvalid = true;
-    } else {
-      _gymNameError = null;
     }
 
     if (_wallNameController.text.trim().isEmpty) {
-      // gymName은 유효하지만 wallName이 유효하지 않은 경우에도 gym/wall 정보 섹션을 흔들어야 함
       _wallNameError = AppLocalizations.of(context)!.enterWallName;
       isValid = false;
       gymInfoInvalid = true;
@@ -765,14 +774,13 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
   }
 
   bool _hasUnsavedChanges() {
-    final initialGymName = widget.polygonData.gymName ?? '';
+    final initialPlaceId = widget.polygonData.placeId;
     final initialWallName = widget.polygonData.wallName ?? '';
     final initialWallExpirationDate = widget.polygonData.wallExpirationDate;
 
-    final currentGymName = _gymNameController.text.trim();
     final currentWallName = _wallNameController.text.trim();
 
-    return currentGymName != initialGymName ||
+    return _selectedPlace?.id != initialPlaceId ||
         currentWallName != initialWallName ||
         _wallExpirationDate != initialWallExpirationDate ||
         _addingHolds.isNotEmpty ||
@@ -1075,25 +1083,26 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SprayWallInformationInput(
-                              gymNameController: _gymNameController,
-                              wallNameController: _wallNameController,
-                              onGymNameChanged: (value) => setState(() {
-                                _gymNameError = null; // 입력 시 에러 상태 초기화
-                                _isGymInfoInvalid = false; // 입력 시 애니메이션 상태 초기화
+                              selectedPlace: _selectedPlace,
+                              onPlaceChanged: (place) => setState(() {
+                                _selectedPlace = place;
+                                _isGymInfoInvalid = false;
                               }),
+                              exifLatitude: _exifLatitude,
+                              exifLongitude: _exifLongitude,
+                              wallNameController: _wallNameController,
                               onWallNameChanged: (value) => setState(() {
-                                _wallNameError = null; // 입력 시 에러 상태 초기화
-                                _isGymInfoInvalid = false; // 입력 시 애니메이션 상태 초기화
+                                _wallNameError = null;
+                                _isGymInfoInvalid = false;
                               }),
                               onWallExpirationDateChanged: (date) => setState(() {
                                 _wallExpirationDate = date;
-                                _isDateInvalid = false; // 날짜 선택 시 애니메이션 상태 초기화
+                                _isDateInvalid = false;
                               }),
-                              gymNameError: _gymNameError,
                               wallNameError: _wallNameError,
                               wallExpirationDate: _wallExpirationDate,
-                              isGymInfoInvalid: _isGymInfoInvalid, // invalid 상태 전달
-                              isDateInvalid: _isDateInvalid, // invalid 상태 전달
+                              isGymInfoInvalid: _isGymInfoInvalid,
+                              isDateInvalid: _isDateInvalid,
                             ),
                             Padding(
                               padding: const EdgeInsets.all(16.0),
