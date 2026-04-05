@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../models/place_data.dart';
@@ -61,6 +63,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   LatLng? _registerPinPosition;
   bool _isPrivate = false;
   bool _isSubmitting = false;
+  File? _registerImage;
 
   // --- Suggest mode state ---
   PlaceData? _suggestPlace;
@@ -160,6 +163,14 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     return true;
   }
 
+  Future<void> _pickRegisterImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      setState(() => _registerImage = File(picked.path));
+    }
+  }
+
   Future<void> _submitRegister() async {
     final name = _registerNameController.text.trim();
     if (name.isEmpty) return;
@@ -173,6 +184,16 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
         latitude: _registerPinPosition?.latitude,
         longitude: _registerPinPosition?.longitude,
       );
+
+      // 이미지가 있으면 업로드
+      if (_registerImage != null) {
+        try {
+          await PlaceService.uploadImage(place.id, _registerImage!.path);
+        } catch (_) {
+          // 이미지 업로드 실패해도 암장 등록은 성공
+        }
+      }
+
       if (mounted) Navigator.pop(context, place);
     } catch (e) {
       if (mounted) {
@@ -529,6 +550,51 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
+                // 이미지 선택
+                GestureDetector(
+                  onTap: _pickRegisterImage,
+                  child: _registerImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 120,
+                                child: Image.file(_registerImage!, fit: BoxFit.cover),
+                              ),
+                              Positioned(
+                                top: 8, right: 8,
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _registerImage = null),
+                                  child: Container(
+                                    width: 28, height: 28,
+                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[50],
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.camera_alt, size: 28, color: Colors.grey[400]),
+                              const SizedBox(height: 4),
+                              Text('대표 사진 선택 (선택)', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                            ],
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _registerNameController,
                   autofocus: true,
