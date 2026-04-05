@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.dependencies import get_current_user
 from app.models import model_config
-from app.models.place import Place, normalize_name
+from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
 from app.models.user import User
 
 router = APIRouter(prefix="/places", tags=["places"])
@@ -27,6 +27,32 @@ class CreatePlaceRequest(BaseModel):
     latitude: Optional[float] = Field(None, description="위도")
     longitude: Optional[float] = Field(None, description="경도")
     type: str = Field("gym", description="장소 유형 (gym | private-gym)")
+
+
+class UpdatePlaceRequest(BaseModel):
+    model_config = model_config
+
+    name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+
+class CreatePlaceSuggestionRequest(BaseModel):
+    model_config = model_config
+
+    place_id: str
+    changes: PlaceSuggestionChanges
+
+
+class PlaceSuggestionView(BaseModel):
+    model_config = model_config
+
+    id: PydanticObjectId
+    place_id: PydanticObjectId
+    requested_by: PydanticObjectId
+    status: str
+    changes: PlaceSuggestionChanges
+    created_at: datetime
 
 
 class PlaceView(BaseModel):
@@ -148,3 +174,87 @@ async def get_nearby_places(
 
     results.sort(key=lambda p: p.distance)
     return results
+
+
+@router.get("/instant-search", response_model=List[PlaceView])
+async def instant_search_places(
+    query: str = Query(..., description="검색어"),
+    current_user: User = Depends(get_current_user),
+):
+    normalized_query = normalize_name(query)
+    if len(normalized_query) < 2:
+        return []
+
+    candidates = await Place.find(
+        {"normalized_name": {"$regex": normalized_query, "$options": "i"}}
+    ).limit(20).to_list()
+
+    results: List[PlaceView] = []
+    for place in candidates:
+        if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
+            continue
+        results.append(_place_to_view(place))
+
+    return results
+
+
+@router.put("/{place_id}", response_model=PlaceView)
+async def update_place(
+    place_id: str,
+    request: UpdatePlaceRequest,
+    current_user: User = Depends(get_current_user),
+):
+    place = await Place.get(place_id)
+    if place is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
+
+    if place.type != "private-gym" or str(place.created_by) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to update this place",
+        )
+
+    if request.name is not None:
+        place.name = request.name
+        place.normalized_name = normalize_name(request.name)
+    if request.latitude is not None:
+        place.latitude = request.latitude
+    if request.longitude is not None:
+        place.longitude = request.longitude
+
+    await place.save()
+    return _place_to_view(place)
+
+
+@router.post("/suggestions", status_code=status.HTTP_201_CREATED, response_model=PlaceSuggestionView)
+async def create_place_suggestion(
+    request: CreatePlaceSuggestionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    place = await Place.get(request.place_id)
+    if place is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
+
+    if place.type == "private-gym":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Suggestions are not allowed for private-gym places",
+        )
+
+    suggestion = PlaceSuggestion(
+        place_id=place.id,
+        requested_by=current_user.id,
+        status="pending",
+        changes=request.changes,
+        created_at=datetime.now(tz=timezone.utc),
+    )
+    created = await suggestion.save()
+
+    return PlaceSuggestionView(
+        id=created.id,
+        place_id=created.place_id,
+        requested_by=created.requested_by,
+        status=created.status,
+        changes=created.changes,
+        created_at=created.created_at,
+    )
