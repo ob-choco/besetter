@@ -176,6 +176,7 @@ class AuthorizedHttpClient {
     String path,
     String filePath, {
     String fieldName = 'file',
+    Map<String, String>? fields,
   }) async {
     return _executeRequest((token) async {
       final request = http.MultipartRequest(
@@ -192,6 +193,10 @@ class AuthorizedHttpClient {
           filename: filePath.split('/').last,
         ),
       );
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
 
       final streamedResponse = await request.send();
       return await http.Response.fromStream(streamedResponse);

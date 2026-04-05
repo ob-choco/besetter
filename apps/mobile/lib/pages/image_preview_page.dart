@@ -10,11 +10,15 @@ import '../providers/images_provider.dart';
 class ImagePreviewPage extends ConsumerWidget {
   final File image;
   final String source;
+  final double? latitude;
+  final double? longitude;
 
   const ImagePreviewPage({
     super.key,
     required this.image,
     required this.source,
+    this.latitude,
+    this.longitude,
   });
 
   @override
@@ -73,7 +77,11 @@ class ImagePreviewPage extends ConsumerWidget {
                     );
 
                     try {
-                      final PolygonData? polygonData = await ref.read(imagesProvider.notifier).createImage(image);
+                      final PolygonData? polygonData = await ref.read(imagesProvider.notifier).createImage(
+                        image,
+                        latitude: latitude,
+                        longitude: longitude,
+                      );
 
                       if (context.mounted) {
                         Navigator.pop(context);

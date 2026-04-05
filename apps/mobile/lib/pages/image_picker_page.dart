@@ -5,6 +5,13 @@ import 'package:photo_manager/photo_manager.dart';
 import 'dart:io';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+class SelectedImage {
+  final File file;
+  final double? latitude;
+  final double? longitude;
+  SelectedImage({required this.file, this.latitude, this.longitude});
+}
+
 class ImagePickerPage extends StatefulWidget {
   final List<File> initialSelectedImages;
   final bool allowMultiple;
@@ -238,8 +245,8 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             child: Text(l10n.complete),
             onPressed: canComplete
                 ? () {
-                    _updateSelectedImagesFromAssetIds().then((_) {
-                      Navigator.pop(context, selectedImages);
+                    _buildSelectedImagesWithGps().then((result) {
+                      Navigator.pop(context, result);
                     });
                   }
                 : null,
@@ -250,24 +257,43 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     );
   }
 
-  Future<void> _updateSelectedImagesFromAssetIds() async {
-    List<File> newSelectedFiles = [];
+  Future<List<SelectedImage>> _buildSelectedImagesWithGps() async {
+    List<SelectedImage> result = [];
     for (String assetId in selectedAssetIds) {
+      AssetEntity? asset;
+      try {
+        asset = allImages.firstWhere((a) => a.id == assetId);
+      } catch (_) {
+        asset = null;
+      }
+
       File? file = imageCache[assetId];
-      if (file == null) {
-        AssetEntity? asset = allImages.firstWhere((a) => a.id == assetId, orElse: () => null as AssetEntity);
-        if (asset != null) {
-          file = await asset.file;
-          if (file != null) {
-            imageCache[assetId] = file;
-          }
+      if (file == null && asset != null) {
+        file = await asset.file;
+        if (file != null) {
+          imageCache[assetId] = file;
         }
       }
+
       if (file != null) {
-        newSelectedFiles.add(file);
+        double? latitude;
+        double? longitude;
+        if (asset != null) {
+          try {
+            final latLng = await asset.latlngAsync();
+            if (latLng.latitude != 0.0 || latLng.longitude != 0.0) {
+              latitude = latLng.latitude;
+              longitude = latLng.longitude;
+            }
+          } catch (_) {
+            // GPS not available, leave as null
+          }
+        }
+        result.add(SelectedImage(file: file, latitude: latitude, longitude: longitude));
       }
     }
-    selectedImages = newSelectedFiles;
+    selectedImages = result.map((s) => s.file).toList();
+    return result;
   }
 
   Widget _buildBody() {

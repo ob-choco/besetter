@@ -33,6 +33,8 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
     }
 
     File? selectedImage;
+    double? selectedLatitude;
+    double? selectedLongitude;
 
     try {
       if (source == 'wall_select') {
@@ -87,7 +89,7 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
           }
         }
       } else {
-        final result = await Navigator.push<List<File>>(
+        final result = await Navigator.push<List<SelectedImage>>(
           context,
           MaterialPageRoute(
             builder: (context) => ImagePickerPage(initialSelectedImages: const [], allowMultiple: false),
@@ -95,7 +97,10 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
         );
 
         if (result != null && result.isNotEmpty) {
-          selectedImage = result.first;
+          final selected = result.first;
+          selectedImage = selected.file;
+          selectedLatitude = selected.latitude;
+          selectedLongitude = selected.longitude;
           final image = await decodeImageFromList(await selectedImage.readAsBytes());
 
           // 이미지 최소 해상도 검사 (가로/세로 방향 모두 고려)
@@ -141,6 +146,8 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
             builder: (context) => ImagePreviewPage(
               image: selectedImage!,
               source: source,
+              latitude: selectedLatitude,
+              longitude: selectedLongitude,
             ),
           ),
         );

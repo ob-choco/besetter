@@ -39,13 +39,17 @@ class Images extends _$Images {
     await future;
   }
 
-  Future<PolygonData?> createImage(File image) async {
+  Future<PolygonData?> createImage(File image, {double? latitude, double? longitude}) async {
     state = const AsyncLoading();
 
     try {
       final response = await AuthorizedHttpClient.multipartPost(
         '/hold-polygons',
         image.path,
+        fields: {
+          if (latitude != null) 'latitude': latitude.toString(),
+          if (longitude != null) 'longitude': longitude.toString(),
+        },
       );
 
       if (response.statusCode == 201) {
