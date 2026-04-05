@@ -4,9 +4,16 @@ from typing import Optional, Literal
 from beanie.odm.fields import PydanticObjectId
 from pydantic import BaseModel, Field
 from datetime import datetime
-from pymongo import IndexModel, ASCENDING
+from pymongo import IndexModel, ASCENDING, GEOSPHERE
 
 from . import model_config
+
+
+class GeoJsonPoint(BaseModel):
+    model_config = model_config
+
+    type: str = Field(default="Point")
+    coordinates: list[float] = Field(default_factory=list, description="[longitude, latitude]")
 
 
 def normalize_name(name: str) -> str:
@@ -27,15 +34,23 @@ class Place(Document):
     type: Literal["gym", "private-gym"] = Field(..., description="장소 유형")
     latitude: Optional[float] = Field(None, description="위도")
     longitude: Optional[float] = Field(None, description="경도")
+    location: Optional[GeoJsonPoint] = Field(None, description="GeoJSON Point for 2dsphere index")
     image_url: Optional[str] = Field(None, description="장소 이미지 URL")
     thumbnail_url: Optional[str] = Field(None, description="장소 썸네일 URL")
     created_by: PydanticObjectId = Field(..., description="생성한 사용자의 ID")
     created_at: datetime = Field(..., description="생성 시간")
 
+    def set_location(self):
+        """latitude/longitude로부터 GeoJSON location 필드를 설정"""
+        if self.latitude is not None and self.longitude is not None:
+            self.location = GeoJsonPoint(coordinates=[self.longitude, self.latitude])
+        else:
+            self.location = None
+
     class Settings:
         name = "places"
         indexes = [
-            IndexModel([("latitude", ASCENDING), ("longitude", ASCENDING)]),
+            IndexModel([("location", GEOSPHERE)], sparse=True),
             IndexModel([("created_by", ASCENDING)]),
             IndexModel([("normalized_name", ASCENDING)]),
         ]

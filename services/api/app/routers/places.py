@@ -185,6 +185,7 @@ async def create_place(
         created_by=current_user.id,
         created_at=datetime.now(tz=timezone.utc),
     )
+    place.set_location()
 
     created = await place.save()
     return _place_to_view(created)
@@ -197,36 +198,28 @@ async def get_nearby_places(
     radius: float = Query(100, description="반경 (미터)"),
     current_user: User = Depends(get_current_user),
 ):
-    # Bounding box pre-filter (1 degree lat ≈ 111 320 m)
-    delta_lat = radius / 111_320
-    delta_lon = radius / (111_320 * math.cos(math.radians(latitude)))
+    # $nearSphere with 2dsphere index — returns sorted by distance
+    query_filter = {
+        "location": {
+            "$nearSphere": {
+                "$geometry": {
+                    "type": "Point",
+                    "coordinates": [longitude, latitude],
+                },
+                "$maxDistance": radius,
+            }
+        }
+    }
 
-    lat_min = latitude - delta_lat
-    lat_max = latitude + delta_lat
-    lon_min = longitude - delta_lon
-    lon_max = longitude + delta_lon
-
-    candidates = await Place.find(
-        Place.latitude >= lat_min,
-        Place.latitude <= lat_max,
-        Place.longitude >= lon_min,
-        Place.longitude <= lon_max,
-    ).to_list()
+    candidates = await Place.find(query_filter).to_list()
 
     results: List[PlaceView] = []
     for place in candidates:
-        # Visibility filter
         if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
             continue
+        distance = _haversine(latitude, longitude, place.latitude, place.longitude) if place.latitude and place.longitude else None
+        results.append(_place_to_view(place, distance=round(distance, 2) if distance else None))
 
-        # Exact haversine distance check
-        if place.latitude is None or place.longitude is None:
-            continue
-        distance = _haversine(latitude, longitude, place.latitude, place.longitude)
-        if distance <= radius:
-            results.append(_place_to_view(place, distance=round(distance, 2)))
-
-    results.sort(key=lambda p: p.distance)
     return results
 
 
@@ -276,6 +269,7 @@ async def update_place(
     if request.longitude is not None:
         place.longitude = request.longitude
 
+    place.set_location()
     await place.save()
     return _place_to_view(place)
 
