@@ -18,19 +18,50 @@ collection: places
   _id:        ObjectId
   name:       String          // "더클라임 강남점"
   type:       String          // "gym" | "private-gym"
-  latitude:   Number          // 37.516523
-  longitude:  Number          // 127.019823
+  latitude:   Number?         // 37.516523 (gym: required, private-gym: optional)
+  longitude:  Number?         // 127.019823 (gym: required, private-gym: optional)
+  imageUrl:      String?      // 대표 이미지 원본 URL
+  thumbnailUrl:  String?      // 썸네일 URL (200x200)
   createdBy:  ObjectId (ref)  // 최초 등록 userId
   createdAt:  Date
 }
 
-index: 2dsphere on { latitude, longitude }
+index: 2dsphere on { latitude, longitude } (sparse - null 허용)
 ```
 
-### Type Visibility Rules
+Place 저장/수정 시 `normalizedName` 필드를 자동 생성한다:
+- `name`에서 공백, 기호, 특수문자를 제거한 값
+- 예: "더클라임 강남점" → "더클라임강남점", "The Climb (Gangnam)" → "theclimbgangnam"
 
-- `gym`: 모든 유저의 nearby 검색에 노출. 커뮤니티 공유 자산.
-- `private-gym`: `createdBy` 본인에게만 노출. 다른 유저 검색 결과에 미포함. 개인 연습 공간용.
+### PlaceSuggestion Collection
+
+`gym` 타입 Place의 수정 제안. 운영자 검수 후 반영. 알림(notification)으로도 활용.
+
+```
+collection: placeSuggestions
+{
+  _id:          ObjectId
+  placeId:      ObjectId (ref)    // 대상 place
+  requestedBy:  ObjectId (ref)    // 제안자 userId
+  status:       String            // "pending" | "approved" | "rejected"
+  changes: {
+    name:       String?           // 변경 요청값 (변경 없으면 null)
+    latitude:   Number?
+    longitude:  Number?
+    imageUrl:   String?           // 새 이미지 URL (업로드 후)
+  }
+  createdAt:    Date
+  readAt:       Date?             // 운영자 열람 시각 (null=안읽음)
+  reviewedAt:   Date?             // 승인/거절 시각
+}
+```
+
+### Type Visibility & Edit Rules
+
+- `gym`: 모든 유저의 nearby/search에 노출. 커뮤니티 공유 자산.
+  - 수정: 누구든 `placeSuggestions` 제출 → 운영자 검수 후 반영 (본인 등록이라도 동일)
+- `private-gym`: `createdBy` 본인에게만 노출. 다른 유저 검색 결과에 미포함.
+  - 수정: 본인이 즉시 수정 (PUT /places/:id)
 
 ### Image Data 변경
 
@@ -66,6 +97,38 @@ Response: 200
 - `type=gym` → 모든 유저에게 반환
 - `type=private-gym` → 요청자의 userId === createdBy 일 때만 반환
 
+### GET /places/instant-search
+
+이름으로 암장 검색. 바텀시트 상단 검색창에서 사용. 클라이언트에서 1초 debounce 적용.
+
+```
+Query Parameters:
+  query:     string (required, 암장 이름)
+
+Response: 200
+[
+  {
+    id:        string
+    name:      string
+    type:      "gym" | "private-gym"
+    latitude:  number
+    longitude: number
+    createdBy: string
+  }
+]
+```
+
+**서버 필터 로직:** nearby와 동일 (gym→모두, private-gym→본인만)
+
+**검색 엔진: Atlas Search + nGram**
+- Place 저장 시 name에서 공백, 기호, 특수문자 제거한 `normalizedName` 필드 생성
+- Atlas Search 인덱스에 `normalizedName`을 `autocomplete` 타입으로 설정
+  - tokenizer: `nGram` (infix 매칭 — "클라"로 "더클라임" 검색 가능)
+  - minGrams: 2, maxGrams: 15
+  - foldDiacritics: true
+- 검색 쿼리도 동일하게 공백/기호/특수문자 제거 후 매칭
+- Atlas M0 무료 티어에서 추가 비용 없이 사용 가능
+
 ### POST /places
 
 새 암장(Place) 등록.
@@ -73,8 +136,8 @@ Response: 200
 ```
 Body:
   name:      string (required)
-  latitude:  number (required)
-  longitude: number (required)
+  latitude:  number (gym: required, private-gym: optional)
+  longitude: number (gym: required, private-gym: optional)
   type:      "gym" | "private-gym" (optional, default: "gym")
 
 Response: 201
@@ -82,11 +145,75 @@ Response: 201
   id:        string
   name:      string
   type:      "gym" | "private-gym"
-  latitude:  number
-  longitude: number
+  latitude:  number?
+  longitude: number?
   createdBy: string  // 서버에서 인증된 userId 자동 설정
 }
 ```
+
+### POST /place-suggestions
+
+`gym` 타입 Place에 대한 수정 제안 제출.
+
+```
+Body:
+  placeId:   string (required)
+  changes: {
+    name:      string?
+    latitude:  number?
+    longitude: number?
+  }
+
+Response: 201
+{
+  id:          string
+  placeId:     string
+  requestedBy: string
+  status:      "pending"
+  changes:     { ... }
+  createdAt:   Date
+}
+```
+
+### PUT /places/:id
+
+`private-gym` 본인 즉시 수정용.
+
+```
+Body:
+  name:      string?
+  latitude:  number?
+  longitude: number?
+
+Response: 200
+{ id, name, type, latitude, longitude, createdBy }
+```
+
+**서버 검증:** `type=private-gym` && `createdBy=요청자` 일 때만 허용. `gym` 타입은 403.
+
+### POST /places/:id/image
+
+암장 대표 이미지 등록/교체. multipart/form-data.
+
+```
+Body (multipart):
+  image:     file (required, jpg/png)
+
+서버 처리:
+  1. 원본 이미지 저장 → imageUrl
+  2. 썸네일 생성 (200x200 crop, sharp) → thumbnailUrl
+  3. place 문서 업데이트
+
+Response: 200
+{
+  imageUrl:      string
+  thumbnailUrl:  string
+}
+```
+
+**권한:**
+- `gym`: 수정 제안 시트 내에서 이미지 추가/교체 포함. placeSuggestions로 제안.
+- `private-gym`: 즉시 수정 시트 내에서 본인이 자유롭게 등록/교체.
 
 ## User Flow
 
@@ -94,13 +221,14 @@ Response: 201
 
 스프레이월 에디터 → "클라이밍 암장 정보" ListTile 탭
 
-### Flow
+### 암장 선택 Flow
 
 ```
 [암장 정보 탭]
   → 사진 EXIF에서 GPS 추출
   → GET /places/nearby 호출
   → [암장 선택 바텀시트]
+      ├─ 검색창 입력 → GET /places/instant-search 호출 → 검색 결과로 전환
       ├─ 근처 암장 있음 → 리스트에서 탭하여 선택 → placeId 연결 → 시트 닫힘
       └─ 근처 암장 없음 또는 해당 없음
           → "새 암장 등록하기" 탭
@@ -111,6 +239,21 @@ Response: 201
               → "등록하기" 탭
               → POST /places 호출
               → placeId 연결 → 시트 닫힘
+```
+
+### 암장 수정 제안 Flow
+
+```
+[선택된 암장 정보 영역에서 "수정 제안" 탭]
+  ├─ type=gym
+  │   → 수정 제안 시트 (이름, 지도 위치 변경)
+  │   → POST /place-suggestions
+  │   → "제안이 접수되었습니다" 안내
+  │   → 운영자 readAt 갱신 (알림 확인) → reviewedAt 갱신 (승인/거절)
+  └─ type=private-gym (본인만)
+      → 즉시 편집 시트
+      → PUT /places/:id
+      → 즉시 반영
 ```
 
 ### EXIF GPS 없는 경우
@@ -129,6 +272,10 @@ Response: 201
 
 - `showModalBottomSheet` with `isScrollControlled: true`
 - 상단: 드래그 핸들 + "암장 선택" 타이틀
+- 검색창: TextField (돋보기 아이콘 + placeholder "암장 이름으로 검색")
+  - 1초 debounce 후 GET /places/instant-search 호출
+  - 입력 시 nearby 리스트 → 검색 결과 리스트로 전환
+  - 검색어 지우면 다시 nearby 리스트로 복귀
 - 근처 암장 섹션: "📍 근처 암장" 라벨 + 리스트
   - 각 아이템: 암장 이름 + 거리(m) + type 배지
   - `gym`: 기본 배경 (#F7F8FA)
@@ -172,7 +319,6 @@ Response: 201
 ## Out of Scope (v1)
 
 - 암장 상세 페이지
-- 암장 수정/삭제
 - 암장 사진 등록
-- 텍스트 검색 (이름으로 검색)
 - 암장 리뷰/평점
+- 운영자 검수 UI (초기에는 DB 직접 조회로 처리)
