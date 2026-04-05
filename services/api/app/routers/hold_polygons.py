@@ -10,13 +10,15 @@ import pytz
 from fastapi.encoders import jsonable_encoder
 from typing import List
 import jsonpatch
-from pydantic import HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
+from beanie.odm.fields import PydanticObjectId
 
 
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.image import Image
-from app.models.hold_polygon import HoldPolygon
+from app.models.hold_polygon import HoldPolygon, HoldPolygonData
+from app.models import model_config
 
 import aiohttp
 
@@ -34,7 +36,49 @@ from app.core.gcs import get_base_url, bucket, storage_client, generate_signed_u
 router = APIRouter(prefix="/hold-polygons", tags=["hold-polygons"])
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+class HoldPolygonResponse(BaseModel):
+    """HoldPolygon + Image 메타데이터를 합친 응답 모델"""
+    model_config = model_config
+
+    id: PydanticObjectId
+    image_id: PydanticObjectId
+    user_id: PydanticObjectId
+    image_url: HttpUrl
+    polygons: List[HoldPolygonData]
+    is_deleted: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    # Image에서 join한 메타데이터
+    gym_name: Optional[str] = None
+    wall_name: Optional[str] = None
+    wall_expiration_date: Optional[datetime] = None
+    place_id: Optional[PydanticObjectId] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+
+def _build_response(hold_polygon: HoldPolygon, image: Optional[Image] = None) -> HoldPolygonResponse:
+    """HoldPolygon + Image로부터 응답 모델 생성"""
+    return HoldPolygonResponse(
+        id=hold_polygon.id,
+        image_id=hold_polygon.image_id,
+        user_id=hold_polygon.user_id,
+        image_url=hold_polygon.image_url,
+        polygons=hold_polygon.polygons,
+        is_deleted=hold_polygon.is_deleted,
+        created_at=hold_polygon.created_at,
+        updated_at=hold_polygon.updated_at,
+        gym_name=image.gym_name if image else None,
+        wall_name=image.wall_name if image else None,
+        wall_expiration_date=image.wall_expiration_date if image else None,
+        place_id=image.place_id if image else None,
+        latitude=image.metadata.location.latitude if image and image.metadata and image.metadata.location else None,
+        longitude=image.metadata.location.longitude if image and image.metadata and image.metadata.location else None,
+    )
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=HoldPolygonResponse)
 async def create_hold_polygon(
     file: UploadFile = File(...),
     latitude: Optional[float] = Form(None),
@@ -83,9 +127,6 @@ async def create_hold_polygon(
         except Exception:
             # 로컬 환경: 서비스 계정으로 ID token 발급
             from app.core.config import get as get_config
-            sa_credentials = Credentials.from_service_account_info(
-                get_config("google_cloud.storage.account_info"),
-            )
             from google.oauth2.service_account import IDTokenCredentials
             id_token_credentials = IDTokenCredentials.from_service_account_info(
                 get_config("google_cloud.storage.account_info"),
@@ -127,8 +168,6 @@ async def create_hold_polygon(
         user_id=current_user.id,
         image_url=file_url,
         polygons=polygons,
-        latitude=latitude,
-        longitude=longitude,
     )
 
     await hold_polygon.save()
@@ -147,23 +186,11 @@ async def create_hold_polygon(
     image.url = signed_url
     hold_polygon.image_url = signed_url
 
-    return hold_polygon
+    return _build_response(hold_polygon, image)
 
 
-@router.get("/{hold_polygon_id}")
+@router.get("/{hold_polygon_id}", response_model=HoldPolygonResponse)
 async def get_hold_polygon(hold_polygon_id: str, current_user: User = Depends(get_current_user)):
-    """홀드 폴리곤 정보를 조회하는 엔드포인트
-
-    Args:
-        hold_polygon_id (str): 조회할 홀드 폴리곤의 ID
-        current_user (User): 현재 인증된 사용자
-
-    Returns:
-        HoldPolygon: 조회된 홀드 폴리곤 정보
-
-    Raises:
-        HTTPException: 폴리곤을 찾을 수 없거나 접근 권한이 없는 경우
-    """
     hold_polygon = await HoldPolygon.find_one(
         HoldPolygon.id == ObjectId(hold_polygon_id),
         HoldPolygon.user_id == current_user.id,
@@ -173,12 +200,15 @@ async def get_hold_polygon(hold_polygon_id: str, current_user: User = Depends(ge
     if not hold_polygon:
         raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
 
+    # Image join
+    image = await Image.find_one(Image.id == hold_polygon.image_id)
+
     blob_path = extract_blob_path_from_url(hold_polygon.image_url)
     if blob_path:
         signed_url = generate_signed_url(blob_path)
         hold_polygon.image_url = HttpUrl(signed_url)
 
-    return hold_polygon
+    return _build_response(hold_polygon, image)
 
 
 @router.patch("/{hold_polygon_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -187,16 +217,6 @@ async def update_hold_polygon(
     patch: List[dict] = Body(...),
     current_user: User = Depends(get_current_user),
 ):
-    """홀드 폴리곤을 JSON Patch로 업데이트하는 엔드포인트
-
-    Args:
-        hold_polygon_id (str): 업데이트할 홀드 폴리곤의 ID
-        patch (List[dict]): JSON Patch 작업 목록
-        current_user (User): 현재 인증된 사용자
-
-    Raises:
-        HTTPException: 폴리곤을 찾을 수 없거나, 패치 적용에 실패한 경우
-    """
     hold_polygon = await HoldPolygon.find_one(
         HoldPolygon.id == ObjectId(hold_polygon_id),
         HoldPolygon.user_id == current_user.id,
@@ -209,27 +229,32 @@ async def update_hold_polygon(
     image = await Image.find_one(Image.id == hold_polygon.image_id)
 
     if not image:
-        raise HTTPException(status_code=404, detail="홀드 폴리곤을 찾을 수 없거나 접근 권한이 없습니다")
+        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
 
     try:
-        # 문서를 dict로 변환
-        hold_polygon_dict = jsonable_encoder(hold_polygon)
+        # HoldPolygon + Image 메타데이터를 합친 dict로 patch 적용
+        hp_dict = jsonable_encoder(hold_polygon)
+        # Image 메타데이터를 HoldPolygon dict에 포함 (patch에서 참조할 수 있도록)
+        hp_dict["gymName"] = jsonable_encoder(image.gym_name)
+        hp_dict["wallName"] = jsonable_encoder(image.wall_name)
+        hp_dict["wallExpirationDate"] = jsonable_encoder(image.wall_expiration_date)
+        hp_dict["placeId"] = jsonable_encoder(image.place_id)
 
         # JSON Patch 적용
         patch = jsonpatch.JsonPatch(patch)
-        patched_data = patch.apply(hold_polygon_dict)
-        updated_hold_polygon = HoldPolygon.model_validate(patched_data)
+        patched_data = patch.apply(hp_dict)
 
-        hold_polygon.polygons = updated_hold_polygon.polygons
-        hold_polygon.gym_name = updated_hold_polygon.gym_name
-        hold_polygon.wall_name = updated_hold_polygon.wall_name
-        hold_polygon.wall_expiration_date = updated_hold_polygon.wall_expiration_date
+        # HoldPolygon 필드 업데이트 (polygons만)
+        hold_polygon.polygons = HoldPolygon.model_validate(patched_data).polygons
         hold_polygon.updated_at = datetime.now(tz=pytz.UTC)
         await hold_polygon.save()
 
-        image.gym_name = updated_hold_polygon.gym_name
-        image.wall_name = updated_hold_polygon.wall_name
-        image.wall_expiration_date = updated_hold_polygon.wall_expiration_date
+        # Image 메타데이터 업데이트 (정본)
+        image.gym_name = patched_data.get("gymName")
+        image.wall_name = patched_data.get("wallName")
+        wall_exp = patched_data.get("wallExpirationDate")
+        image.wall_expiration_date = datetime.fromisoformat(wall_exp) if wall_exp else None
+        image.place_id = ObjectId(patched_data["placeId"]) if patched_data.get("placeId") else None
         await image.save()
 
     except (jsonpatch.JsonPatchException, ValueError) as e:

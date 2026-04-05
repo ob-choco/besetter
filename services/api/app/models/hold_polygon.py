@@ -35,13 +35,8 @@ class HoldPolygon(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)
 
-    # image에 있는 데이터를 동일하게 쓴다.
-    gym_name: Optional[str] = Field(None, description="암장 이름")
-    wall_name: Optional[str] = Field(None, description="벽 이름")
-    wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
-    place_id: Optional[PydanticObjectId] = Field(None, description="연결된 Place ID")
-    latitude: Optional[float] = Field(None, description="위도")
-    longitude: Optional[float] = Field(None, description="경도")
+    # 메타데이터(gym_name, wall_name, place_id 등)는 Image에 정본으로 저장.
+    # GET 응답 시 Image를 join하여 반환.
 
     class Settings:
         name = "holdPolygons"
