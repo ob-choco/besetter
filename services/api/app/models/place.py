@@ -32,20 +32,30 @@ class Place(Document):
     name: str = Field(..., description="장소 이름")
     normalized_name: str = Field(..., description="정규화된 장소 이름 (공백/기호 제거, 소문자)")
     type: Literal["gym", "private-gym"] = Field(..., description="장소 유형")
-    latitude: Optional[float] = Field(None, description="위도")
-    longitude: Optional[float] = Field(None, description="경도")
-    location: Optional[GeoJsonPoint] = Field(None, description="GeoJSON Point for 2dsphere index")
+    location: Optional[GeoJsonPoint] = Field(None, description="GeoJSON Point [lng, lat]")
     image_url: Optional[str] = Field(None, description="장소 이미지 URL")
     thumbnail_url: Optional[str] = Field(None, description="장소 썸네일 URL")
     created_by: PydanticObjectId = Field(..., description="생성한 사용자의 ID")
     created_at: datetime = Field(..., description="생성 시간")
 
-    def set_location(self):
-        """latitude/longitude로부터 GeoJSON location 필드를 설정"""
-        if self.latitude is not None and self.longitude is not None:
-            self.location = GeoJsonPoint(coordinates=[self.longitude, self.latitude])
+    def set_location_from(self, latitude: Optional[float], longitude: Optional[float]):
+        """lat/lng으로 GeoJSON location 설정"""
+        if latitude is not None and longitude is not None:
+            self.location = GeoJsonPoint(coordinates=[longitude, latitude])
         else:
             self.location = None
+
+    @property
+    def latitude(self) -> Optional[float]:
+        if self.location and len(self.location.coordinates) == 2:
+            return self.location.coordinates[1]
+        return None
+
+    @property
+    def longitude(self) -> Optional[float]:
+        if self.location and len(self.location.coordinates) == 2:
+            return self.location.coordinates[0]
+        return None
 
     class Settings:
         name = "places"

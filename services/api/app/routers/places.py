@@ -178,14 +178,12 @@ async def create_place(
         name=name,
         normalized_name=normalize_name(name),
         type=type,
-        latitude=latitude,
-        longitude=longitude,
         image_url=image_url,
         thumbnail_url=thumbnail_url,
         created_by=current_user.id,
         created_at=datetime.now(tz=timezone.utc),
     )
-    place.set_location()
+    place.set_location_from(latitude, longitude)
 
     created = await place.save()
     return _place_to_view(created)
@@ -264,12 +262,10 @@ async def update_place(
     if request.name is not None:
         place.name = request.name
         place.normalized_name = normalize_name(request.name)
-    if request.latitude is not None:
-        place.latitude = request.latitude
-    if request.longitude is not None:
-        place.longitude = request.longitude
 
-    place.set_location()
+    new_lat = request.latitude if request.latitude is not None else place.latitude
+    new_lng = request.longitude if request.longitude is not None else place.longitude
+    place.set_location_from(new_lat, new_lng)
     await place.save()
     return _place_to_view(place)
 
