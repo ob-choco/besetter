@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from bson import ObjectId
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Body
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Body
 from fastapi import status
+from typing import Optional
 import uuid
 import os
 from pathlib import Path
@@ -34,7 +35,12 @@ router = APIRouter(prefix="/hold-polygons", tags=["hold-polygons"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_hold_polygon(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+async def create_hold_polygon(
+    file: UploadFile = File(...),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    current_user: User = Depends(get_current_user),
+):
     # 1. 파일 저장
     file_ext = os.path.splitext(file.filename)[1]
 
@@ -44,6 +50,11 @@ async def create_hold_polygon(file: UploadFile = File(...), current_user: User =
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     content = await file.read()
     metadata = extract_metadata(content)
+
+    # 클라이언트에서 전달받은 GPS 좌표로 location 설정
+    if latitude is not None and longitude is not None:
+        metadata.location.latitude = latitude
+        metadata.location.longitude = longitude
 
     blob = bucket.blob(f"wall_images/{unique_filename}")
     blob.upload_from_string(data=content, content_type="image/jpeg")
@@ -64,11 +75,24 @@ async def create_hold_polygon(file: UploadFile = File(...), current_user: User =
 
     # 3. 외부 API를 통해 홀드 폴리곤 데이터 가져오기
     try:
-        auth_req = google.auth.transport.requests.Request()
-        id_token = google.oauth2.id_token.fetch_id_token(
-            auth_req,
-            "https://besetter-detectron2-371038003203.asia-northeast3.run.app/",
-        )
+        target_audience = "https://besetter-detectron2-371038003203.asia-northeast3.run.app/"
+        try:
+            # Cloud Run 환경: 메타데이터 서버에서 ID token 발급
+            auth_req = google.auth.transport.requests.Request()
+            id_token = google.oauth2.id_token.fetch_id_token(auth_req, target_audience)
+        except Exception:
+            # 로컬 환경: 서비스 계정으로 ID token 발급
+            from app.core.config import get as get_config
+            sa_credentials = Credentials.from_service_account_info(
+                get_config("google_cloud.storage.account_info"),
+            )
+            from google.oauth2.service_account import IDTokenCredentials
+            id_token_credentials = IDTokenCredentials.from_service_account_info(
+                get_config("google_cloud.storage.account_info"),
+                target_audience=target_audience,
+            )
+            id_token_credentials.refresh(google.auth.transport.requests.Request())
+            id_token = id_token_credentials.token
 
         # API 호출 준비
         url = "https://besetter-detectron2-371038003203.asia-northeast3.run.app/hold-polygons"
@@ -103,6 +127,8 @@ async def create_hold_polygon(file: UploadFile = File(...), current_user: User =
         user_id=current_user.id,
         image_url=file_url,
         polygons=polygons,
+        latitude=latitude,
+        longitude=longitude,
     )
 
     await hold_polygon.save()

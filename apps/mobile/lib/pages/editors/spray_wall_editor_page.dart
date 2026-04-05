@@ -175,6 +175,11 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
           _exifLongitude = gps.longitude;
         });
       }
+    } else if (widget.polygonData.latitude != null && widget.polygonData.longitude != null) {
+      setState(() {
+        _exifLatitude = widget.polygonData.latitude;
+        _exifLongitude = widget.polygonData.longitude;
+      });
     }
   }
 

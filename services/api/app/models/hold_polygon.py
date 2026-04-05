@@ -40,6 +40,8 @@ class HoldPolygon(Document):
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
     place_id: Optional[PydanticObjectId] = Field(None, description="연결된 Place ID")
+    latitude: Optional[float] = Field(None, description="위도")
+    longitude: Optional[float] = Field(None, description="경도")
 
     class Settings:
         name = "holdPolygons"

@@ -7,6 +7,8 @@ class PolygonData {
   final String? gymName;
   final String? wallName;
   final DateTime? wallExpirationDate;
+  final double? latitude;
+  final double? longitude;
 
   PolygonData({
     required this.id,
@@ -17,6 +19,8 @@ class PolygonData {
     this.gymName,
     this.wallName,
     this.wallExpirationDate,
+    this.latitude,
+    this.longitude,
   });
 
   factory PolygonData.fromJson(Map<String, dynamic> json) {
@@ -30,9 +34,11 @@ class PolygonData {
       placeId: json['placeId'],
       gymName: json['gymName'],
       wallName: json['wallName'],
-      wallExpirationDate: json['wallExpirationDate'] != null 
+      wallExpirationDate: json['wallExpirationDate'] != null
           ? DateTime.parse(json['wallExpirationDate'])
           : null,
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
     );
   }
 

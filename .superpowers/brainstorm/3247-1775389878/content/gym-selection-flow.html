@@ -1,0 +1,223 @@
+<h2>암장 정보 입력 플로우</h2>
+<p class="subtitle">스프레이월 에디터에서 "클라이밍 암장 정보" 탭 시 진입하는 플로우</p>
+
+<div style="display: flex; gap: 24px; overflow-x: auto; padding: 16px 0;">
+
+  <!-- Screen 1: Editor Page (현재) -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">현재 에디터 화면</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <!-- AppBar -->
+      <div style="background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #eee;">
+        <span style="font-size: 18px; color: #333;">←</span>
+        <span style="font-size: 15px; font-weight: 600; margin-left: 12px;">스프레이 월 편집</span>
+      </div>
+      <!-- Wall Image -->
+      <div style="height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; position: relative;">
+        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">🧗 벽 이미지 영역</span>
+        <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(245,246,247,0.6); backdrop-filter: blur(10px); border-radius: 8px; padding: 8px 12px;">
+          <div style="font-size: 9px; color: #595C5D; letter-spacing: 1px;">편집 중</div>
+          <div style="font-size: 12px; font-weight: 600; color: #2C2F30;">홀드를 탭하여 선택/해제</div>
+        </div>
+      </div>
+      <!-- Hold Edit Menu -->
+      <div style="padding: 12px; background: #f8f8f8; text-align: center;">
+        <span style="font-size: 12px; color: #999; font-style: italic;">선택된 홀드 없음</span>
+      </div>
+      <!-- Info Section -->
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #FFFDE7;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">클라이밍 암장 정보</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 만기 날짜</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 16px; margin-top: auto;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">스프레이 월 편집 완료</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">노란 하이라이트 영역 탭 → 바텀시트</p>
+  </div>
+
+  <!-- Screen 2: Gym Selection Bottom Sheet -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">② 암장 선택 바텀시트</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <!-- Dimmed background -->
+      <div style="height: 140px; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.3); font-size: 11px;">에디터 화면 (dim 처리)</span>
+      </div>
+      <!-- Bottom Sheet -->
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column; position: relative;">
+        <!-- Handle -->
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <!-- Title -->
+        <div style="padding: 0 16px 12px;">
+          <div style="font-size: 16px; font-weight: 700;">암장 선택</div>
+        </div>
+        <!-- Nearby Section -->
+        <div style="padding: 0 16px;">
+          <div style="font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;">📍 근처 암장 (EXIF GPS 기반)</div>
+          <!-- Gym Item 1 -->
+          <div style="padding: 12px; background: #F7F8FA; border-radius: 10px; margin-bottom: 8px; cursor: pointer; border: 1.5px solid transparent;">
+            <div style="font-size: 14px; font-weight: 600; color: #333;">더클라임 강남점</div>
+            <div style="font-size: 11px; color: #888; margin-top: 2px;">52m · 서울 강남구</div>
+          </div>
+          <!-- Gym Item 2 -->
+          <div style="padding: 12px; background: #F7F8FA; border-radius: 10px; margin-bottom: 8px; cursor: pointer;">
+            <div style="font-size: 14px; font-weight: 600; color: #333;">클라이밍파크 역삼</div>
+            <div style="font-size: 11px; color: #888; margin-top: 2px;">87m · 서울 강남구</div>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div style="height: 1px; background: #eee; margin: 12px 16px;"></div>
+        <!-- New Gym Button -->
+        <div style="padding: 0 16px; margin-top: auto; margin-bottom: 24px;">
+          <div style="border: 1.5px dashed #bbb; border-radius: 10px; padding: 14px; text-align: center; cursor: pointer;">
+            <span style="font-size: 14px; color: #666;">+ 새 암장 등록하기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">사진 EXIF GPS → 서버 조회 → 반경 100m 결과</p>
+  </div>
+
+  <!-- Screen 3A: Selected -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">③-A 선택 완료 (기존 암장)</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #eee;">
+        <span style="font-size: 18px; color: #333;">←</span>
+        <span style="font-size: 15px; font-weight: 600; margin-left: 12px;">스프레이 월 편집</span>
+      </div>
+      <div style="height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">🧗 벽 이미지 영역</span>
+      </div>
+      <div style="padding: 12px; background: #f8f8f8; text-align: center;">
+        <span style="font-size: 12px; color: #999; font-style: italic;">선택된 홀드 없음</span>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">클라이밍 암장 정보</div>
+            <div style="font-size: 13px; color: #333; font-weight: 600;">더클라임 강남점 <span style="font-size: 11px; color: #4CAF50;">✓</span></div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 위치</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 만기 날짜</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 16px; margin-top: auto;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">스프레이 월 편집 완료</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">암장 선택됨 → gymId 연결, 이름 표시</p>
+  </div>
+
+  <!-- Screen 3B: New Registration -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">③-B 새 암장 등록</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 140px; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.3); font-size: 11px;">에디터 화면 (dim 처리)</span>
+      </div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 16px;">
+          <div style="font-size: 16px; font-weight: 700;">새 암장 등록</div>
+          <div style="font-size: 12px; color: #888; margin-top: 4px;">등록한 암장은 다른 유저도 사용할 수 있어요</div>
+        </div>
+        <div style="padding: 0 16px;">
+          <!-- Gym Name Input -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">암장 이름 *</div>
+            <div style="border: 1.5px solid #6750A4; border-radius: 8px; padding: 12px; background: #FAFAFA;">
+              <span style="font-size: 14px; color: #333;">더클라임 신사점</span>
+              <span style="font-size: 14px; color: #6750A4;">|</span>
+            </div>
+          </div>
+          <!-- GPS Location -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">위치 (사진 GPS 기반)</div>
+            <div style="border: 1.5px solid #ddd; border-radius: 8px; padding: 12px; background: #F7F8FA; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; color: #666;">📍 37.5165, 127.0198</span>
+              <span style="font-size: 11px; color: #6750A4; font-weight: 600;">자동 설정됨</span>
+            </div>
+            <div style="font-size: 10px; color: #aaa; margin-top: 4px;">* 사진의 EXIF 위치 정보를 사용합니다</div>
+          </div>
+        </div>
+        <!-- Register Button -->
+        <div style="padding: 0 16px; margin-top: auto; margin-bottom: 24px;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">등록하기</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">이름 입력 + EXIF GPS 자동 → POI 생성</p>
+  </div>
+
+</div>
+
+<!-- Flow Diagram -->
+<div style="margin-top: 24px; padding: 20px; background: #F7F8FA; border-radius: 12px;">
+  <p class="label">데이터 플로우</p>
+  <div style="font-family: monospace; font-size: 12px; line-height: 2; color: #444;">
+    <div>[사진 업로드] → EXIF GPS 추출 (lat, lng)</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;↓</div>
+    <div>[서버] GET /gyms/nearby?lat=37.51&lng=127.01&radius=100</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;↓</div>
+    <div>┌─ 결과 있음 → 리스트 표시 → 유저 선택 → gymId 연결</div>
+    <div>└─ 결과 없음 → "새 암장 등록" → POST /gyms { name, lat, lng } → gymId 연결</div>
+  </div>
+</div>
+
+<!-- API Design -->
+<div style="margin-top: 16px; padding: 20px; background: #F7F8FA; border-radius: 12px;">
+  <p class="label">API 설계 (안)</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div>
+      <div style="font-size: 12px; font-weight: 700; color: #6750A4; margin-bottom: 6px;">GET /gyms/nearby</div>
+      <pre style="font-size: 11px; background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 0;">Query:
+  lat: number (required)
+  lng: number (required)
+  radius: number (default: 100m)
+
+Response: 200
+  [{ id, name, lat, lng, distance }]</pre>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 700; color: #6750A4; margin-bottom: 6px;">POST /gyms</div>
+      <pre style="font-size: 11px; background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 0;">Body:
+  name: string (required)
+  lat: number (required)
+  lng: number (required)
+
+Response: 201
+  { id, name, lat, lng }</pre>
+    </div>
+  </div>
+</div>

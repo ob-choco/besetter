@@ -1,0 +1,289 @@
+<h2>암장 이미지 등록 플로우</h2>
+<p class="subtitle">대표 이미지 1장 — 등록 시 or 나중에 추가</p>
+
+<div style="display: flex; gap: 24px; overflow-x: auto; padding: 16px 0;">
+
+  <!-- Screen 1: New gym registration with image -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">① 신규 등록 시 이미지 추가</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 50px; background: rgba(0,0,0,0.4);"></div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 10px;">
+          <div style="font-size: 16px; font-weight: 700;">새 암장 등록</div>
+        </div>
+        <div style="padding: 0 16px; flex: 1; display: flex; flex-direction: column;">
+          <!-- Image upload area -->
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">대표 이미지 <span style="font-weight: 400; color: #999;">(선택)</span></div>
+            <div style="border: 1.5px dashed #ccc; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: #FAFAFA;">
+              <div style="width: 40px; height: 40px; background: #E8E8E8; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                <span style="font-size: 20px; color: #999;">📷</span>
+              </div>
+              <div style="font-size: 13px; color: #888;">탭하여 사진 선택</div>
+            </div>
+          </div>
+          <!-- Name -->
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">암장 이름 *</div>
+            <div style="border: 1.5px solid #6750A4; border-radius: 8px; padding: 11px; background: #FAFAFA;">
+              <span style="font-size: 14px; color: #333;">더클라임 신사점</span><span style="color: #6750A4;">|</span>
+            </div>
+          </div>
+          <!-- Map (compact) -->
+          <div style="margin-bottom: 12px; flex: 1; min-height: 0;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">위치</div>
+            <div style="border: 1.5px solid #ddd; border-radius: 10px; overflow: hidden; height: 100%; min-height: 80px; position: relative; background: #F2EFE9;">
+              <div style="position: absolute; inset: 0; background:
+                linear-gradient(to right, rgba(180,175,165,0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(180,175,165,0.2) 1px, transparent 1px);
+                background-size: 35px 35px;"></div>
+              <div style="position: absolute; top: 50%; left: 0; right: 0; height: 8px; background: #fff; transform: translateY(-50%); border: 1px solid #ddd;"></div>
+              <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; background: #fff; transform: translateX(-50%); border: 1px solid #ddd;"></div>
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 10;">
+                <div style="width: 24px; height: 24px; background: #D32F2F; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                  <div style="width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: rotate(45deg);"></div>
+                </div>
+              </div>
+              <div style="position: absolute; bottom: 2px; right: 4px; font-size: 7px; color: #666; background: rgba(255,255,255,0.7); padding: 1px 3px; border-radius: 2px;">© OpenStreetMap</div>
+            </div>
+          </div>
+          <!-- Private toggle -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F7F8FA; border-radius: 8px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: #333;">개인 암장</div>
+              </div>
+              <div style="width: 44px; height: 24px; background: #E0E0E0; border-radius: 12px; position: relative;">
+                <div style="width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 0 16px 24px;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">등록하기</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">등록 시 이미지 선택 (optional)</p>
+  </div>
+
+  <!-- Screen 2: Image selected state -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">② 이미지 선택됨</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 50px; background: rgba(0,0,0,0.4);"></div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 10px;">
+          <div style="font-size: 16px; font-weight: 700;">새 암장 등록</div>
+        </div>
+        <div style="padding: 0 16px; flex: 1; display: flex; flex-direction: column;">
+          <!-- Image preview -->
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">대표 이미지 <span style="font-weight: 400; color: #999;">(선택)</span></div>
+            <div style="border-radius: 10px; overflow: hidden; position: relative; height: 100px; background: linear-gradient(135deg, #8B7355 0%, #A0926B 50%, #6B5B45 100%);">
+              <!-- Fake gym photo -->
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                <span style="color: rgba(255,255,255,0.6); font-size: 11px;">🧗 암장 외관 사진</span>
+              </div>
+              <!-- Remove button -->
+              <div style="position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <span style="color: white; font-size: 14px; line-height: 1;">×</span>
+              </div>
+              <!-- Change button -->
+              <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.5); border-radius: 6px; padding: 4px 8px;">
+                <span style="color: white; font-size: 10px;">변경</span>
+              </div>
+            </div>
+          </div>
+          <!-- Name -->
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">암장 이름 *</div>
+            <div style="border: 1.5px solid #6750A4; border-radius: 8px; padding: 11px; background: #FAFAFA;">
+              <span style="font-size: 14px; color: #333;">더클라임 신사점</span><span style="color: #6750A4;">|</span>
+            </div>
+          </div>
+          <!-- Map (compact) -->
+          <div style="margin-bottom: 12px; flex: 1; min-height: 0;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">위치</div>
+            <div style="border: 1.5px solid #ddd; border-radius: 10px; overflow: hidden; height: 100%; min-height: 80px; position: relative; background: #F2EFE9;">
+              <div style="position: absolute; inset: 0; background:
+                linear-gradient(to right, rgba(180,175,165,0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(180,175,165,0.2) 1px, transparent 1px);
+                background-size: 35px 35px;"></div>
+              <div style="position: absolute; top: 50%; left: 0; right: 0; height: 8px; background: #fff; transform: translateY(-50%); border: 1px solid #ddd;"></div>
+              <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; background: #fff; transform: translateX(-50%); border: 1px solid #ddd;"></div>
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 10;">
+                <div style="width: 24px; height: 24px; background: #D32F2F; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                  <div style="width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: rotate(45deg);"></div>
+                </div>
+              </div>
+              <div style="position: absolute; bottom: 2px; right: 4px; font-size: 7px; color: #666; background: rgba(255,255,255,0.7); padding: 1px 3px; border-radius: 2px;">© OpenStreetMap</div>
+            </div>
+          </div>
+          <!-- Private toggle -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F7F8FA; border-radius: 8px;">
+              <div style="font-size: 13px; font-weight: 600; color: #333;">개인 암장</div>
+              <div style="width: 44px; height: 24px; background: #E0E0E0; border-radius: 12px; position: relative;">
+                <div style="width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 0 16px 24px;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">등록하기</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">프리뷰 + ×(제거) / 변경 버튼</p>
+  </div>
+
+  <!-- Screen 3: Nearby list with images -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">③ 리스트에서 이미지 노출</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 100px; background: rgba(0,0,0,0.4);"></div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 12px;">
+          <div style="font-size: 16px; font-weight: 700;">암장 선택</div>
+        </div>
+        <!-- Search -->
+        <div style="padding: 0 16px 12px;">
+          <div style="background: #F7F8FA; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #999; font-size: 14px;">🔍</span>
+            <span style="color: #bbb; font-size: 13px;">암장 이름으로 검색</span>
+          </div>
+        </div>
+        <div style="padding: 0 16px; flex: 1; overflow-y: auto;">
+          <div style="font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;">📍 근처 암장</div>
+          <!-- Gym with image -->
+          <div style="padding: 10px; background: #F7F8FA; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #8B7355, #A0926B); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 8px; color: rgba(255,255,255,0.6);">🧗</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #333;">더클라임 강남점</div>
+              <div style="font-size: 11px; color: #888;">52m</div>
+            </div>
+            <span style="font-size: 10px; background: #E8F5E9; color: #4CAF50; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">gym</span>
+          </div>
+          <!-- Gym without image -->
+          <div style="padding: 10px; background: #F7F8FA; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 48px; height: 48px; border-radius: 8px; background: #E0E0E0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 18px; color: #bbb;">🏔</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #333;">클라이밍파크 역삼</div>
+              <div style="font-size: 11px; color: #888;">87m</div>
+            </div>
+            <span style="font-size: 10px; background: #E8F5E9; color: #4CAF50; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">gym</span>
+          </div>
+          <!-- Private gym with image -->
+          <div style="padding: 10px; background: #FFF8E1; border-radius: 10px; margin-bottom: 8px; border: 1px solid #FFE082; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #5C6B4E, #7A8B6A); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 8px; color: rgba(255,255,255,0.6);">🏠</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #333;">우리집 벽 🔒</div>
+              <div style="font-size: 11px; color: #888;">12m · 나만 보임</div>
+            </div>
+            <span style="font-size: 10px; background: #FFF3E0; color: #F57C00; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">private</span>
+          </div>
+        </div>
+        <div style="height: 1px; background: #eee; margin: 4px 16px;"></div>
+        <div style="padding: 12px 16px 24px;">
+          <div style="border: 1.5px dashed #bbb; border-radius: 10px; padding: 14px; text-align: center;">
+            <span style="font-size: 14px; color: #666;">+ 새 암장 등록하기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">이미지 있으면 썸네일 / 없으면 기본 아이콘</p>
+  </div>
+
+  <!-- Screen 4: Add image to existing gym -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">④ 기존 암장에 이미지 추가</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 100px; background: rgba(0,0,0,0.4);"></div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 12px;">
+          <div style="font-size: 16px; font-weight: 700;">암장 선택</div>
+        </div>
+        <div style="padding: 0 16px 12px;">
+          <div style="background: #F7F8FA; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #999; font-size: 14px;">🔍</span>
+            <span style="color: #bbb; font-size: 13px;">암장 이름으로 검색</span>
+          </div>
+        </div>
+        <div style="padding: 0 16px;">
+          <div style="font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;">📍 근처 암장</div>
+          <!-- Selected gym without image - highlighted -->
+          <div style="padding: 10px; background: #EDE7F6; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid #6750A4; display: flex; gap: 10px; align-items: center;">
+            <div style="width: 48px; height: 48px; border-radius: 8px; background: #E0E0E0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 18px; color: #bbb;">🏔</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #333;">클라이밍파크 역삼 <span style="font-size: 11px; color: #6750A4;">선택됨</span></div>
+              <div style="font-size: 11px; color: #888;">87m</div>
+            </div>
+          </div>
+          <!-- Action buttons for selected gym -->
+          <div style="display: flex; gap: 8px; margin-bottom: 12px; padding-left: 4px;">
+            <div style="font-size: 12px; color: #6750A4; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 13px;">📷</span> 사진 등록
+            </div>
+            <div style="color: #ddd;">|</div>
+            <div style="font-size: 12px; color: #6750A4; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 13px;">✏️</span> 정보 수정 제안
+            </div>
+          </div>
+        </div>
+        <div style="flex: 1;"></div>
+        <div style="height: 1px; background: #eee; margin: 4px 16px;"></div>
+        <div style="padding: 12px 16px 24px;">
+          <div style="border: 1.5px dashed #bbb; border-radius: 10px; padding: 14px; text-align: center;">
+            <span style="font-size: 14px; color: #666;">+ 새 암장 등록하기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">이미지 없는 암장 선택 시 "사진 등록" 액션 노출</p>
+  </div>
+
+</div>
+
+<!-- Image Rules -->
+<div style="margin-top: 24px; padding: 20px; background: #F7F8FA; border-radius: 12px;">
+  <p class="label">이미지 등록 규칙</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="padding: 14px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+      <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 6px;">gym</div>
+      <div style="font-size: 12px; color: #555; line-height: 1.6;">
+        <div>• 이미지 없을 때: 누구나 등록 가능</div>
+        <div>• 이미지 있을 때: placeSuggestions로 교체 제안</div>
+        <div>• POST /places/:id/image</div>
+      </div>
+    </div>
+    <div style="padding: 14px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+      <div style="font-size: 13px; font-weight: 700; color: #E65100; margin-bottom: 6px;">private-gym</div>
+      <div style="font-size: 12px; color: #555; line-height: 1.6;">
+        <div>• 본인만 등록/교체 자유</div>
+        <div>• POST /places/:id/image</div>
+      </div>
+    </div>
+  </div>
+</div>

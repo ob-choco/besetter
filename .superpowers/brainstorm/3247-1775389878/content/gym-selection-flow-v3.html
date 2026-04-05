@@ -1,0 +1,259 @@
+<h2>암장 정보 입력 플로우 (v3)</h2>
+<p class="subtitle">위치를 지도로 표시 + 핀 드래그 조정</p>
+
+<div style="display: flex; gap: 24px; overflow-x: auto; padding: 16px 0;">
+
+  <!-- Screen 1: Editor Page -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">① 에디터 화면</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #eee;">
+        <span style="font-size: 18px; color: #333;">←</span>
+        <span style="font-size: 15px; font-weight: 600; margin-left: 12px;">스프레이 월 편집</span>
+      </div>
+      <div style="height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">🧗 벽 이미지 영역</span>
+      </div>
+      <div style="padding: 12px; background: #f8f8f8; text-align: center;">
+        <span style="font-size: 12px; color: #999; font-style: italic;">선택된 홀드 없음</span>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #FFFDE7;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">클라이밍 암장 정보</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 만기 날짜</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 16px; margin-top: auto;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">스프레이 월 편집 완료</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Place Selection Bottom Sheet -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">② 암장 선택 바텀시트</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 120px; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.3); font-size: 11px;">에디터 화면 (dim)</span>
+      </div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 12px;">
+          <div style="font-size: 16px; font-weight: 700;">암장 선택</div>
+        </div>
+        <div style="padding: 0 16px; flex: 1; overflow-y: auto;">
+          <div style="font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;">📍 근처 암장</div>
+          <div style="padding: 12px; background: #F7F8FA; border-radius: 10px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: #333;">더클라임 강남점</div>
+                <div style="font-size: 11px; color: #888; margin-top: 2px;">52m</div>
+              </div>
+              <span style="font-size: 10px; background: #E8F5E9; color: #4CAF50; padding: 2px 6px; border-radius: 4px;">gym</span>
+            </div>
+          </div>
+          <div style="padding: 12px; background: #FFF8E1; border-radius: 10px; margin-bottom: 8px; border: 1px solid #FFE082;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: #333;">우리집 벽 🔒</div>
+                <div style="font-size: 11px; color: #888; margin-top: 2px;">12m · 나만 보임</div>
+              </div>
+              <span style="font-size: 10px; background: #FFF3E0; color: #F57C00; padding: 2px 6px; border-radius: 4px;">private</span>
+            </div>
+          </div>
+        </div>
+        <div style="height: 1px; background: #eee; margin: 4px 16px;"></div>
+        <div style="padding: 12px 16px 24px;">
+          <div style="border: 1.5px dashed #bbb; border-radius: 10px; padding: 14px; text-align: center; cursor: pointer;">
+            <span style="font-size: 14px; color: #666;">+ 새 암장 등록하기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: New Registration with Map -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">③ 새 암장 등록 (지도)</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="height: 60px; background: rgba(0,0,0,0.4);"></div>
+      <div style="flex: 1; background: #fff; border-radius: 16px 16px 0 0; margin-top: -16px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; padding: 12px 0 8px;">
+          <div style="width: 36px; height: 4px; background: #ddd; border-radius: 2px;"></div>
+        </div>
+        <div style="padding: 0 16px 10px;">
+          <div style="font-size: 16px; font-weight: 700;">새 암장 등록</div>
+        </div>
+        <div style="padding: 0 16px; flex: 1; display: flex; flex-direction: column;">
+          <!-- Name -->
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">암장 이름 *</div>
+            <div style="border: 1.5px solid #6750A4; border-radius: 8px; padding: 11px; background: #FAFAFA;">
+              <span style="font-size: 14px; color: #333;">더클라임 신사점</span><span style="color: #6750A4;">|</span>
+            </div>
+          </div>
+          <!-- Map -->
+          <div style="margin-bottom: 12px; flex: 1; min-height: 0;">
+            <div style="font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px;">위치 <span style="font-weight: 400; color: #999;">핀을 드래그하여 조정</span></div>
+            <div style="border: 1.5px solid #ddd; border-radius: 10px; overflow: hidden; height: 100%; min-height: 130px; position: relative; background: #E8EAED;">
+              <!-- Fake map tiles -->
+              <div style="position: absolute; inset: 0; background:
+                linear-gradient(to right, rgba(200,210,200,0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(200,210,200,0.3) 1px, transparent 1px);
+                background-size: 40px 40px;
+              "></div>
+              <!-- Roads -->
+              <div style="position: absolute; top: 50%; left: 0; right: 0; height: 8px; background: #fff; transform: translateY(-50%);"></div>
+              <div style="position: absolute; left: 45%; top: 0; bottom: 0; width: 6px; background: #fff; transform: translateX(-50%);"></div>
+              <div style="position: absolute; top: 30%; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.6); transform: rotate(15deg);"></div>
+              <!-- Blocks -->
+              <div style="position: absolute; top: 12%; left: 10%; width: 30%; height: 28%; background: #D4DAD0; border-radius: 3px;"></div>
+              <div style="position: absolute; top: 58%; left: 55%; width: 35%; height: 30%; background: #D4DAD0; border-radius: 3px;"></div>
+              <div style="position: absolute; top: 60%; left: 8%; width: 25%; height: 25%; background: #D4DAD0; border-radius: 3px;"></div>
+              <!-- Pin -->
+              <div style="position: absolute; top: 50%; left: 45%; transform: translate(-50%, -100%); z-index: 10;">
+                <div style="width: 32px; height: 32px; display: flex; flex-direction: column; align-items: center;">
+                  <div style="width: 24px; height: 24px; background: #EA4335; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                    <div style="width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: rotate(45deg);"></div>
+                  </div>
+                  <div style="width: 6px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 50%; margin-top: 2px;"></div>
+                </div>
+              </div>
+              <!-- Accuracy circle -->
+              <div style="position: absolute; top: 50%; left: 45%; transform: translate(-50%, -50%); width: 60px; height: 60px; border: 2px solid rgba(66,133,244,0.3); background: rgba(66,133,244,0.08); border-radius: 50%;"></div>
+              <!-- Google logo -->
+              <div style="position: absolute; bottom: 4px; left: 6px; font-size: 8px; color: #666; font-weight: 500;">Google</div>
+            </div>
+          </div>
+          <!-- Private Toggle -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #F7F8FA; border-radius: 8px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: #333;">개인 암장</div>
+                <div style="font-size: 11px; color: #888;">나만 볼 수 있는 암장</div>
+              </div>
+              <div style="width: 44px; height: 24px; background: #E0E0E0; border-radius: 12px; position: relative;">
+                <div style="width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 0 16px 24px;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">등록하기</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: center;">EXIF GPS로 초기 핀 → 유저가 드래그 조정 가능</p>
+  </div>
+
+  <!-- Screen 4: Selected Complete -->
+  <div style="min-width: 280px; max-width: 280px;">
+    <p class="label">④ 선택 완료</p>
+    <div style="background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); height: 520px; display: flex; flex-direction: column;">
+      <div style="background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid #eee;">
+        <span style="font-size: 18px; color: #333;">←</span>
+        <span style="font-size: 15px; font-weight: 600; margin-left: 12px;">스프레이 월 편집</span>
+      </div>
+      <div style="height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">🧗 벽 이미지 영역</span>
+      </div>
+      <div style="padding: 12px; background: #f8f8f8; text-align: center;">
+        <span style="font-size: 12px; color: #999; font-style: italic;">선택된 홀드 없음</span>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">클라이밍 암장 정보</div>
+            <div style="font-size: 13px; color: #333; font-weight: 600;">더클라임 강남점 <span style="font-size: 11px; color: #4CAF50;">✓</span></div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 위치</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 14px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">벽 만기 날짜</div>
+            <div style="font-size: 12px; color: #999;">선택하여 입력하세요</div>
+          </div>
+          <span style="color: #ccc; font-size: 16px;">›</span>
+        </div>
+        <div style="padding: 16px; margin-top: auto;">
+          <div style="background: #6750A4; color: white; text-align: center; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;">스프레이 월 편집 완료</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tech Stack -->
+<div style="margin-top: 24px; padding: 20px; background: #F7F8FA; border-radius: 12px;">
+  <p class="label">지도 구현 스택</p>
+  <pre style="font-size: 12px; background: #2d2d2d; color: #f8f8f2; padding: 16px; border-radius: 8px; margin: 0;"><span style="color: #ff79c6;">패키지:</span> google_maps_flutter (iOS + Android 동일)
+<span style="color: #ff79c6;">무료 한도:</span> 월 28,000 Dynamic Maps 로드
+
+<span style="color: #ff79c6;">지도 동작:</span>
+  1. EXIF GPS 추출 → 초기 카메라 위치 + 핀 배치
+  2. 유저가 핀 드래그 → onCameraMove로 좌표 업데이트
+  3. "등록하기" 탭 → 최종 핀 위치의 latitude/longitude 전송
+
+<span style="color: #ff79c6;">EXIF 없는 경우:</span>
+  - 기기 현재 위치로 fallback (geolocator 패키지)
+  - 위치 권한 없으면 → 서울 시청 기본값 + 안내 문구</pre>
+</div>
+
+<!-- API (unchanged) -->
+<div style="margin-top: 16px; padding: 20px; background: #F7F8FA; border-radius: 12px;">
+  <p class="label">API 설계</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div>
+      <div style="font-size: 12px; font-weight: 700; color: #6750A4; margin-bottom: 6px;">GET /places/nearby</div>
+      <pre style="font-size: 11px; background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 0;">Query:
+  latitude:  number (required)
+  longitude: number (required)
+  radius:    number (default: 100m)
+
+Response: 200
+[{
+  id, name, type,
+  latitude, longitude,
+  distance, createdBy
+}]
+
+<span style="color: #6272a4;">// type=gym → 모두에게 반환</span>
+<span style="color: #6272a4;">// type=private-gym → 본인만</span></pre>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 700; color: #6750A4; margin-bottom: 6px;">POST /places</div>
+      <pre style="font-size: 11px; background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 0;">Body:
+  name:      string (required)
+  latitude:  number (required)
+  longitude: number (required)
+  type:      "gym" | "private-gym"
+
+Response: 201
+{
+  id, name, type,
+  latitude, longitude,
+  createdBy
+}</pre>
+    </div>
+  </div>
+</div>
