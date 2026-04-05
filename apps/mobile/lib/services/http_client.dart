@@ -8,7 +8,10 @@ import '../main.dart' show container;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AuthorizedHttpClient {
-  static const String _baseUrl = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+  static const String _baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'https://besetter-api-371038003203.asia-northeast3.run.app',
+  );
 
   // 전역 네비게이터 키 추가
   static final navigatorKey = GlobalKey<NavigatorState>();
