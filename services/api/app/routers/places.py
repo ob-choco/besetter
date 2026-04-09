@@ -96,7 +96,7 @@ def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def _place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
+def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
     return PlaceView(
         id=place.id,
         name=place.name,
@@ -186,7 +186,7 @@ async def create_place(
     place.set_location_from(latitude, longitude)
 
     created = await place.save()
-    return _place_to_view(created)
+    return place_to_view(created)
 
 
 @router.get("/nearby", response_model=List[PlaceView])
@@ -216,7 +216,7 @@ async def get_nearby_places(
         if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
             continue
         distance = _haversine(latitude, longitude, place.latitude, place.longitude) if place.latitude and place.longitude else None
-        results.append(_place_to_view(place, distance=round(distance, 2) if distance else None))
+        results.append(place_to_view(place, distance=round(distance, 2) if distance else None))
 
     return results
 
@@ -238,7 +238,7 @@ async def instant_search_places(
     for place in candidates:
         if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
             continue
-        results.append(_place_to_view(place))
+        results.append(place_to_view(place))
 
     return results
 
@@ -267,7 +267,7 @@ async def update_place(
     new_lng = request.longitude if request.longitude is not None else place.longitude
     place.set_location_from(new_lat, new_lng)
     await place.save()
-    return _place_to_view(place)
+    return place_to_view(place)
 
 
 @router.post("/suggestions", status_code=status.HTTP_201_CREATED, response_model=PlaceSuggestionView)

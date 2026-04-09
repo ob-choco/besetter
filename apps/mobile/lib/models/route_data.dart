@@ -1,3 +1,4 @@
+import 'place_data.dart';
 import 'polygon_data.dart';
 
 enum RouteType {
@@ -42,7 +43,7 @@ class RouteData {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
-  final String? gymName;
+  final PlaceData? place;
   final String? wallName;
   final DateTime? wallExpirationDate;
 
@@ -67,7 +68,7 @@ class RouteData {
     this.enduranceHolds,
     required this.createdAt,
     this.updatedAt,
-    this.gymName,
+    this.place,
     this.wallName,
     this.wallExpirationDate,
     this.overlayImageUrl,
@@ -100,7 +101,7 @@ class RouteData {
           : null,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      gymName: json['gymName'],
+      place: json['place'] != null ? PlaceData.fromJson(json['place']) : null,
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null ? DateTime.parse(json['wallExpirationDate']) : null,
       overlayImageUrl: json['overlayImageUrl'],
@@ -127,7 +128,7 @@ class RouteData {
         'enduranceHolds': enduranceHolds?.map((hold) => hold.toJson()).toList(),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
-        'gymName': gymName,
+        'place': place,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),
         'overlayImageUrl': overlayImageUrl,

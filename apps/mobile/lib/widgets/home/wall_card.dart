@@ -123,12 +123,12 @@ class _WallCardState extends ConsumerState<WallCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.image.gymName ?? AppLocalizations.of(context)!.enterGymInfoGuide,
+                  widget.image.place?.name ?? AppLocalizations.of(context)!.enterGymInfoGuide,
                   style: TextStyle(
-                    color: widget.image.gymName != null ? Colors.white : Colors.white70,
+                    color: widget.image.place?.name != null ? Colors.white : Colors.white70,
                     fontSize: 18,
-                    fontWeight: widget.image.gymName != null ? FontWeight.bold : FontWeight.normal,
-                    fontStyle: widget.image.gymName != null ? FontStyle.normal : FontStyle.italic,
+                    fontWeight: widget.image.place?.name != null ? FontWeight.bold : FontWeight.normal,
+                    fontStyle: widget.image.place?.name != null ? FontStyle.normal : FontStyle.italic,
                   ),
                 ),
                 const SizedBox(height: 4),

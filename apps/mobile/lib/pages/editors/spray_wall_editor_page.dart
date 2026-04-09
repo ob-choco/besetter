@@ -97,6 +97,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
       _polygons = widget.polygonData.polygons;
       _wallNameController.text = widget.polygonData.wallName ?? '';
       _wallExpirationDate = widget.polygonData.wallExpirationDate;
+      _selectedPlace = widget.polygonData.place;
     });
     _extractExifGps();
   }
@@ -345,7 +346,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     });
 
     try {
-      final initialPlaceId = widget.polygonData.placeId;
+      final initialPlaceId = widget.polygonData.place?.id;
       final initialWallName = widget.polygonData.wallName ?? '';
       final initialWallExpirationDate = widget.polygonData.wallExpirationDate;
 
@@ -779,7 +780,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
   }
 
   bool _hasUnsavedChanges() {
-    final initialPlaceId = widget.polygonData.placeId;
+    final initialPlaceId = widget.polygonData.place?.id;
     final initialWallName = widget.polygonData.wallName ?? '';
     final initialWallExpirationDate = widget.polygonData.wallExpirationDate;
 

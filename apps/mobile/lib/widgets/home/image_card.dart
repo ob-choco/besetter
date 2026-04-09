@@ -31,8 +31,8 @@ class ImageCard extends StatelessWidget {
                 ),
                 if (image.wallName != null &&
                     image.wallName!.isNotEmpty &&
-                    image.gymName != null &&
-                    image.gymName!.isNotEmpty)
+                    image.place?.name != null &&
+                    image.place!.name.isNotEmpty)
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -54,7 +54,7 @@ class ImageCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            image.gymName!,
+                            image.place!.name,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,

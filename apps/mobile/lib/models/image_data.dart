@@ -1,3 +1,5 @@
+import 'place_data.dart';
+
 class ImageData {
   final String id;
   final String url;
@@ -6,7 +8,7 @@ class ImageData {
   final DateTime uploadedAt;
   final String? holdPolygonId;
 
-  final String? gymName;
+  final PlaceData? place;
   final String? wallName;
   final DateTime? wallExpirationDate;
 
@@ -17,7 +19,7 @@ class ImageData {
     required this.userId,
     required this.uploadedAt,
     this.holdPolygonId,
-    this.gymName,
+    this.place,
     this.wallName,
     this.wallExpirationDate,
   });
@@ -30,7 +32,7 @@ class ImageData {
       userId: json['userId'],
       uploadedAt: DateTime.parse(json['uploadedAt']),
       holdPolygonId: json['holdPolygonId'],
-      gymName: json['gymName'],
+      place: json['place'] != null ? PlaceData.fromJson(json['place']) : null,
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null ? DateTime.parse(json['wallExpirationDate']) : null,
     );
@@ -43,7 +45,7 @@ class ImageData {
         'userId': userId,
         'uploadedAt': uploadedAt.toIso8601String(),
         'holdPolygonId': holdPolygonId,
-        'gymName': gymName,
+        'place': place,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),
       };

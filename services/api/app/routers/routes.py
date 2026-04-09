@@ -23,6 +23,7 @@ import base64
 
 
 from app.models import model_config
+from app.routers.places import PlaceView, place_to_view
 from typing import Optional, List
 from deepdiff import DeepDiff
 from app.services.route_overlay import generate_route_overlay
@@ -65,7 +66,7 @@ class CreateRouteRequest(BaseModel):
 class RouteDetailView(Route):
     model_config = model_config
 
-    gym_name: Optional[str] = Field(None, description="암장 이름")
+    place: Optional[PlaceView] = Field(None, description="장소 정보")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
 
@@ -150,7 +151,7 @@ class RouteServiceView(BaseModel):
     updated_at: Optional[datetime]
     deleted_at: Optional[datetime]
 
-    gym_name: Optional[str] = Field(None, description="암장 이름")
+    place: Optional[PlaceView] = Field(None, description="장소 정보")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
 
@@ -248,48 +249,73 @@ async def get_routes(
     else:
         query = query.sort([(db_field, 1), ("_id", 1)])
 
-    # 프로젝션 및 제한 적용
-    query = query.project(projection_model=RouteServiceView).limit(limit + 1)
-    routes = await query.to_list()
-
-    # 이미지 정보 추가
-    image_ids = [route.image_id for route in routes]
-    images = await Image.find(In(Image.id, image_ids)).to_list()
-    image_dict = {str(image.id): image for image in images}
-
-    # Place 이름 일괄 조회
-    place_ids = list({image.place_id for image in images if image.place_id})
-    if place_ids:
-        places = await Place.find(In(Place.id, place_ids)).to_list()
-        place_dict = {place.id: place for place in places}
-    else:
-        place_dict = {}
-
-    for route in routes:
-        image = image_dict.get(str(route.image_id))
-        if image:
-            route.wall_name = image.wall_name
-            route.wall_expiration_date = image.wall_expiration_date
-            if image.place_id and image.place_id in place_dict:
-                route.gym_name = place_dict[image.place_id].name
+    # 제한 적용 (프로젝션 제거 — place 조인을 위해 full document 조회)
+    query = query.limit(limit + 1)
+    raw_routes = await query.to_list()
 
     # 다음 페이지 토큰 생성
-    has_next = len(routes) > limit
+    has_next = len(raw_routes) > limit
     next_token = None
 
     if has_next:
-        routes = routes[:limit]  # 마지막 항목 제거
-        last_route = routes[-1]
+        raw_routes = raw_routes[:limit]  # 마지막 항목 제거
+        last_route = raw_routes[-1]
         next_token = encode_cursor(sort_field, sort_order, str(last_route.id))
 
-    for route in routes:
+    # 이미지 정보 추가
+    image_ids = [route.image_id for route in raw_routes]
+    images = await Image.find(In(Image.id, image_ids)).to_list()
+    image_dict = {str(image.id): image for image in images}
+
+    # Place 일괄 조회
+    place_ids = list({image.place_id for image in images if image.place_id})
+    if place_ids:
+        places = await Place.find(In(Place.id, place_ids)).to_list()
+        place_dict: dict = {place.id: place for place in places}
+    else:
+        place_dict = {}
+
+    # RouteServiceView 구성
+    routes: list[RouteServiceView] = []
+    for route in raw_routes:
+        image = image_dict.get(str(route.image_id))
+
+        image_url = str(route.image_url)
         blob_path = extract_blob_path_from_url(route.image_url)
         if blob_path:
-            route.image_url = generate_signed_url(blob_path)
+            image_url = generate_signed_url(blob_path)
+
+        overlay_image_url = None
         if route.overlay_image_url:
             overlay_blob_path = extract_blob_path_from_url(route.overlay_image_url)
-            if overlay_blob_path:
-                route.overlay_image_url = generate_signed_url(overlay_blob_path)
+            overlay_image_url = generate_signed_url(overlay_blob_path) if overlay_blob_path else str(route.overlay_image_url)
+
+        place_view = None
+        if image and image.place_id and image.place_id in place_dict:
+            place_view = place_to_view(place_dict[image.place_id])
+
+        routes.append(RouteServiceView(
+            id=route.id,
+            type=route.type,
+            title=route.title,
+            description=route.description,
+            visibility=route.visibility,
+            grade_type=route.grade_type,
+            grade=route.grade,
+            grade_color=route.grade_color,
+            hold_polygon_id=route.hold_polygon_id,
+            image_id=route.image_id,
+            user_id=route.user_id,
+            image_url=image_url,
+            overlay_image_url=overlay_image_url,
+            overlay_processing=route.overlay_processing or False,
+            created_at=route.created_at,
+            updated_at=route.updated_at,
+            deleted_at=route.deleted_at,
+            place=place_view,
+            wall_name=image.wall_name if image else None,
+            wall_expiration_date=image.wall_expiration_date if image else None,
+        ))
 
     return RouteListResponse(data=routes, meta=RouteListMeta(next_token=next_token))
 
@@ -332,12 +358,12 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
 
     hold_polygon = hold_polygon[0] if hold_polygon else None
 
-    # Image에서 wall 메타데이터 + Place에서 gym_name 해석
+    # Image에서 wall 메타데이터 + Place 해석
     image = await Image.get(route.image_id)
     place = await Place.get(image.place_id) if image and image.place_id else None
 
     route_detail = RouteDetailView(**route.model_dump(), polygons=hold_polygon.get("polygons"))
-    route_detail.gym_name = place.name if place else None
+    route_detail.place = place_to_view(place) if place else None
     route_detail.wall_name = image.wall_name if image else None
     route_detail.wall_expiration_date = image.wall_expiration_date if image else None
 

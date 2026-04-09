@@ -231,9 +231,9 @@ class _RouteCardState extends ConsumerState<RouteCard> {
                           ),
                           const SizedBox(height: 4),
                           // 위치 정보
-                          if (route.gymName != null || route.wallName != null)
+                          if (route.place?.name != null || route.wallName != null)
                             Text(
-                              [route.gymName, route.wallName].whereType<String>().join(' \u2022 '),
+                              [route.place?.name, route.wallName].whereType<String>().join(' \u2022 '),
                               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

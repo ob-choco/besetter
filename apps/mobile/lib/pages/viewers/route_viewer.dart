@@ -412,11 +412,11 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: 32),
                         // Meta Information
-                        if (widget.routeData.gymName != null)
+                        if (widget.routeData.place != null)
                           _buildMetaRow(
                             icon: Icons.location_on_outlined,
                             label: AppLocalizations.of(context)!.gymLabel,
-                            value: widget.routeData.gymName!,
+                            value: widget.routeData.place!.name,
                           ),
                         if (widget.routeData.wallName != null) ...[
                           const SizedBox(height: 24),

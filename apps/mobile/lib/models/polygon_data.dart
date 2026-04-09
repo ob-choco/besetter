@@ -1,10 +1,11 @@
+import 'place_data.dart';
+
 class PolygonData {
   final String id;
   final List<Polygon> polygons;
   final String imageId;
   final String imageUrl;
-  final String? placeId;
-  final String? gymName;
+  final PlaceData? place;
   final String? wallName;
   final DateTime? wallExpirationDate;
   final double? latitude;
@@ -15,8 +16,7 @@ class PolygonData {
     required this.polygons,
     required this.imageId,
     required this.imageUrl,
-    this.placeId,
-    this.gymName,
+    this.place,
     this.wallName,
     this.wallExpirationDate,
     this.latitude,
@@ -31,8 +31,7 @@ class PolygonData {
           .toList(),
       imageId: json['imageId'],
       imageUrl: json['imageUrl'],
-      placeId: json['placeId'],
-      gymName: json['gymName'],
+      place: json['place'] != null ? PlaceData.fromJson(json['place']) : null,
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null
           ? DateTime.parse(json['wallExpirationDate'])
@@ -47,8 +46,7 @@ class PolygonData {
         'polygons': polygons.map((p) => p.toJson()).toList(),
         'imageId': imageId,
         'imageUrl': imageUrl,
-        'placeId': placeId,
-        'gymName': gymName,
+        'place': place,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),
       };

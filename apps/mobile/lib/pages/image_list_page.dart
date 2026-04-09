@@ -267,9 +267,9 @@ class _ImageListPageState extends State<ImageListPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    if (image.gymName != null && image.gymName!.isNotEmpty)
+                    if (image.place != null && image.place!.name.isNotEmpty)
                       Text(
-                        image.gymName!,
+                        image.place!.name,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,

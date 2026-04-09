@@ -24,6 +24,7 @@ from app.models import model_config
 import aiohttp
 
 from app.routers.images import extract_metadata
+from app.routers.places import PlaceView, place_to_view
 
 import google.auth.transport.requests
 import google.oauth2.id_token
@@ -51,10 +52,9 @@ class HoldPolygonResponse(BaseModel):
     updated_at: Optional[datetime] = None
 
     # Image에서 join한 메타데이터
-    gym_name: Optional[str] = None
+    place: Optional[PlaceView] = None
     wall_name: Optional[str] = None
     wall_expiration_date: Optional[datetime] = None
-    place_id: Optional[PydanticObjectId] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
@@ -70,10 +70,9 @@ def _build_response(hold_polygon: HoldPolygon, image: Optional[Image] = None, pl
         is_deleted=hold_polygon.is_deleted,
         created_at=hold_polygon.created_at,
         updated_at=hold_polygon.updated_at,
-        gym_name=place.name if place else None,
+        place=place_to_view(place) if place else None,
         wall_name=image.wall_name if image else None,
         wall_expiration_date=image.wall_expiration_date if image else None,
-        place_id=image.place_id if image else None,
         latitude=image.metadata.location.latitude if image and image.metadata and image.metadata.location else None,
         longitude=image.metadata.location.longitude if image and image.metadata and image.metadata.location else None,
     )

@@ -18,6 +18,7 @@ from beanie.odm.operators.find.comparison import LT, GT, Eq, In
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
 
 from app.models import model_config
+from app.routers.places import PlaceView, place_to_view
 
 router = APIRouter(prefix="/images", tags=["images"])
 
@@ -37,8 +38,7 @@ class ImageServiceView(BaseModel):
     uploaded_at: datetime
     hold_polygon_id: Optional[ObjectId]
 
-    place_id: Optional[ObjectId] = Field(None, description="연결된 Place ID")
-    gym_name: Optional[str] = Field(None, description="암장 이름")
+    place: Optional[PlaceView] = Field(None, description="연결된 Place")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
 
@@ -135,38 +135,54 @@ async def get_images(
             ("_id", 1)
         ])
     
-    # 프로젝션 및 제한 적용
-    query = query.project(projection_model=ImageServiceView).limit(limit + 1)
-    images = await query.to_list()
+    # 제한 적용 (프로젝션 제거 — place 조인을 위해 full document 조회)
+    query = query.limit(limit + 1)
+    raw_images = await query.to_list()
 
     # 다음 페이지 토큰 생성
-    has_next = len(images) > limit
+    has_next = len(raw_images) > limit
     next_token = None
 
     if has_next:
-        images = images[:limit]  # 마지막 항목 제거
-        last_image = images[-1]
+        raw_images = raw_images[:limit]  # 마지막 항목 제거
+        last_image = raw_images[-1]
         next_token = encode_cursor(
             sort_field,
             sort_order,
             str(last_image.id)
         )
 
-    # Place 이름 일괄 조회
-    place_ids = list({image.place_id for image in images if image.place_id})
+    # Place 일괄 조회
+    place_ids = list({image.place_id for image in raw_images if image.place_id})
     if place_ids:
         places = await Place.find(In(Place.id, place_ids)).to_list()
         place_dict = {place.id: place for place in places}
     else:
         place_dict = {}
 
-    # 이미지 URL을 signed URL로 변환 + gym_name 해석
-    for image in images:
-        blob_path = extract_blob_path_from_url(image.url)
+    # ImageServiceView 구성 + signed URL 변환
+    images: list[ImageServiceView] = []
+    for image in raw_images:
+        url = image.url
+        blob_path = extract_blob_path_from_url(url)
         if blob_path:
-            image.url = HttpUrl(generate_signed_url(blob_path))
+            url = HttpUrl(generate_signed_url(blob_path))
+
+        place_view = None
         if image.place_id and image.place_id in place_dict:
-            image.gym_name = place_dict[image.place_id].name
+            place_view = place_to_view(place_dict[image.place_id])
+
+        images.append(ImageServiceView(
+            id=image.id,
+            url=url,
+            filename=image.filename,
+            user_id=image.user_id,
+            uploaded_at=image.uploaded_at,
+            hold_polygon_id=image.hold_polygon_id,
+            place=place_view,
+            wall_name=image.wall_name,
+            wall_expiration_date=image.wall_expiration_date,
+        ))
 
     return ImageListResponse(
         data=images,
@@ -268,7 +284,7 @@ async def get_image(
             Image.user_id == current_user.id,
             Image.is_deleted != True
         )
-    ).project(ImageServiceView)
+    )
 
     if not image:
         raise HTTPException(
@@ -276,18 +292,30 @@ async def get_image(
             detail="이미지를 찾을 수 없습니다."
         )
 
-    # Place에서 gym_name 해석
+    # Place 해석
+    place_view = None
     if image.place_id:
         place = await Place.get(image.place_id)
         if place:
-            image.gym_name = place.name
+            place_view = place_to_view(place)
 
     # 이미지 URL을 signed URL로 변환
-    blob_path = extract_blob_path_from_url(image.url)
+    url = image.url
+    blob_path = extract_blob_path_from_url(url)
     if blob_path:
-        image.url = generate_signed_url(blob_path)
+        url = HttpUrl(generate_signed_url(blob_path))
 
-    return image
+    return ImageServiceView(
+        id=image.id,
+        url=url,
+        filename=image.filename,
+        user_id=image.user_id,
+        uploaded_at=image.uploaded_at,
+        hold_polygon_id=image.hold_polygon_id,
+        place=place_view,
+        wall_name=image.wall_name,
+        wall_expiration_date=image.wall_expiration_date,
+    )
 
 
 @router.get("/count", response_model=ImageCountResponse)
