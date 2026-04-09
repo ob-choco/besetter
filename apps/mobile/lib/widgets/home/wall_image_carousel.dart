@@ -26,7 +26,8 @@ class WallImageCarousel extends ConsumerWidget {
           return _buildEmptyState(context);
         }
 
-        final itemCount = images.length + 1;
+        final hasMore = images.length >= 9;
+        final itemCount = hasMore ? images.length + 1 : images.length;
 
         return CarouselSlider.builder(
           itemCount: itemCount,
