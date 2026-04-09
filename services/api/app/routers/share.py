@@ -6,6 +6,7 @@ from bson.errors import InvalidId
 
 from app.models.route import Route, Visibility
 from app.models.image import Image
+from app.models.place import Place
 
 router = APIRouter(prefix="/share", tags=["share"])
 
@@ -72,8 +73,10 @@ async def share_route(request: Request, route_id: str):
 
     # 설명 생성
     description_parts = [route.grade]
-    if image and image.gym_name:
-        description_parts.append(image.gym_name)
+    if image and image.place_id:
+        place = await Place.get(image.place_id)
+        if place:
+            description_parts.append(place.name)
     description = " · ".join(description_parts)
 
     share_url = str(request.url)

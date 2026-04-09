@@ -52,8 +52,6 @@ class Image(Document):
     uploaded_at: datetime = Field(..., description="이미지가 업로드된 시간")
     deleted_at: Optional[datetime] = Field(None, description="이미지가 삭제된 시간")
 
-    # 암장 정보는 POI로 별도로 분리해야 하지만, MVP에서는 이미지에 간단히 텍스트로 저장만 합니다.
-    gym_name: Optional[str] = Field(None, description="암장 이름")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
     place_id: Optional[PydanticObjectId] = Field(None, description="연결된 Place ID")

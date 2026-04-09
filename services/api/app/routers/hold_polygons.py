@@ -18,6 +18,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.image import Image
 from app.models.hold_polygon import HoldPolygon, HoldPolygonData
+from app.models.place import Place
 from app.models import model_config
 
 import aiohttp
@@ -58,8 +59,8 @@ class HoldPolygonResponse(BaseModel):
     longitude: Optional[float] = None
 
 
-def _build_response(hold_polygon: HoldPolygon, image: Optional[Image] = None) -> HoldPolygonResponse:
-    """HoldPolygon + Image로부터 응답 모델 생성"""
+def _build_response(hold_polygon: HoldPolygon, image: Optional[Image] = None, place: Optional[Place] = None) -> HoldPolygonResponse:
+    """HoldPolygon + Image + Place로부터 응답 모델 생성"""
     return HoldPolygonResponse(
         id=hold_polygon.id,
         image_id=hold_polygon.image_id,
@@ -69,7 +70,7 @@ def _build_response(hold_polygon: HoldPolygon, image: Optional[Image] = None) ->
         is_deleted=hold_polygon.is_deleted,
         created_at=hold_polygon.created_at,
         updated_at=hold_polygon.updated_at,
-        gym_name=image.gym_name if image else None,
+        gym_name=place.name if place else None,
         wall_name=image.wall_name if image else None,
         wall_expiration_date=image.wall_expiration_date if image else None,
         place_id=image.place_id if image else None,
@@ -203,12 +204,15 @@ async def get_hold_polygon(hold_polygon_id: str, current_user: User = Depends(ge
     # Image join
     image = await Image.find_one(Image.id == hold_polygon.image_id)
 
+    # Place resolution
+    place = await Place.get(image.place_id) if image and image.place_id else None
+
     blob_path = extract_blob_path_from_url(hold_polygon.image_url)
     if blob_path:
         signed_url = generate_signed_url(blob_path)
         hold_polygon.image_url = HttpUrl(signed_url)
 
-    return _build_response(hold_polygon, image)
+    return _build_response(hold_polygon, image, place)
 
 
 @router.patch("/{hold_polygon_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -235,7 +239,6 @@ async def update_hold_polygon(
         # HoldPolygon + Image 메타데이터를 합친 dict로 patch 적용
         hp_dict = jsonable_encoder(hold_polygon)
         # Image 메타데이터를 HoldPolygon dict에 포함 (patch에서 참조할 수 있도록)
-        hp_dict["gymName"] = jsonable_encoder(image.gym_name)
         hp_dict["wallName"] = jsonable_encoder(image.wall_name)
         hp_dict["wallExpirationDate"] = jsonable_encoder(image.wall_expiration_date)
         hp_dict["placeId"] = jsonable_encoder(image.place_id)
@@ -250,7 +253,6 @@ async def update_hold_polygon(
         await hold_polygon.save()
 
         # Image 메타데이터 업데이트 (정본)
-        image.gym_name = patched_data.get("gymName")
         image.wall_name = patched_data.get("wallName")
         wall_exp = patched_data.get("wallExpirationDate")
         image.wall_expiration_date = datetime.fromisoformat(wall_exp) if wall_exp else None

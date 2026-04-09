@@ -4,6 +4,7 @@ from typing import List, Optional, Literal
 from bson import ObjectId
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from app.models.image import Image, ImageMetadata, LocationMetadata, CameraMetadata
+from app.models.place import Place
 from app.models.user import User
 from app.dependencies import get_current_user
 from pydantic import BaseModel, HttpUrl, Field
@@ -13,7 +14,7 @@ from PIL import Image as PILImage
 from PIL.ExifTags import TAGS, GPSTAGS
 import base64
 from beanie.odm.operators.find.logical import Or, And
-from beanie.odm.operators.find.comparison import LT, GT, Eq
+from beanie.odm.operators.find.comparison import LT, GT, Eq, In
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
 
 from app.models import model_config
@@ -36,6 +37,7 @@ class ImageServiceView(BaseModel):
     uploaded_at: datetime
     hold_polygon_id: Optional[ObjectId]
 
+    place_id: Optional[ObjectId] = Field(None, description="연결된 Place ID")
     gym_name: Optional[str] = Field(None, description="암장 이름")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
@@ -136,11 +138,11 @@ async def get_images(
     # 프로젝션 및 제한 적용
     query = query.project(projection_model=ImageServiceView).limit(limit + 1)
     images = await query.to_list()
-    
+
     # 다음 페이지 토큰 생성
     has_next = len(images) > limit
     next_token = None
-    
+
     if has_next:
         images = images[:limit]  # 마지막 항목 제거
         last_image = images[-1]
@@ -149,13 +151,23 @@ async def get_images(
             sort_order,
             str(last_image.id)
         )
-    
-    # 이미지 URL을 signed URL로 변환
+
+    # Place 이름 일괄 조회
+    place_ids = list({image.place_id for image in images if image.place_id})
+    if place_ids:
+        places = await Place.find(In(Place.id, place_ids)).to_list()
+        place_dict = {place.id: place for place in places}
+    else:
+        place_dict = {}
+
+    # 이미지 URL을 signed URL로 변환 + gym_name 해석
     for image in images:
         blob_path = extract_blob_path_from_url(image.url)
         if blob_path:
             image.url = HttpUrl(generate_signed_url(blob_path))
-    
+        if image.place_id and image.place_id in place_dict:
+            image.gym_name = place_dict[image.place_id].name
+
     return ImageListResponse(
         data=images,
         meta=ImageListMeta(next_token=next_token)
@@ -264,11 +276,17 @@ async def get_image(
             detail="이미지를 찾을 수 없습니다."
         )
 
+    # Place에서 gym_name 해석
+    if image.place_id:
+        place = await Place.get(image.place_id)
+        if place:
+            image.gym_name = place.name
+
     # 이미지 URL을 signed URL로 변환
     blob_path = extract_blob_path_from_url(image.url)
     if blob_path:
         image.url = generate_signed_url(blob_path)
-    
+
     return image
 
 

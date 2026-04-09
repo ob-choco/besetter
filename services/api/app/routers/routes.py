@@ -10,6 +10,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.hold_polygon import HoldPolygon, HoldPolygonData
 from app.models.image import Image
+from app.models.place import Place
 from app.models import IdView
 from app.models.route import Route, BoulderingHold, EnduranceHold, Visibility, RouteType
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
@@ -256,12 +257,21 @@ async def get_routes(
     images = await Image.find(In(Image.id, image_ids)).to_list()
     image_dict = {str(image.id): image for image in images}
 
+    # Place 이름 일괄 조회
+    place_ids = list({image.place_id for image in images if image.place_id})
+    if place_ids:
+        places = await Place.find(In(Place.id, place_ids)).to_list()
+        place_dict = {place.id: place for place in places}
+    else:
+        place_dict = {}
+
     for route in routes:
         image = image_dict.get(str(route.image_id))
         if image:
-            route.gym_name = image.gym_name
             route.wall_name = image.wall_name
             route.wall_expiration_date = image.wall_expiration_date
+            if image.place_id and image.place_id in place_dict:
+                route.gym_name = place_dict[image.place_id].name
 
     # 다음 페이지 토큰 생성
     has_next = len(routes) > limit
@@ -308,9 +318,6 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
             {
                 "$project": {
                     "_id": 1,
-                    "gymName": 1,
-                    "wallName": 1,
-                    "wallExpirationDate": 1,
                     "polygons": {
                         "$filter": {
                             "input": "$polygons",
@@ -325,10 +332,14 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
 
     hold_polygon = hold_polygon[0] if hold_polygon else None
 
+    # Image에서 wall 메타데이터 + Place에서 gym_name 해석
+    image = await Image.get(route.image_id)
+    place = await Place.get(image.place_id) if image and image.place_id else None
+
     route_detail = RouteDetailView(**route.model_dump(), polygons=hold_polygon.get("polygons"))
-    route_detail.gym_name = hold_polygon.get("gymName")
-    route_detail.wall_name = hold_polygon.get("wallName")
-    route_detail.wall_expiration_date = hold_polygon.get("wallExpirationDate")
+    route_detail.gym_name = place.name if place else None
+    route_detail.wall_name = image.wall_name if image else None
+    route_detail.wall_expiration_date = image.wall_expiration_date if image else None
 
     return route_detail
 

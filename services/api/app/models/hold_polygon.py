@@ -35,7 +35,7 @@ class HoldPolygon(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)
 
-    # 메타데이터(gym_name, wall_name, place_id 등)는 Image에 정본으로 저장.
+    # 메타데이터(wall_name, place_id 등)는 Image에 정본으로 저장.
     # GET 응답 시 Image를 join하여 반환.
 
     class Settings:
