@@ -18,6 +18,8 @@ import '../../models/route_data.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../viewers/route_viewer.dart';
+import '../../providers/routes_provider.dart';
+import '../../main.dart' show container;
 
 enum RouteEditModeType {
   bouldering,
@@ -440,6 +442,8 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
         );
 
         if (response.statusCode == 201) {
+          container.invalidate(routesProvider);
+          container.invalidate(routesTotalCountProvider);
           if (!mounted) return;
           final routeData = RouteData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
 
@@ -462,6 +466,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
         );
 
         if (response.statusCode == 200) {
+          container.invalidate(routesProvider);
           if (!mounted) return;
           final routeData = RouteData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
 

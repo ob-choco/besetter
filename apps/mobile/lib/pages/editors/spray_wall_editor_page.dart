@@ -18,6 +18,8 @@ import '../../widgets/editors/spray_wall_information_input_widget.dart';
 import '../../pages/editors/route_editor_page.dart';
 import '../../models/image_data.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../providers/images_provider.dart';
+import '../../main.dart' show container;
 
 class AddingHold {
   final String type;
@@ -482,6 +484,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
       );
 
       if (response.statusCode == 204) {
+        container.invalidate(imagesProvider);
         if (!mounted) return;
 
         showDialog(
