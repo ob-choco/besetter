@@ -191,5 +191,7 @@
   "failedUpdateProfile": "Failed to update profile",
   "failedLoadProfile": "Failed to load profile",
   "editProfile": "Edit",
-  "saveProfile": "Save"
+  "saveProfile": "Save",
+  "labelName": "Name",
+  "labelBio": "Bio"
 }

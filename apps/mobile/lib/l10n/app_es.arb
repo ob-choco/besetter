@@ -192,5 +192,7 @@
   "failedUpdateProfile": "No se pudo actualizar el perfil",
   "failedLoadProfile": "No se pudo cargar el perfil",
   "editProfile": "Editar",
-  "saveProfile": "Guardar"
+  "saveProfile": "Guardar",
+  "labelName": "Nombre",
+  "labelBio": "Biografía"
 }

@@ -191,5 +191,7 @@
   "failedUpdateProfile": "プロフィールの更新に失敗しました",
   "failedLoadProfile": "プロフィールの読み込みに失敗しました",
   "editProfile": "編集",
-  "saveProfile": "保存"
+  "saveProfile": "保存",
+  "labelName": "名前",
+  "labelBio": "自己紹介"
 }

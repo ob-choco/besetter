@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/user_provider.dart';
+import '../utils/thumbnail_url.dart';
 import 'setting.dart';
 
 class MyPage extends HookConsumerWidget {
@@ -214,7 +215,7 @@ class _ProfileHeader extends StatelessWidget {
                       ? Image.file(croppedImage.value!, fit: BoxFit.cover)
                       : user.profileImageUrl != null
                           ? CachedNetworkImage(
-                              imageUrl: user.profileImageUrl!,
+                              imageUrl: toThumbnailUrl(user.profileImageUrl!, 's100'),
                               fit: BoxFit.cover,
                               placeholder: (_, __) => const Icon(
                                 Icons.person,
@@ -269,7 +270,7 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 SizedBox(
                   child: Text(
-                    AppLocalizations.of(context)!.title,
+                    AppLocalizations.of(context)!.labelName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -317,7 +318,7 @@ class _ProfileHeader extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8),
                   child: SizedBox(
                     child: Text(
-                      AppLocalizations.of(context)!.description,
+                      AppLocalizations.of(context)!.labelBio,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

@@ -192,5 +192,7 @@
   "failedUpdateProfile": "프로필 업데이트에 실패했습니다",
   "failedLoadProfile": "프로필을 불러오는데 실패했습니다",
   "editProfile": "수정",
-  "saveProfile": "저장"
+  "saveProfile": "저장",
+  "labelName": "이름",
+  "labelBio": "자기소개"
 }
