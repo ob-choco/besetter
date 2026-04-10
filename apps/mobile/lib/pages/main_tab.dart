@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'home.dart';
 import 'routes_page.dart';
-import 'setting.dart';
+import 'my_page.dart';
 
 class MainTabPage extends HookConsumerWidget {
   const MainTabPage({super.key});
@@ -16,7 +16,7 @@ class MainTabPage extends HookConsumerWidget {
     final pages = [
       const HomePage(),
       const RoutesPage(),
-      const SettingsPage(),
+      const MyPage(),
     ];
 
     return Scaffold(
@@ -37,8 +37,8 @@ class MainTabPage extends HookConsumerWidget {
             label: AppLocalizations.of(context)!.navRoutes,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.menu),
-            label: AppLocalizations.of(context)!.navMenu,
+            icon: const Icon(Icons.person),
+            label: AppLocalizations.of(context)!.navMy,
           ),
         ],
       ),
