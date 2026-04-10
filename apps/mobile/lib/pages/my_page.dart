@@ -263,19 +263,23 @@ class _ProfileHeader extends StatelessWidget {
         // 이름
         if (isEditing)
           SizedBox(
-            width: 200,
+            width: 280,
             child: TextField(
               controller: nameController,
-              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
                 color: Color(0xFF2C2F30),
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
-                border: UnderlineInputBorder(),
+                labelText: AppLocalizations.of(context)!.title,
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF595C5D),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                border: const UnderlineInputBorder(),
               ),
             ),
           )
@@ -295,17 +299,21 @@ class _ProfileHeader extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 320),
             child: TextField(
               controller: bioController,
-              textAlign: TextAlign.center,
               maxLines: 3,
               minLines: 1,
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF595C5D),
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
-                border: UnderlineInputBorder(),
+                labelText: AppLocalizations.of(context)!.description,
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF595C5D),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                border: const UnderlineInputBorder(),
               ),
             ),
           )
