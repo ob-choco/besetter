@@ -268,7 +268,6 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 60,
                   child: Text(
                     AppLocalizations.of(context)!.title,
                     style: const TextStyle(
@@ -317,7 +316,6 @@ class _ProfileHeader extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: SizedBox(
-                    width: 60,
                     child: Text(
                       AppLocalizations.of(context)!.description,
                       style: const TextStyle(
