@@ -13,6 +13,8 @@ class AuthorizedHttpClient {
     defaultValue: 'https://besetter-api-371038003203.asia-northeast3.run.app',
   );
 
+  static String get baseUrl => _baseUrl;
+
   // 전역 네비게이터 키 추가
   static final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -96,12 +98,13 @@ class AuthorizedHttpClient {
   }
 
   // GET 요청
-  static Future<http.Response> get(String path) async {
+  static Future<http.Response> get(String path, {Map<String, String>? extraHeaders}) async {
     return _executeRequest((token) => http.get(
           Uri.parse('$_baseUrl$path'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
+            if (extraHeaders != null) ...extraHeaders,
           },
         ));
   }

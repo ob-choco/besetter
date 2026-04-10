@@ -1,8 +1,13 @@
 import 'dart:convert';
+import 'dart:ui';
 import '../models/place_data.dart';
 import 'http_client.dart';
 
 class PlaceService {
+  static Map<String, String> get _langHeader => {
+    'Accept-Language': PlatformDispatcher.instance.locale.languageCode,
+  };
+
   static Future<List<PlaceData>> getNearbyPlaces({
     required double latitude,
     required double longitude,
@@ -13,7 +18,7 @@ class PlaceService {
       'longitude': longitude.toString(),
       'radius': radius.toString(),
     });
-    final response = await AuthorizedHttpClient.get(uri.toString());
+    final response = await AuthorizedHttpClient.get(uri.toString(), extraHeaders: _langHeader);
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -27,7 +32,7 @@ class PlaceService {
     final uri = Uri.parse('/places/instant-search').replace(queryParameters: {
       'query': query,
     });
-    final response = await AuthorizedHttpClient.get(uri.toString());
+    final response = await AuthorizedHttpClient.get(uri.toString(), extraHeaders: _langHeader);
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
