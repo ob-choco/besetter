@@ -69,3 +69,65 @@ def test_generate_thumbnail_output_is_jpeg():
     result = generate_thumbnail(image_bytes, "w400")
     img = PILImage.open(BytesIO(result))
     assert img.format == "JPEG"
+
+
+from unittest.mock import MagicMock, patch
+
+
+@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch("app.core.gcs.bucket")
+def test_get_or_create_thumbnail_cached(mock_bucket, mock_base_url):
+    """When thumbnail already exists in GCS, return URL without generating."""
+    from app.services.thumbnail import get_or_create_thumbnail
+
+    mock_blob = MagicMock()
+    mock_blob.exists.return_value = True
+    mock_bucket.blob.return_value = mock_blob
+
+    result = get_or_create_thumbnail("wall_images/abc.jpg", "w400")
+
+    assert result == "https://storage.example.com/bucket/wall_images/abc_w400.jpg"
+    mock_bucket.blob.assert_called_once_with("wall_images/abc_w400.jpg")
+    mock_blob.download_as_bytes.assert_not_called()
+
+
+@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch("app.core.gcs.bucket")
+def test_get_or_create_thumbnail_generates(mock_bucket, mock_base_url):
+    """When thumbnail doesn't exist, generate and upload it."""
+    from app.services.thumbnail import get_or_create_thumbnail
+
+    thumb_blob = MagicMock()
+    thumb_blob.exists.return_value = False
+    original_blob = MagicMock()
+    original_blob.exists.return_value = True
+    original_blob.download_as_bytes.return_value = create_test_image(800, 600)
+
+    def blob_side_effect(path):
+        return thumb_blob if "_w400" in path else original_blob
+    mock_bucket.blob.side_effect = blob_side_effect
+
+    result = get_or_create_thumbnail("wall_images/abc.jpg", "w400")
+
+    assert result == "https://storage.example.com/bucket/wall_images/abc_w400.jpg"
+    thumb_blob.upload_from_string.assert_called_once()
+    assert thumb_blob.upload_from_string.call_args.kwargs["content_type"] == "image/jpeg"
+
+
+@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch("app.core.gcs.bucket")
+def test_get_or_create_thumbnail_original_not_found(mock_bucket, mock_base_url):
+    """When original blob doesn't exist, return None."""
+    from app.services.thumbnail import get_or_create_thumbnail
+
+    thumb_blob = MagicMock()
+    thumb_blob.exists.return_value = False
+    original_blob = MagicMock()
+    original_blob.exists.return_value = False
+
+    def blob_side_effect(path):
+        return thumb_blob if "_w400" in path else original_blob
+    mock_bucket.blob.side_effect = blob_side_effect
+
+    result = get_or_create_thumbnail("wall_images/abc.jpg", "w400")
+    assert result is None

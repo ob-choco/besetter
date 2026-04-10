@@ -6,7 +6,13 @@ from PIL import Image as PILImage
 
 # Mock infrastructure modules to avoid Secret Manager / GCS deps in tests
 sys.modules.setdefault("app.core.config", MagicMock())
-sys.modules.setdefault("app.core.gcs", MagicMock())
+_gcs_mock = MagicMock()
+sys.modules.setdefault("app.core.gcs", _gcs_mock)
+
+# Ensure app.core has a .gcs attribute so @patch("app.core.gcs.*") resolves correctly
+import app.core as _app_core
+if not hasattr(_app_core, "gcs"):
+    _app_core.gcs = sys.modules["app.core.gcs"]
 
 
 def create_test_image(width: int, height: int, color: str = "red") -> bytes:
