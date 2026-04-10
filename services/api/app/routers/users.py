@@ -66,6 +66,51 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
     return _build_profile_response(current_user)
 
 
+@router.patch("/me", response_model=UserProfileResponse)
+async def update_my_profile(
+    name: Optional[str] = Form(None),
+    bio: Optional[str] = Form(None),
+    profile_image: Optional[UploadFile] = File(None, alias="profileImage"),
+    current_user: User = Depends(get_current_user),
+):
+    """인증된 유저의 프로필을 수정한다. multipart/form-data를 지원한다."""
+    if name is not None:
+        current_user.name = name
+
+    if bio is not None:
+        current_user.bio = bio
+
+    if profile_image is not None and profile_image.filename:
+        file_ext = os.path.splitext(profile_image.filename)[1].lower()
+        if file_ext not in (".jpg", ".jpeg", ".png"):
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Only jpg/jpeg/png files are supported",
+            )
+
+        # 기존 프로필 이미지 삭제
+        if current_user.profile_image_url:
+            old_blob_path = extract_blob_path_from_url(current_user.profile_image_url)
+            if old_blob_path:
+                old_blob = bucket.blob(old_blob_path)
+                old_blob.delete(if_generation_match=None)
+
+        # 새 프로필 이미지 업로드
+        user_id = str(current_user.id)
+        unique_hex = uuid.uuid4().hex[:8]
+        blob_path = f"profile_images/{user_id}_{unique_hex}{file_ext}"
+        content = await profile_image.read()
+        content_type = "image/png" if file_ext == ".png" else "image/jpeg"
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(data=content, content_type=content_type)
+        current_user.profile_image_url = f"{get_base_url()}/{blob_path}"
+
+    current_user.updated_at = datetime.now(tz=timezone.utc)
+    await current_user.save()
+
+    return _build_profile_response(current_user)
+
+
 @router.delete("/me", status_code=204)
 async def delete_account(current_user: User = Depends(get_current_user)):
     """인증된 유저의 계정과 모든 리소스를 soft delete 한다."""
