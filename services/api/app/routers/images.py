@@ -16,6 +16,9 @@ import base64
 from beanie.odm.operators.find.logical import Or, And
 from beanie.odm.operators.find.comparison import LT, GT, Eq, In
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
+from fastapi.responses import RedirectResponse
+from app.services.thumbnail import PRESETS, get_or_create_thumbnail
+from app.core.gcs import get_base_url as gcs_get_base_url
 
 from app.models import model_config
 from app.routers.places import PlaceView, place_to_view
@@ -335,3 +338,34 @@ async def get_image_count(
     ).count()
     
     return ImageCountResponse(total_count=count)
+
+
+@router.get("/{blob_path:path}")
+async def get_image_by_blob_path(
+    blob_path: str,
+    type: Optional[str] = Query(None, description="Thumbnail preset (w400, s100)"),
+):
+    """Serve image or thumbnail via redirect to public GCS URL.
+
+    Without ?type: redirects to original image.
+    With ?type=<preset>: generates thumbnail on first request, then redirects to cached version.
+    """
+    if type is None:
+        base_url = gcs_get_base_url()
+        return RedirectResponse(url=f"{base_url}/{blob_path}", status_code=302)
+
+    if type not in PRESETS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid thumbnail preset: {type}. Valid: {', '.join(PRESETS.keys())}",
+        )
+
+    try:
+        url = get_or_create_thumbnail(blob_path, type)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    if url is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+    return RedirectResponse(url=url, status_code=302)
