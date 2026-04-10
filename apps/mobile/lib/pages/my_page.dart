@@ -262,25 +262,39 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 4),
         // 이름
         if (isEditing)
-          SizedBox(
-            width: 280,
-            child: TextField(
-              controller: nameController,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-                color: Color(0xFF2C2F30),
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: AppLocalizations.of(context)!.title,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF595C5D),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    AppLocalizations.of(context)!.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF595C5D),
+                    ),
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: const UnderlineInputBorder(),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: nameController,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Color(0xFF2C2F30),
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      border: UnderlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -292,29 +306,46 @@ class _ProfileHeader extends StatelessWidget {
               color: Color(0xFF2C2F30),
             ),
           ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 12),
         // 자기소개
         if (isEditing)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: TextField(
-              controller: bioController,
-              maxLines: 3,
-              minLines: 1,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF595C5D),
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: AppLocalizations.of(context)!.description,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF595C5D),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    width: 60,
+                    child: Text(
+                      AppLocalizations.of(context)!.description,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF595C5D),
+                      ),
+                    ),
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: const UnderlineInputBorder(),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: bioController,
+                    maxLines: 3,
+                    minLines: 1,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF595C5D),
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      border: UnderlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
             ),
           )
         else
