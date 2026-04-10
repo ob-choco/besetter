@@ -66,6 +66,7 @@ class User(Document):
     name: Optional[str] = None
     email: Optional[str] = None
     profile_image_url: Optional[str] = None
+    bio: Optional[str] = None
 
     refresh_token: Optional[str] = None
 
