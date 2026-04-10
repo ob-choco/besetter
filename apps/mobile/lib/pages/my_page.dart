@@ -162,12 +162,7 @@ class _ProfileHeader extends StatelessWidget {
   Future<void> _pickAndCropImage(BuildContext context) async {
     final editProfileLabel = AppLocalizations.of(context)!.editProfile;
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
+    final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
     final cropped = await ImageCropper().cropImage(
