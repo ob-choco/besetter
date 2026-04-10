@@ -182,5 +182,14 @@
   "createRoute": "Create Route",
   "enterGymInfoGuide": "Please enter climbing gym info",
   "addMorePhotos": "Add more photos",
-  "openSettings": "Open Settings"
+  "openSettings": "Open Settings",
+  "navMy": "MY",
+  "profile": "Profile",
+  "monthlyProgress": "Monthly Progress",
+  "recentWorkout": "Recent workout",
+  "profileUpdated": "Profile updated",
+  "failedUpdateProfile": "Failed to update profile",
+  "failedLoadProfile": "Failed to load profile",
+  "editProfile": "Edit",
+  "saveProfile": "Save"
 }

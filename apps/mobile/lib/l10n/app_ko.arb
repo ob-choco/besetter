@@ -183,5 +183,14 @@
   "createRoute": "루트 만들기",
   "enterGymInfoGuide": "암장 정보를 입력해주세요",
   "addMorePhotos": "사진 더 추가",
-  "openSettings": "설정 열기"
+  "openSettings": "설정 열기",
+  "navMy": "MY",
+  "profile": "프로필",
+  "monthlyProgress": "월간 운동 기록",
+  "recentWorkout": "최근 운동",
+  "profileUpdated": "프로필이 업데이트되었습니다",
+  "failedUpdateProfile": "프로필 업데이트에 실패했습니다",
+  "failedLoadProfile": "프로필을 불러오는데 실패했습니다",
+  "editProfile": "수정",
+  "saveProfile": "저장"
 }

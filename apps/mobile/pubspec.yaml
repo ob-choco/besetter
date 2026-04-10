@@ -76,6 +76,7 @@ dependencies:
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   exif: ^3.3.0
+  image_cropper: ^8.0.2
 
 dev_dependencies:
   flutter_test:

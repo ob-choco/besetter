@@ -182,5 +182,14 @@
   "createRoute": "ルートを作成",
   "enterGymInfoGuide": "ジム情報を入力してください",
   "addMorePhotos": "写真を追加",
-  "openSettings": "設定を開く"
+  "openSettings": "設定を開く",
+  "navMy": "MY",
+  "profile": "プロフィール",
+  "monthlyProgress": "月間トレーニング記録",
+  "recentWorkout": "最近のワークアウト",
+  "profileUpdated": "プロフィールが更新されました",
+  "failedUpdateProfile": "プロフィールの更新に失敗しました",
+  "failedLoadProfile": "プロフィールの読み込みに失敗しました",
+  "editProfile": "編集",
+  "saveProfile": "保存"
 }

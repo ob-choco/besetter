@@ -183,5 +183,14 @@
   "createRoute": "Crear ruta",
   "enterGymInfoGuide": "Ingrese la información del gimnasio",
   "addMorePhotos": "Agregar más fotos",
-  "openSettings": "Abrir configuración"
+  "openSettings": "Abrir configuración",
+  "navMy": "MI",
+  "profile": "Perfil",
+  "monthlyProgress": "Progreso mensual",
+  "recentWorkout": "Entrenamiento reciente",
+  "profileUpdated": "Perfil actualizado",
+  "failedUpdateProfile": "No se pudo actualizar el perfil",
+  "failedLoadProfile": "No se pudo cargar el perfil",
+  "editProfile": "Editar",
+  "saveProfile": "Guardar"
 }
