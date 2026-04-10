@@ -193,5 +193,6 @@
   "editProfile": "Edit",
   "saveProfile": "Save",
   "labelName": "Name",
-  "labelBio": "Bio"
+  "labelBio": "Bio",
+  "wallsTitle": "Climbing Walls"
 }

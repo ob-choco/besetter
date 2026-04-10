@@ -24,19 +24,25 @@ class HomePage extends HookConsumerWidget {
     }, []);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.yourClimbingWalls,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 48, 24, 16),
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 36, color: Colors.black),
+                  children: [
+                    const TextSpan(text: 'Your\n'),
+                    TextSpan(
+                      text: AppLocalizations.of(context)!.wallsTitle,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const Expanded(
               child: WallImageCarousel(),
             ),

@@ -194,5 +194,6 @@
   "editProfile": "Editar",
   "saveProfile": "Guardar",
   "labelName": "Nombre",
-  "labelBio": "Biografía"
+  "labelBio": "Biografía",
+  "wallsTitle": "Muros de Escalada"
 }

@@ -193,5 +193,6 @@
   "editProfile": "編集",
   "saveProfile": "保存",
   "labelName": "名前",
-  "labelBio": "自己紹介"
+  "labelBio": "自己紹介",
+  "wallsTitle": "クライミングウォール"
 }

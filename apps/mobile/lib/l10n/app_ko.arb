@@ -194,5 +194,6 @@
   "editProfile": "수정",
   "saveProfile": "저장",
   "labelName": "이름",
-  "labelBio": "자기소개"
+  "labelBio": "자기소개",
+  "wallsTitle": "클라이밍 월"
 }
