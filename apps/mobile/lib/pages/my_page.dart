@@ -38,11 +38,19 @@ class MyPage extends HookConsumerWidget {
           ),
         ),
         actions: [
+          if (isEditing.value && !isSaving.value)
+            IconButton(
+              icon: const Icon(Icons.close, color: Color(0xFF2C2F30)),
+              onPressed: () {
+                isEditing.value = false;
+                croppedImage.value = null;
+              },
+            ),
           if (!isSaving.value)
             IconButton(
               icon: Icon(
                 isEditing.value ? Icons.check : Icons.edit_outlined,
-                color: const Color(0xFF2C2F30),
+                color: isEditing.value ? const Color(0xFF0066FF) : const Color(0xFF2C2F30),
               ),
               onPressed: () async {
                 if (isEditing.value) {
