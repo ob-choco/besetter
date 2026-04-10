@@ -17,7 +17,6 @@ class MyPage extends HookConsumerWidget {
     final userAsync = ref.watch(userProfileProvider);
     final isEditing = useState(false);
     final croppedImage = useState<File?>(null);
-    final isCropping = useState(false);
     final nameController = useTextEditingController();
     final bioController = useTextEditingController();
     final isSaving = useState(false);
@@ -121,36 +120,24 @@ class MyPage extends HookConsumerWidget {
             ],
           ),
         ),
-        data: (user) => Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  _ProfileHeader(
-                    user: user,
-                    isEditing: isEditing.value,
-                    croppedImage: croppedImage,
-                    isCropping: isCropping,
-                    nameController: nameController,
-                    bioController: bioController,
-                  ),
-                  const SizedBox(height: 32),
-                  _MonthlyCalendar(selectedDay: selectedDay),
-                  const SizedBox(height: 32),
-                  _RecentWorkout(selectedDay: selectedDay.value),
-                ],
+        data: (user) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              _ProfileHeader(
+                user: user,
+                isEditing: isEditing.value,
+                croppedImage: croppedImage,
+                nameController: nameController,
+                bioController: bioController,
               ),
-            ),
-            if (isCropping.value)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black38,
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-              ),
-          ],
+              const SizedBox(height: 32),
+              _MonthlyCalendar(selectedDay: selectedDay),
+              const SizedBox(height: 32),
+              _RecentWorkout(selectedDay: selectedDay.value),
+            ],
+          ),
         ),
       ),
     );
@@ -161,7 +148,6 @@ class _ProfileHeader extends StatelessWidget {
   final UserState user;
   final bool isEditing;
   final ValueNotifier<File?> croppedImage;
-  final ValueNotifier<bool> isCropping;
   final TextEditingController nameController;
   final TextEditingController bioController;
 
@@ -169,7 +155,6 @@ class _ProfileHeader extends StatelessWidget {
     required this.user,
     required this.isEditing,
     required this.croppedImage,
-    required this.isCropping,
     required this.nameController,
     required this.bioController,
   });
@@ -180,30 +165,25 @@ class _ProfileHeader extends StatelessWidget {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
-    isCropping.value = true;
-    try {
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: picked.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: editProfileLabel,
-            cropStyle: CropStyle.circle,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(
-            title: editProfileLabel,
-            cropStyle: CropStyle.circle,
-            aspectRatioLockEnabled: true,
-          ),
-        ],
-      );
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: editProfileLabel,
+          cropStyle: CropStyle.circle,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: editProfileLabel,
+          cropStyle: CropStyle.circle,
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
 
-      if (cropped != null) {
-        croppedImage.value = File(cropped.path);
-      }
-    } finally {
-      isCropping.value = false;
+    if (cropped != null) {
+      croppedImage.value = File(cropped.path);
     }
   }
 
