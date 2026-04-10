@@ -306,7 +306,7 @@ class _ProfileHeader extends StatelessWidget {
               color: Color(0xFF2C2F30),
             ),
           ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         // 자기소개
         if (isEditing)
           Padding(
@@ -315,32 +315,37 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: SizedBox(
-                    child: Text(
-                      AppLocalizations.of(context)!.labelBio,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF595C5D),
-                      ),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    AppLocalizations.of(context)!.labelBio,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF595C5D),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
-                    controller: bioController,
-                    maxLines: 3,
-                    minLines: 1,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF595C5D),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFDADDDF)),
                     ),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      border: UnderlineInputBorder(),
+                    child: TextField(
+                      controller: bioController,
+                      maxLines: 4,
+                      minLines: 3,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF595C5D),
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
                 ),
