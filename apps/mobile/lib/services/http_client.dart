@@ -171,6 +171,41 @@ class AuthorizedHttpClient {
         ));
   }
 
+  // Multipart request (supports POST, PATCH, etc.)
+  static Future<http.Response> multipartRequest(
+    String path,
+    String? filePath, {
+    String fieldName = 'file',
+    Map<String, String>? fields,
+    String method = 'POST',
+  }) async {
+    return _executeRequest((token) async {
+      final request = http.MultipartRequest(
+        method,
+        Uri.parse('$_baseUrl$path'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (filePath != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fieldName,
+            filePath,
+            filename: filePath.split('/').last,
+          ),
+        );
+      }
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      final streamedResponse = await request.send();
+      return await http.Response.fromStream(streamedResponse);
+    });
+  }
+
   // Multipart POST 요청
   static Future<http.Response> multipartPost(
     String path,
