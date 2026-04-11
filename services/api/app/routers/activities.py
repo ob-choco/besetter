@@ -269,3 +269,58 @@ async def create_activity(
     await _update_user_route_stats(current_user.id, route.id, inc, activity_at=now)
 
     return _activity_to_response(activity)
+
+
+@router.patch("/{route_id}/activity/{activity_id}", response_model=ActivityResponse)
+async def update_activity(
+    route_id: str,
+    activity_id: str,
+    request: UpdateActivityRequest,
+    current_user: User = Depends(get_current_user),
+):
+    # 1. Activity 존재 + 소유 확인
+    activity = await Activity.find_one(
+        Activity.id == ObjectId(activity_id),
+        Activity.route_id == ObjectId(route_id),
+        Activity.user_id == current_user.id,
+    )
+    if not activity:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    # 2. 이미 종료된 건 수정 불가
+    if activity.status != ActivityStatus.STARTED:
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="Only activities with status 'started' can be updated",
+        )
+
+    # 3. status 유효성
+    if request.status not in (ActivityStatus.COMPLETED, ActivityStatus.ATTEMPTED):
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Status must be 'completed' or 'attempted'",
+        )
+
+    # 4. duration 계산 + 업데이트
+    now = datetime.now(tz=timezone.utc)
+    duration = _compute_duration(activity.started_at, request.ended_at)
+    activity.status = request.status
+    activity.ended_at = request.ended_at
+    activity.duration = duration
+    activity.updated_at = now
+    await activity.save()
+
+    # 5. Stats 갱신 — PATCH는 이미 total_count +1 되어 있으므로 count 증가 없이 duration + completed 관련만
+    inc: dict = {}
+    inc["totalDuration"] = duration
+    if request.status == ActivityStatus.COMPLETED:
+        inc["completedCount"] = 1
+        inc["completedDuration"] = duration
+        if activity.location_verified:
+            inc["verifiedCompletedCount"] = 1
+            inc["verifiedCompletedDuration"] = duration
+
+    await _update_route_stats(activity.route_id, inc)
+    await _update_user_route_stats(current_user.id, activity.route_id, inc, activity_at=now)
+
+    return _activity_to_response(activity)
