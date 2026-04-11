@@ -811,39 +811,14 @@ class _DailyRouteCard extends StatelessWidget {
                           Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
                         ],
                       ),
-                      // Bottom: big send count + sub stats
+                      // Bottom: stat boxes row (A style)
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '$completedCount',
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0066FF), height: 1),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                l10n.completed.toUpperCase(),
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '$attemptedCount ${l10n.attempted}',
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D)),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                l10n.totalDurationLabel(formatDuration(totalDuration)),
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D)),
-                              ),
-                            ],
-                          ),
+                          _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase()),
+                          const SizedBox(width: 12),
+                          _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase()),
+                          const SizedBox(width: 12),
+                          _StatBox(value: formatDuration(totalDuration), label: 'DURATION'),
                         ],
                       ),
                     ],
@@ -854,6 +829,31 @@ class _DailyRouteCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _StatBox({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30), height: 1),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
+        ),
+      ],
     );
   }
 }
