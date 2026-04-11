@@ -195,7 +195,7 @@
   "labelName": "Name",
   "labelBio": "Bio",
   "wallsTitle": "Spray Walls",
-  "slideToStart": "Start climbing!",
+  "slideToStart": "Slide to start climbing!",
   "duration": "DURATION",
   "resetTimer": "Reset",
   "attempted": "Attempted",
@@ -212,5 +212,24 @@
     }
   },
   "activitySaveFailed": "Failed to save activity",
-  "ok": "OK"
+  "ok": "OK",
+  "workoutLog": "WORKOUT LOG",
+  "totalSessionsCount": "Total: {count} sessions",
+  "@totalSessionsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "avgDurationLabel": "Avg. Duration: {duration}",
+  "@avgDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "completedOnly": "Completed Only",
+  "onSite": "ON-SITE",
+  "noWorkoutRecords": "No workout records yet",
+  "deleteActivityConfirm": "Delete this record?",
+  "activityDeleted": "Record deleted",
+  "failedDeleteActivity": "Failed to delete record"
 }

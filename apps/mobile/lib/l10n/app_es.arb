@@ -196,7 +196,7 @@
   "labelName": "Nombre",
   "labelBio": "Biografía",
   "wallsTitle": "Spray Walls",
-  "slideToStart": "¡A escalar!",
+  "slideToStart": "¡Desliza para escalar!",
   "duration": "DURATION",
   "resetTimer": "Reiniciar",
   "attempted": "Intentado",
@@ -213,5 +213,24 @@
     }
   },
   "activitySaveFailed": "Error al guardar la actividad",
-  "ok": "OK"
+  "ok": "OK",
+  "workoutLog": "REGISTRO DE EJERCICIO",
+  "totalSessionsCount": "Total: {count} sesiones",
+  "@totalSessionsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "avgDurationLabel": "Duración promedio: {duration}",
+  "@avgDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "completedOnly": "Solo completados",
+  "onSite": "ON-SITE",
+  "noWorkoutRecords": "Aún no hay registros de ejercicio",
+  "deleteActivityConfirm": "¿Eliminar este registro?",
+  "activityDeleted": "Registro eliminado",
+  "failedDeleteActivity": "No se pudo eliminar el registro"
 }

@@ -195,7 +195,7 @@
   "labelName": "名前",
   "labelBio": "自己紹介",
   "wallsTitle": "クライミングウォール",
-  "slideToStart": "クライミング開始！",
+  "slideToStart": "スライドしてクライミング開始！",
   "duration": "DURATION",
   "resetTimer": "リセット",
   "attempted": "未完登",
@@ -212,5 +212,24 @@
     }
   },
   "activitySaveFailed": "アクティビティの保存に失敗しました",
-  "ok": "OK"
+  "ok": "OK",
+  "workoutLog": "ワークアウトログ",
+  "totalSessionsCount": "合計 {count}回",
+  "@totalSessionsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "avgDurationLabel": "平均 {duration}",
+  "@avgDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "completedOnly": "完登のみ",
+  "onSite": "ON-SITE",
+  "noWorkoutRecords": "ワークアウト記録がありません",
+  "deleteActivityConfirm": "この記録を削除しますか？",
+  "activityDeleted": "記録が削除されました",
+  "failedDeleteActivity": "記録の削除に失敗しました"
 }

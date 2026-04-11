@@ -196,7 +196,7 @@
   "labelName": "이름",
   "labelBio": "자기소개",
   "wallsTitle": "클라이밍 월",
-  "slideToStart": "등반 시작!",
+  "slideToStart": "밀어서 등반 시작!",
   "duration": "DURATION",
   "resetTimer": "리셋",
   "attempted": "미완등",
@@ -213,5 +213,24 @@
     }
   },
   "activitySaveFailed": "활동 저장에 실패했습니다",
-  "ok": "확인"
+  "ok": "확인",
+  "workoutLog": "운동 기록",
+  "totalSessionsCount": "총 {count}회",
+  "@totalSessionsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "avgDurationLabel": "평균 {duration}",
+  "@avgDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "completedOnly": "완등만",
+  "onSite": "ON-SITE",
+  "noWorkoutRecords": "운동 기록이 없습니다",
+  "deleteActivityConfirm": "이 기록을 삭제하시겠습니까?",
+  "activityDeleted": "기록이 삭제되었습니다",
+  "failedDeleteActivity": "기록 삭제에 실패했습니다"
 }
