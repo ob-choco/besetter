@@ -51,4 +51,47 @@ class ActivityService {
       throw Exception('Failed to delete activity. Status: ${response.statusCode}');
     }
   }
+
+  /// Get the current user's stats for a specific route.
+  static Future<Map<String, dynamic>> getMyStats({
+    required String routeId,
+  }) async {
+    final response = await AuthorizedHttpClient.get(
+      '/routes/$routeId/my-stats',
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('Failed to load stats. Status: ${response.statusCode}');
+    }
+  }
+
+  /// Get the current user's activities for a specific route.
+  ///
+  /// [status] - Optional filter: "completed" for completed only, null for all.
+  /// [limit] - Page size, default 10.
+  /// [cursor] - Cursor for pagination, null for first page.
+  static Future<Map<String, dynamic>> getMyActivities({
+    required String routeId,
+    String? status,
+    int limit = 10,
+    String? cursor,
+  }) async {
+    final queryParams = <String, String>{
+      'limit': limit.toString(),
+      if (status != null) 'status': status,
+      if (cursor != null) 'cursor': cursor,
+    };
+    final uri = Uri.parse('/routes/$routeId/my-activities')
+        .replace(queryParameters: queryParams);
+
+    final response = await AuthorizedHttpClient.get(uri.toString());
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('Failed to load activities. Status: ${response.statusCode}');
+    }
+  }
 }
