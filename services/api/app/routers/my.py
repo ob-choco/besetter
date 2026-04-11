@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from app.dependencies import get_current_user
 from app.models import model_config
-from app.models.activity import Activity
+from app.models.activity import Activity, RouteSnapshot
 from app.models.user import User
 
 router = APIRouter(prefix="/my", tags=["my"])
@@ -75,6 +75,34 @@ class MonthlySummaryResponse(BaseModel):
     active_dates: list[int] = []
 
 
+class DailySummary(BaseModel):
+    model_config = model_config
+
+    total_count: int = 0
+    completed_count: int = 0
+    attempted_count: int = 0
+    total_duration: float = 0
+    route_count: int = 0
+
+
+class DailyRouteItem(BaseModel):
+    model_config = model_config
+
+    route_id: str
+    route_snapshot: RouteSnapshot
+    total_count: int
+    completed_count: int
+    attempted_count: int
+    total_duration: float
+
+
+class DailyRoutesResponse(BaseModel):
+    model_config = model_config
+
+    summary: DailySummary
+    routes: list[DailyRouteItem]
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -123,3 +151,63 @@ async def get_monthly_summary(
     active_dates = [doc["_id"] for doc in results]
 
     return MonthlySummaryResponse(active_dates=active_dates)
+
+
+@router.get("/daily-routes", response_model=DailyRoutesResponse)
+async def get_daily_routes(
+    date: str = Query(pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    timezone_param: str = Query(alias="timezone", default=DEFAULT_TIMEZONE),
+    current_user: User = Depends(get_current_user),
+):
+    start_utc, end_utc = _day_utc_range(date, timezone_param)
+
+    pipeline = [
+        {"$match": {
+            "userId": current_user.id,
+            "startedAt": {"$gte": start_utc, "$lt": end_utc},
+        }},
+        {"$group": {
+            "_id": "$routeId",
+            "routeSnapshot": {"$first": "$routeSnapshot"},
+            "totalCount": {"$sum": 1},
+            "completedCount": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
+            "attemptedCount": {"$sum": {"$cond": [{"$eq": ["$status", "attempted"]}, 1, 0]}},
+            "totalDuration": {"$sum": "$duration"},
+        }},
+        {"$group": {
+            "_id": None,
+            "routes": {"$push": "$$ROOT"},
+            "totalCount": {"$sum": "$totalCount"},
+            "completedCount": {"$sum": "$completedCount"},
+            "attemptedCount": {"$sum": "$attemptedCount"},
+            "totalDuration": {"$sum": "$totalDuration"},
+            "routeCount": {"$sum": 1},
+        }},
+    ]
+
+    results = await Activity.aggregate(pipeline).to_list()
+
+    if not results:
+        return DailyRoutesResponse(summary=DailySummary(), routes=[])
+
+    doc = results[0]
+    summary = DailySummary(
+        total_count=doc["totalCount"],
+        completed_count=doc["completedCount"],
+        attempted_count=doc["attemptedCount"],
+        total_duration=doc["totalDuration"],
+        route_count=doc["routeCount"],
+    )
+    routes = [
+        DailyRouteItem(
+            route_id=str(r["_id"]),
+            route_snapshot=RouteSnapshot(**r["routeSnapshot"]),
+            total_count=r["totalCount"],
+            completed_count=r["completedCount"],
+            attempted_count=r["attemptedCount"],
+            total_duration=r["totalDuration"],
+        )
+        for r in doc["routes"]
+    ]
+
+    return DailyRoutesResponse(summary=summary, routes=routes)

@@ -3,10 +3,14 @@ from datetime import datetime, timezone as tz, timedelta
 from app.routers.my import (
     LastActivityDateResponse,
     MonthlySummaryResponse,
+    DailyRoutesResponse,
+    DailySummary,
+    DailyRouteItem,
     _to_local_date_str,
     _month_utc_range,
     _day_utc_range,
 )
+from app.models.activity import RouteSnapshot
 
 
 def test_last_activity_date_response_schema():
@@ -86,3 +90,48 @@ def test_monthly_summary_response_empty():
     resp = MonthlySummaryResponse(active_dates=[])
     dumped = resp.model_dump(by_alias=True)
     assert dumped["activeDates"] == []
+
+
+def test_daily_routes_response_schema():
+    """DailyRoutesResponse should serialize with camelCase aliases."""
+    snapshot = RouteSnapshot(
+        title="Morning Light",
+        grade_type="v_grade",
+        grade="V4",
+        grade_color="#4CAF50",
+        place_name="Urban Apex Gym",
+    )
+    route_item = DailyRouteItem(
+        route_id="507f1f77bcf86cd799439011",
+        route_snapshot=snapshot,
+        total_count=3,
+        completed_count=2,
+        attempted_count=1,
+        total_duration=845.50,
+    )
+    summary = DailySummary(
+        total_count=3,
+        completed_count=2,
+        attempted_count=1,
+        total_duration=845.50,
+        route_count=1,
+    )
+    resp = DailyRoutesResponse(summary=summary, routes=[route_item])
+    dumped = resp.model_dump(by_alias=True)
+
+    assert dumped["summary"]["totalCount"] == 3
+    assert dumped["summary"]["routeCount"] == 1
+    assert len(dumped["routes"]) == 1
+    assert dumped["routes"][0]["routeId"] == "507f1f77bcf86cd799439011"
+    assert dumped["routes"][0]["routeSnapshot"]["gradeType"] == "v_grade"
+    assert dumped["routes"][0]["completedCount"] == 2
+    assert dumped["routes"][0]["totalDuration"] == 845.50
+
+
+def test_daily_routes_response_empty():
+    """DailyRoutesResponse with no data should have zero summary and empty routes."""
+    summary = DailySummary()
+    resp = DailyRoutesResponse(summary=summary, routes=[])
+    dumped = resp.model_dump(by_alias=True)
+    assert dumped["summary"]["totalCount"] == 0
+    assert dumped["routes"] == []
