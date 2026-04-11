@@ -324,3 +324,27 @@ async def update_activity(
     await _update_user_route_stats(current_user.id, activity.route_id, inc, activity_at=now)
 
     return _activity_to_response(activity)
+
+
+@router.delete("/{route_id}/activity/{activity_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+async def delete_activity(
+    route_id: str,
+    activity_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    # 1. Activity 존재 + 소유 확인
+    activity = await Activity.find_one(
+        Activity.id == ObjectId(activity_id),
+        Activity.route_id == ObjectId(route_id),
+        Activity.user_id == current_user.id,
+    )
+    if not activity:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    # 2. Stats 감소
+    inc = _build_stats_inc(activity.status, activity.location_verified, activity.duration, sign=-1)
+    await _update_route_stats(activity.route_id, inc)
+    await _update_user_route_stats(current_user.id, activity.route_id, inc)
+
+    # 3. Hard delete
+    await activity.delete()
