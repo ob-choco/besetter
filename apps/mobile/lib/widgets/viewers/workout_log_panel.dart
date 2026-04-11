@@ -177,20 +177,11 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     }
   }
 
-  String _formatAvgDuration(double totalDuration, int count) {
-    if (count == 0) return '00:00:00';
-    final avg = totalDuration / count;
-    final hours = (avg / 3600).floor().toString().padLeft(2, '0');
-    final minutes = ((avg % 3600) / 60).floor().toString().padLeft(2, '0');
-    final seconds = (avg % 60).floor().toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
-  }
-
   String _formatDuration(double durationSeconds) {
-    final hours = (durationSeconds / 3600).floor().toString().padLeft(2, '0');
-    final minutes = ((durationSeconds % 3600) / 60).floor().toString().padLeft(2, '0');
+    final minutes = (durationSeconds / 60).floor().toString().padLeft(2, '0');
     final seconds = (durationSeconds % 60).floor().toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
+    final centiseconds = ((durationSeconds * 100) % 100).floor().toString().padLeft(2, '0');
+    return '$minutes:$seconds.$centiseconds';
   }
 
   /// Group activities by date, returning a list of (dateLabel, activities) pairs.
@@ -317,7 +308,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${l10n.totalSessionsCount(count)} | ${l10n.avgDurationLabel(_formatAvgDuration(duration, count))}',
+            '${l10n.totalSessionsCount(count)} | ${l10n.avgDurationLabel(_formatDuration(count > 0 ? duration / count : 0))}',
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF595C5D),
@@ -390,63 +381,58 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time + duration column
+          // Time + duration
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      timeStr,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF2C2F30),
-                      ),
-                    ),
-                    if (isVerified && isCompleted) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Color(0xFF22C55E),
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              l10n.onSite,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF16A34A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
                 Text(
-                  'Duration: ${_formatDuration(duration)}',
+                  timeStr,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2C2F30),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _formatDuration(duration),
+                  style: const TextStyle(
+                    fontSize: 13,
                     color: Color(0xFF595C5D),
                   ),
                 ),
+                if (isVerified && isCompleted) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          size: 12,
+                          color: Color(0xFF22C55E),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          l10n.onSite,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
