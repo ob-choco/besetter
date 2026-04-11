@@ -356,9 +356,18 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       );
     }
 
-    // 3.5 items visible: each item ~72px height → container ~252px
+    // 1-3 items: no fixed height (fit content), 4+: 3.5 items visible with scroll
+    const itemHeight = 44.0; // single-line row (~12 vertical padding + content)
+    const dateHeaderHeight = 28.0;
+
+    if (_activities.length <= 3) {
+      return Column(children: items);
+    }
+
+    // Calculate height for 3.5 items visible
+    final scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
     return SizedBox(
-      height: 252,
+      height: scrollHeight,
       child: ListView(
         controller: _scrollController,
         padding: EdgeInsets.zero,
