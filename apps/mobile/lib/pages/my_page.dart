@@ -775,7 +775,7 @@ class _DailyRouteCard extends StatelessWidget {
             ClipRRect(
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
               child: Container(
-                width: 120, height: 120,
+                width: 150, height: 150,
                 color: const Color(0xFFF0F0F0),
                 child: imageUrl != null
                     ? CachedNetworkImage(
@@ -788,35 +788,66 @@ class _DailyRouteCard extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(6)),
-                          child: Text(grade, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2F30))),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(l10n.routeAttemptsSummary(completedCount, attemptedCount), style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D))),
-                        const Spacer(),
-                        Text(l10n.totalDurationLabel(formatDuration(totalDuration)), style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D))),
-                      ],
-                    ),
-                  ],
+              child: SizedBox(
+                height: 150,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top: grade + title + place
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(6)),
+                            child: Text(grade, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
+                          const SizedBox(height: 2),
+                          Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
+                        ],
+                      ),
+                      // Bottom: big send count + sub stats
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$completedCount',
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0066FF), height: 1),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.completed.toUpperCase(),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '$attemptedCount ${l10n.attempted}',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.totalDurationLabel(formatDuration(totalDuration)),
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF595C5D)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
