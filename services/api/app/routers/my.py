@@ -69,6 +69,12 @@ class LastActivityDateResponse(BaseModel):
     last_activity_date: Optional[str] = None
 
 
+class MonthlySummaryResponse(BaseModel):
+    model_config = model_config
+
+    active_dates: list[int] = []
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -91,3 +97,29 @@ async def get_last_activity_date(
 
     date_str = _to_local_date_str(activity[0].started_at, timezone_param)
     return LastActivityDateResponse(last_activity_date=date_str)
+
+
+@router.get("/monthly-summary", response_model=MonthlySummaryResponse)
+async def get_monthly_summary(
+    year: int = Query(ge=2026),
+    month: int = Query(ge=1, le=12),
+    timezone_param: str = Query(alias="timezone", default=DEFAULT_TIMEZONE),
+    current_user: User = Depends(get_current_user),
+):
+    start_utc, end_utc = _month_utc_range(year, month, timezone_param)
+
+    pipeline = [
+        {"$match": {
+            "userId": current_user.id,
+            "startedAt": {"$gte": start_utc, "$lt": end_utc},
+        }},
+        {"$group": {
+            "_id": {"$dayOfMonth": {"date": "$startedAt", "timezone": timezone_param}},
+        }},
+        {"$sort": {"_id": 1}},
+    ]
+
+    results = await Activity.aggregate(pipeline).to_list()
+    active_dates = [doc["_id"] for doc in results]
+
+    return MonthlySummaryResponse(active_dates=active_dates)

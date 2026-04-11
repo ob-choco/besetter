@@ -2,6 +2,7 @@ from datetime import datetime, timezone as tz, timedelta
 
 from app.routers.my import (
     LastActivityDateResponse,
+    MonthlySummaryResponse,
     _to_local_date_str,
     _month_utc_range,
     _day_utc_range,
@@ -71,3 +72,17 @@ def test_day_utc_range_feb_28():
     assert start == datetime(2027, 2, 27, 15, 0, 0, tzinfo=tz.utc)
     # March 1 00:00 KST = Feb 28 15:00 UTC
     assert end == datetime(2027, 2, 28, 15, 0, 0, tzinfo=tz.utc)
+
+
+def test_monthly_summary_response_schema():
+    """MonthlySummaryResponse should serialize with camelCase alias."""
+    resp = MonthlySummaryResponse(active_dates=[1, 5, 9, 12])
+    dumped = resp.model_dump(by_alias=True)
+    assert dumped["activeDates"] == [1, 5, 9, 12]
+
+
+def test_monthly_summary_response_empty():
+    """MonthlySummaryResponse should handle empty list."""
+    resp = MonthlySummaryResponse(active_dates=[])
+    dumped = resp.model_dump(by_alias=True)
+    assert dumped["activeDates"] == []
