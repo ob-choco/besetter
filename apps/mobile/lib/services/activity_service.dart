@@ -17,6 +17,7 @@ class ActivityService {
     required DateTime endedAt,
     required double latitude,
     required double longitude,
+    required String timezone,
   }) async {
     final body = {
       'status': status,
@@ -24,6 +25,7 @@ class ActivityService {
       'endedAt': endedAt.toUtc().toIso8601String(),
       'latitude': latitude,
       'longitude': longitude,
+      'timezone': timezone,
     };
 
     final response = await AuthorizedHttpClient.post(
@@ -92,6 +94,64 @@ class ActivityService {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Failed to load activities. Status: ${response.statusCode}');
+    }
+  }
+
+  /// Get the date of the user's most recent activity.
+  static Future<String?> getLastActivityDate({
+    required String timezone,
+  }) async {
+    final uri = Uri.parse('/my/last-activity-date')
+        .replace(queryParameters: {'timezone': timezone});
+
+    final response = await AuthorizedHttpClient.get(uri.toString());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data['lastActivityDate'] as String?;
+    } else {
+      throw Exception('Failed to load last activity date. Status: ${response.statusCode}');
+    }
+  }
+
+  /// Get the active dates (day numbers) for a given month.
+  static Future<List<int>> getMonthlySummary({
+    required int year,
+    required int month,
+    required String timezone,
+  }) async {
+    final uri = Uri.parse('/my/monthly-summary').replace(queryParameters: {
+      'year': year.toString(),
+      'month': month.toString(),
+      'timezone': timezone,
+    });
+
+    final response = await AuthorizedHttpClient.get(uri.toString());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return List<int>.from(data['activeDates']);
+    } else {
+      throw Exception('Failed to load monthly summary. Status: ${response.statusCode}');
+    }
+  }
+
+  /// Get route groups for a specific date.
+  static Future<Map<String, dynamic>> getDailyRoutes({
+    required String date,
+    required String timezone,
+  }) async {
+    final uri = Uri.parse('/my/daily-routes').replace(queryParameters: {
+      'date': date,
+      'timezone': timezone,
+    });
+
+    final response = await AuthorizedHttpClient.get(uri.toString());
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('Failed to load daily routes. Status: ${response.statusCode}');
     }
   }
 }
