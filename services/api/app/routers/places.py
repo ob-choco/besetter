@@ -1,5 +1,4 @@
 import io
-import math
 import os
 import uuid
 from datetime import datetime, timezone
@@ -11,6 +10,7 @@ from fastapi import status
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field
 
+from app.core.geo import haversine_distance
 from app.core.gcs import bucket, get_base_url
 from app.dependencies import get_current_user
 from app.models import model_config
@@ -84,16 +84,6 @@ class PlaceImageUploadResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Return distance in metres between two (lat, lon) points."""
-    R = 6_371_000  # Earth radius in metres
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
@@ -215,7 +205,7 @@ async def get_nearby_places(
     for place in candidates:
         if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
             continue
-        distance = _haversine(latitude, longitude, place.latitude, place.longitude) if place.latitude and place.longitude else None
+        distance = haversine_distance(latitude, longitude, place.latitude, place.longitude) if place.latitude and place.longitude else None
         results.append(place_to_view(place, distance=round(distance, 2) if distance else None))
 
     return results
