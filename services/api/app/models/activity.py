@@ -49,6 +49,7 @@ class Activity(Document):
     started_at: datetime
     ended_at: datetime
     duration: float
+    timezone: Optional[str] = None  # IANA timezone, e.g. "Asia/Seoul"
     route_snapshot: RouteSnapshot
     created_at: datetime
     updated_at: Optional[datetime] = None

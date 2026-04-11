@@ -40,6 +40,7 @@ class CreateActivityRequest(BaseModel):
     status: ActivityStatus
     started_at: datetime
     ended_at: datetime
+    timezone: str
 
 
 class ActivityResponse(BaseModel):
@@ -260,6 +261,7 @@ async def create_activity(
         started_at=request.started_at,
         ended_at=request.ended_at,
         duration=duration,
+        timezone=request.timezone,
         route_snapshot=snapshot,
         created_at=now,
     )
