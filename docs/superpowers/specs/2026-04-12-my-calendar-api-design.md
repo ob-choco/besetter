@@ -145,7 +145,7 @@ MongoDB Aggregation Pipeline:
 `summary`는 해당 날짜의 전체 통계 (모든 루트 합산), `routes`는 루트별 상세.
 
 **구현:**
-MongoDB Aggregation Pipeline (2단계 group):
+MongoDB Aggregation Pipeline (2단계 $group):
 ```python
 [
     {"$match": {
@@ -160,12 +160,21 @@ MongoDB Aggregation Pipeline (2단계 group):
         "completedCount": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
         "attemptedCount": {"$sum": {"$cond": [{"$eq": ["$status", "attempted"]}, 1, 0]}},
         "totalDuration": {"$sum": "$duration"}
+    }},
+    # Stage 2: 전체 합산 + 루트 배열 수집
+    {"$group": {
+        "_id": None,
+        "routes": {"$push": "$$ROOT"},
+        "totalCount": {"$sum": "$totalCount"},
+        "completedCount": {"$sum": "$completedCount"},
+        "attemptedCount": {"$sum": "$attemptedCount"},
+        "totalDuration": {"$sum": "$totalDuration"},
+        "routeCount": {"$sum": 1}
     }}
 ]
 ```
 
-`summary`는 루트별 집계 결과를 Python에서 합산하여 구성한다 (문서 수가 적으므로 추가 aggregation stage 불필요).
-```
+단일 document로 `summary` 필드와 `routes` 배열이 함께 반환된다. 문서를 한 번만 처리한다.
 
 - `day_start_utc` / `day_end_utc`는 전달받은 timezone 기준 해당 날짜의 00:00:00~23:59:59를 UTC로 변환
 - 인덱스: `(userId, startedAt)` range scan (하루 범위, 매우 좁음)
