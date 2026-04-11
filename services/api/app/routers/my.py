@@ -147,7 +147,9 @@ async def get_monthly_summary(
         {"$sort": {"_id": 1}},
     ]
 
-    results = await Activity.aggregate(pipeline).to_list()
+    collection = Activity.get_motor_collection()
+    cursor = collection.aggregate(pipeline)
+    results = await cursor.to_list(length=None)
     active_dates = [doc["_id"] for doc in results]
 
     return MonthlySummaryResponse(active_dates=active_dates)
@@ -185,7 +187,9 @@ async def get_daily_routes(
         }},
     ]
 
-    results = await Activity.aggregate(pipeline).to_list()
+    collection = Activity.get_motor_collection()
+    cursor = collection.aggregate(pipeline)
+    results = await cursor.to_list(length=None)
 
     if not results:
         return DailyRoutesResponse(summary=DailySummary(), routes=[])
