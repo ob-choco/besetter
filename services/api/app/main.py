@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from app.routers import activities, authentications, hold_polygons, places, share, well_known, my
+from app.routers import activities, authentications, hold_polygons, places, share, well_known
 from app.models.open_id_nonce import OpenIdNonce as OpenIdNonceModel
 from app.models.user import User as UserModel
 from app.models.hold_polygon import HoldPolygon as HoldPolygonModel
@@ -17,6 +17,7 @@ from logging import info
 from app.routers import images
 from app.routers import routes
 from app.routers import users
+from app.routers import my
 from app.core.config import get
 
 
