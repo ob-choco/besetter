@@ -12,7 +12,6 @@ from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.activity import (
     Activity,
-    ActivityStats,
     ActivityStatus,
     RouteSnapshot,
     UserRouteStats,
@@ -21,8 +20,6 @@ from app.models.image import Image
 from app.models.place import Place
 from app.models.route import Route
 from app.models.user import User
-from app.core.gcs import generate_signed_url, extract_blob_path_from_url
-
 router = APIRouter(prefix="/routes", tags=["activities"])
 
 LOCATION_VERIFICATION_RADIUS_M = 300
@@ -179,7 +176,7 @@ async def _verify_location(route: Route, latitude: float, longitude: float) -> b
         return False
 
     place = await Place.get(image.place_id)
-    if not place or not place.latitude or not place.longitude:
+    if not place or place.latitude is None or place.longitude is None:
         return False
 
     distance = haversine_distance(latitude, longitude, place.latitude, place.longitude)
