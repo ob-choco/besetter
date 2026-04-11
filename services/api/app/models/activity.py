@@ -32,11 +32,11 @@ class ActivityStats(BaseModel):
     model_config = model_config
 
     total_count: int = 0
-    total_duration: int = 0
+    total_duration: float = 0
     completed_count: int = 0
-    completed_duration: int = 0
+    completed_duration: float = 0
     verified_completed_count: int = 0
-    verified_completed_duration: int = 0
+    verified_completed_duration: float = 0
 
 
 class Activity(Document):
@@ -48,7 +48,7 @@ class Activity(Document):
     location_verified: bool = False
     started_at: datetime
     ended_at: datetime
-    duration: int
+    duration: float
     route_snapshot: RouteSnapshot
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -57,7 +57,7 @@ class Activity(Document):
         name = "activities"
         indexes = [
             IndexModel([("userId", ASCENDING), ("startedAt", ASCENDING)]),
-            IndexModel([("routeId", ASCENDING), ("userId", ASCENDING)]),
+            IndexModel([("routeId", ASCENDING), ("userId", ASCENDING), ("startedAt", ASCENDING)]),
         ]
         keep_nulls = True
 
@@ -68,11 +68,11 @@ class UserRouteStats(Document):
     user_id: PydanticObjectId
     route_id: PydanticObjectId
     total_count: int = 0
-    total_duration: int = 0
+    total_duration: float = 0
     completed_count: int = 0
-    completed_duration: int = 0
+    completed_duration: float = 0
     verified_completed_count: int = 0
-    verified_completed_duration: int = 0
+    verified_completed_duration: float = 0
     last_activity_at: Optional[datetime] = None
 
     class Settings:
