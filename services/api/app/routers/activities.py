@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
 
@@ -324,7 +324,7 @@ async def get_my_activities(
     route_id: str,
     current_user: User = Depends(get_current_user),
     status: Optional[ActivityStatus] = None,
-    limit: int = 10,
+    limit: int = Query(default=10, ge=1, le=50),
     cursor: Optional[str] = None,
 ):
     query_filters = [
@@ -336,9 +336,12 @@ async def get_my_activities(
         query_filters.append(Activity.status == status)
 
     if cursor:
-        started_at_str, last_id = _decode_activity_cursor(cursor)
-        cursor_started_at = datetime.fromisoformat(started_at_str)
-        cursor_id = ObjectId(last_id)
+        try:
+            started_at_str, last_id = _decode_activity_cursor(cursor)
+            cursor_started_at = datetime.fromisoformat(started_at_str)
+            cursor_id = ObjectId(last_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid cursor")
         # startedAt DESC, _id DESC: get items before cursor
         from beanie.odm.operators.find.comparison import LT
         from beanie.odm.operators.find.logical import Or, And

@@ -316,7 +316,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                   ActivityPanel(
                     routeId: widget.routeData.id,
                     onActivityCreated: () {
-                      (_workoutLogKey.currentState as dynamic).refresh();
+                      (_workoutLogKey.currentState as dynamic)?.refresh();
                     },
                   ),
                   // Workout log (stats + activity list)
