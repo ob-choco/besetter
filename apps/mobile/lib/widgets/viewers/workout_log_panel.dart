@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../providers/activity_refresh_provider.dart';
 import '../../services/activity_service.dart';
 
 class WorkoutLogPanel extends StatefulWidget {
@@ -169,6 +171,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       // Refresh both stats and activities
       _loadStats();
       _loadActivities();
+      ProviderScope.containerOf(context).read(activityRefreshProvider.notifier).state++;
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

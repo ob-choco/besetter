@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../providers/activity_refresh_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/activity_service.dart';
 import '../utils/thumbnail_url.dart';
@@ -85,6 +86,9 @@ class MyPage extends HookConsumerWidget {
       }
     }
 
+    // Watch activity refresh signal
+    final activityRefresh = ref.watch(activityRefreshProvider);
+
     // Initial load
     useEffect(() {
       () async {
@@ -107,6 +111,20 @@ class MyPage extends HookConsumerWidget {
       }();
       return null;
     }, []);
+
+    // Reload current view when activity changes (created/deleted)
+    useEffect(() {
+      if (activityRefresh == 0) return null; // skip initial
+      // Clear caches so fresh data is fetched
+      monthlySummaryCache.value.clear();
+      dailyRoutesCache.value.clear();
+      final tz = timezone.value;
+      loadMonthlySummary(calendarYear.value, calendarMonth.value, tz);
+      if (selectedDay.value != null) {
+        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!, tz);
+      }
+      return null;
+    }, [activityRefresh]);
 
     // Month navigation
     void goToPrevMonth() {
