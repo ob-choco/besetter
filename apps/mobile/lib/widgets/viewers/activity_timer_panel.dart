@@ -50,11 +50,14 @@ class _ActivityTimerPanelState extends State<ActivityTimerPanel> {
     });
   }
 
-  String _formatDuration(Duration d) {
+  String _formatMainTime(Duration d) {
     final minutes = d.inMinutes.toString().padLeft(2, '0');
     final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    final centiseconds = ((d.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0');
-    return '$minutes:$seconds.$centiseconds';
+    return '$minutes:$seconds';
+  }
+
+  String _formatCentiseconds(Duration d) {
+    return '.${((d.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0')}';
   }
 
   @override
@@ -110,14 +113,31 @@ class _ActivityTimerPanelState extends State<ActivityTimerPanel> {
           ),
           const SizedBox(height: 4),
           // Timer display
-          Text(
-            _formatDuration(_elapsed),
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF2C2F30),
-              letterSpacing: -1.8,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                _formatMainTime(_elapsed),
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2C2F30),
+                  letterSpacing: -1.8,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+              Text(
+                _formatCentiseconds(_elapsed),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF595C5D),
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           // Action buttons
