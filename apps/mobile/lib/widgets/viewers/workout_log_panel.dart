@@ -171,7 +171,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       // Refresh both stats and activities
       _loadStats();
       _loadActivities();
-      ProviderScope.containerOf(context).read(activityRefreshProvider.notifier).state++;
+      ProviderScope.containerOf(context).read(activityDirtyProvider.notifier).state = true;
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
