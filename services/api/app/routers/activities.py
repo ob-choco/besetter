@@ -71,7 +71,7 @@ class MyStatsResponse(BaseModel):
 class ActivityListItem(BaseModel):
     model_config = model_config
 
-    id: str
+    id: str = Field(serialization_alias="id")
     status: ActivityStatus
     location_verified: bool
     started_at: datetime
@@ -218,7 +218,7 @@ def _encode_activity_cursor(started_at_iso: str, last_id: str) -> str:
 
 def _decode_activity_cursor(cursor: str) -> tuple[str, str]:
     decoded = base64.b64decode(cursor.encode()).decode()
-    started_at_str, last_id = decoded.split("|")
+    started_at_str, last_id = decoded.split("|", 1)
     return started_at_str, last_id
 
 

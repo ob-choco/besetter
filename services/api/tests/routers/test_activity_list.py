@@ -37,6 +37,8 @@ def test_activity_list_item_schema():
         created_at=datetime(2023, 10, 25, 14, 20, 0, tzinfo=timezone.utc),
     )
     dumped = item.model_dump(by_alias=True)
+    assert "id" in dumped
+    assert "_id" not in dumped
     assert dumped["locationVerified"] is True
     assert dumped["startedAt"] == datetime(2023, 10, 25, 14, 20, 0, tzinfo=timezone.utc)
     assert "started_at" not in dumped
