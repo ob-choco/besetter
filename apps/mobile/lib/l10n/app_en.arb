@@ -194,5 +194,23 @@
   "saveProfile": "Save",
   "labelName": "Name",
   "labelBio": "Bio",
-  "wallsTitle": "Spray Walls"
+  "wallsTitle": "Spray Walls",
+  "slideToStart": "Start climbing!",
+  "duration": "DURATION",
+  "resetTimer": "Reset",
+  "attempted": "Attempted",
+  "completed": "Completed",
+  "activitySent": "Sent!",
+  "activityRecorded": "Recorded",
+  "activityCompleted": "Completed",
+  "activityAttempted": "Attempted",
+  "activityDurationFormat": "{status} · {duration}",
+  "@activityDurationFormat": {
+    "placeholders": {
+      "status": {"type": "String"},
+      "duration": {"type": "String"}
+    }
+  },
+  "activitySaveFailed": "Failed to save activity",
+  "ok": "OK"
 }

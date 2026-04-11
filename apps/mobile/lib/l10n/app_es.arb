@@ -195,5 +195,23 @@
   "saveProfile": "Guardar",
   "labelName": "Nombre",
   "labelBio": "Biografía",
-  "wallsTitle": "Spray Walls"
+  "wallsTitle": "Spray Walls",
+  "slideToStart": "¡A escalar!",
+  "duration": "DURATION",
+  "resetTimer": "Reiniciar",
+  "attempted": "Intentado",
+  "completed": "Completado",
+  "activitySent": "Sent!",
+  "activityRecorded": "Registrado",
+  "activityCompleted": "Completado",
+  "activityAttempted": "Intentado",
+  "activityDurationFormat": "{status} · {duration}",
+  "@activityDurationFormat": {
+    "placeholders": {
+      "status": {"type": "String"},
+      "duration": {"type": "String"}
+    }
+  },
+  "activitySaveFailed": "Error al guardar la actividad",
+  "ok": "OK"
 }

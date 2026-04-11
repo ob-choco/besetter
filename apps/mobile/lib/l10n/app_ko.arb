@@ -195,5 +195,23 @@
   "saveProfile": "저장",
   "labelName": "이름",
   "labelBio": "자기소개",
-  "wallsTitle": "클라이밍 월"
+  "wallsTitle": "클라이밍 월",
+  "slideToStart": "등반 시작!",
+  "duration": "DURATION",
+  "resetTimer": "리셋",
+  "attempted": "미완등",
+  "completed": "완등",
+  "activitySent": "Sent!",
+  "activityRecorded": "기록되었습니다",
+  "activityCompleted": "완등",
+  "activityAttempted": "미완등",
+  "activityDurationFormat": "{status} · {duration}",
+  "@activityDurationFormat": {
+    "placeholders": {
+      "status": {"type": "String"},
+      "duration": {"type": "String"}
+    }
+  },
+  "activitySaveFailed": "활동 저장에 실패했습니다",
+  "ok": "확인"
 }

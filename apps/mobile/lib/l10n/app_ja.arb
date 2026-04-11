@@ -194,5 +194,23 @@
   "saveProfile": "保存",
   "labelName": "名前",
   "labelBio": "自己紹介",
-  "wallsTitle": "クライミングウォール"
+  "wallsTitle": "クライミングウォール",
+  "slideToStart": "クライミング開始！",
+  "duration": "DURATION",
+  "resetTimer": "リセット",
+  "attempted": "未完登",
+  "completed": "完登",
+  "activitySent": "Sent!",
+  "activityRecorded": "記録されました",
+  "activityCompleted": "完登",
+  "activityAttempted": "未完登",
+  "activityDurationFormat": "{status} · {duration}",
+  "@activityDurationFormat": {
+    "placeholders": {
+      "status": {"type": "String"},
+      "duration": {"type": "String"}
+    }
+  },
+  "activitySaveFailed": "アクティビティの保存に失敗しました",
+  "ok": "OK"
 }
