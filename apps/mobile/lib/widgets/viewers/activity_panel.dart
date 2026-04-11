@@ -14,7 +14,7 @@ enum _PanelState { slider, timer, confirmation }
 
 class ActivityPanel extends StatefulWidget {
   final String routeId;
-  final VoidCallback? onActivityCreated;
+  final ValueChanged<Map<String, dynamic>>? onActivityCreated;
 
   const ActivityPanel({
     required this.routeId,
@@ -103,7 +103,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
     try {
       final timezone = await FlutterTimezone.getLocalTimezone();
 
-      await ActivityService.createActivity(
+      final activityData = await ActivityService.createActivity(
         routeId: widget.routeId,
         status: status,
         startedAt: _startedAt!,
@@ -121,7 +121,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
         _state = _PanelState.confirmation;
       });
 
-      widget.onActivityCreated?.call();
+      widget.onActivityCreated?.call(activityData);
 
       if (completed) {
         _confettiController.play();

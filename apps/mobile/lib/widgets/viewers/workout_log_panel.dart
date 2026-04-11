@@ -159,6 +159,12 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
 
     if (confirmed != true) return;
 
+    // Find the activity before deleting so we can update stats locally
+    final activity = _activities.firstWhere(
+      (a) => a['id'] == activityId,
+      orElse: () => <String, dynamic>{},
+    );
+
     try {
       await ActivityService.deleteActivity(
         routeId: widget.routeId,
@@ -168,9 +174,28 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.activityDeleted)),
       );
-      // Refresh both stats and activities
-      _loadStats();
-      _loadActivities();
+
+      final status = activity['status'] as String?;
+      final duration = activity.containsKey('duration') ? (activity['duration'] as num).toDouble() : 0.0;
+      final locationVerified = activity['locationVerified'] == true;
+
+      setState(() {
+        _activities.removeWhere((a) => a['id'] == activityId);
+
+        if (_stats != null && status != null) {
+          _stats!['totalCount'] = (_stats!['totalCount'] as num).toInt() - 1;
+          _stats!['totalDuration'] = (_stats!['totalDuration'] as num).toDouble() - duration;
+          if (status == 'completed') {
+            _stats!['completedCount'] = (_stats!['completedCount'] as num).toInt() - 1;
+            _stats!['completedDuration'] = (_stats!['completedDuration'] as num).toDouble() - duration;
+            if (locationVerified) {
+              _stats!['verifiedCompletedCount'] = (_stats!['verifiedCompletedCount'] as num).toInt() - 1;
+              _stats!['verifiedCompletedDuration'] = (_stats!['verifiedCompletedDuration'] as num).toDouble() - duration;
+            }
+          }
+        }
+      });
+
       ProviderScope.containerOf(context).read(activityDirtyProvider.notifier).state = true;
     } catch (_) {
       if (!mounted) return;
@@ -201,10 +226,45 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     return grouped.entries.toList();
   }
 
-  /// Called externally to refresh stats and activities (e.g., after new activity created).
-  void refresh() {
-    _loadStats();
-    _loadActivities();
+  /// Add a newly created activity to the local state without re-fetching.
+  void addActivity(Map<String, dynamic> activityData) {
+    if (!mounted) return;
+
+    // Build list item from API response (ActivityResponse → ActivityListItem format)
+    final listItem = {
+      'id': activityData['_id'] as String,
+      'status': activityData['status'] as String,
+      'locationVerified': activityData['locationVerified'] as bool,
+      'startedAt': activityData['startedAt'] as String,
+      'endedAt': activityData['endedAt'] as String,
+      'duration': activityData['duration'],
+      'createdAt': activityData['createdAt'] as String,
+    };
+
+    final status = activityData['status'] as String;
+    final locationVerified = activityData['locationVerified'] as bool;
+    final duration = (activityData['duration'] as num).toDouble();
+
+    setState(() {
+      // Insert at the beginning (newest first) if it matches the filter
+      if (!_completedOnly || status == 'completed') {
+        _activities.insert(0, listItem);
+      }
+
+      // Update stats locally
+      if (_stats != null) {
+        _stats!['totalCount'] = (_stats!['totalCount'] as num).toInt() + 1;
+        _stats!['totalDuration'] = (_stats!['totalDuration'] as num).toDouble() + duration;
+        if (status == 'completed') {
+          _stats!['completedCount'] = (_stats!['completedCount'] as num).toInt() + 1;
+          _stats!['completedDuration'] = (_stats!['completedDuration'] as num).toDouble() + duration;
+          if (locationVerified) {
+            _stats!['verifiedCompletedCount'] = (_stats!['verifiedCompletedCount'] as num).toInt() + 1;
+            _stats!['verifiedCompletedDuration'] = (_stats!['verifiedCompletedDuration'] as num).toDouble() + duration;
+          }
+        }
+      }
+    });
   }
 
   @override

@@ -317,8 +317,8 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                   // Activity panel (slide-to-start / timer / confirmation)
                   ActivityPanel(
                     routeId: widget.routeData.id,
-                    onActivityCreated: () {
-                      (_workoutLogKey.currentState as dynamic)?.refresh();
+                    onActivityCreated: (activityData) {
+                      (_workoutLogKey.currentState as dynamic)?.addActivity(activityData);
                       ProviderScope.containerOf(context).read(activityDirtyProvider.notifier).state = true;
                     },
                   ),
