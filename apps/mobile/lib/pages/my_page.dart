@@ -814,11 +814,9 @@ class _DailyRouteCard extends StatelessWidget {
                       // Bottom: stat boxes row (A style)
                       Row(
                         children: [
-                          _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase()),
-                          const SizedBox(width: 12),
-                          _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase()),
-                          const SizedBox(width: 12),
-                          _StatBox(value: formatDuration(totalDuration), label: 'DURATION'),
+                          Expanded(child: _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase())),
+                          Expanded(child: _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase())),
+                          Expanded(child: _StatBox(value: formatDuration(totalDuration), label: 'DURATION')),
                         ],
                       ),
                     ],
