@@ -15,6 +15,7 @@ import '../../widgets/viewers/endurance_route_holds.dart';
 import '../../widgets/viewers/bouldering_route_holds.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/viewers/activity_panel.dart';
 
 
 class RouteViewer extends StatefulWidget {
@@ -308,7 +309,8 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                               },
                             ),
                     ),
-                  const SizedBox(height: 16),
+                  // Activity panel (slide-to-start / timer / confirmation)
+                  ActivityPanel(routeId: widget.routeData.id),
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     height: 1,
