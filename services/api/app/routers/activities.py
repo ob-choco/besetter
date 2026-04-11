@@ -20,10 +20,10 @@ from app.models.image import Image
 from app.models.place import Place
 from app.models.route import Route
 from app.models.user import User
+
 router = APIRouter(prefix="/routes", tags=["activities"])
 
 LOCATION_VERIFICATION_RADIUS_M = 300
-AUTO_CANCEL_MAX_DURATION_S = 3600
 
 
 # ---------------------------------------------------------------------------
@@ -36,14 +36,8 @@ class CreateActivityRequest(BaseModel):
 
     latitude: float
     longitude: float
-    status: Optional[ActivityStatus] = None
-    ended_at: Optional[datetime] = None
-
-
-class UpdateActivityRequest(BaseModel):
-    model_config = model_config
-
     status: ActivityStatus
+    started_at: datetime
     ended_at: datetime
 
 
@@ -55,8 +49,8 @@ class ActivityResponse(BaseModel):
     status: ActivityStatus
     location_verified: bool
     started_at: datetime
-    ended_at: Optional[datetime] = None
-    duration: Optional[int] = None
+    ended_at: datetime
+    duration: int
     route_snapshot: RouteSnapshot
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -75,7 +69,7 @@ def _compute_duration(started_at: datetime, ended_at: datetime) -> int:
 def _build_stats_inc(
     status: ActivityStatus,
     location_verified: bool,
-    duration: Optional[int],
+    duration: int,
     sign: int = 1,
 ) -> dict:
     """Build a MongoDB $inc dict for activity_stats / UserRouteStats fields.
@@ -84,18 +78,14 @@ def _build_stats_inc(
     """
     inc = {}
     inc["totalCount"] = sign
-
-    if duration is not None:
-        inc["totalDuration"] = sign * duration
+    inc["totalDuration"] = sign * duration
 
     if status == ActivityStatus.COMPLETED:
         inc["completedCount"] = sign
-        if duration is not None:
-            inc["completedDuration"] = sign * duration
+        inc["completedDuration"] = sign * duration
         if location_verified:
             inc["verifiedCompletedCount"] = sign
-            if duration is not None:
-                inc["verifiedCompletedDuration"] = sign * duration
+            inc["verifiedCompletedDuration"] = sign * duration
 
     return inc
 
@@ -202,123 +192,34 @@ async def create_activity(
     if not route:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Route not found")
 
-    # 2. 상태 및 endedAt 유효성
-    req_status = request.status or ActivityStatus.STARTED
-    if req_status in (ActivityStatus.COMPLETED, ActivityStatus.ATTEMPTED) and request.ended_at is None:
-        raise HTTPException(
-            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="endedAt is required when status is completed or attempted",
-        )
-
-    # 3. 위치 인증
+    # 2. 위치 인증
     location_verified = await _verify_location(route, request.latitude, request.longitude)
 
-    # 4. 자동취소: 같은 route + user의 기존 "started" Activity
-    now = datetime.now(tz=timezone.utc)
-    existing_started = await Activity.find(
-        Activity.route_id == route.id,
-        Activity.user_id == current_user.id,
-        Activity.status == ActivityStatus.STARTED,
-    ).to_list()
-
-    for old in existing_started:
-        raw_duration = int((now - old.started_at).total_seconds())
-        capped_duration = min(raw_duration, AUTO_CANCEL_MAX_DURATION_S)
-        old.status = ActivityStatus.ATTEMPTED
-        old.ended_at = now
-        old.duration = capped_duration
-        old.updated_at = now
-        await old.save()
-
-        # 자동취소 stats: total_count는 이미 +1 되어 있으므로 duration만 추가
-        auto_inc = {}
-        if capped_duration > 0:
-            auto_inc["totalDuration"] = capped_duration
-        if auto_inc:
-            await _update_route_stats(route.id, auto_inc)
-            await _update_user_route_stats(current_user.id, route.id, auto_inc)
-
-    # 5. 스냅샷 생성
+    # 3. 스냅샷 생성
     snapshot = await _build_route_snapshot(route)
 
-    # 6. duration 계산
-    duration = None
-    if req_status in (ActivityStatus.COMPLETED, ActivityStatus.ATTEMPTED):
-        duration = _compute_duration(now, request.ended_at)
+    # 4. duration 계산
+    duration = _compute_duration(request.started_at, request.ended_at)
 
-    # 7. Activity 생성
+    # 5. Activity 생성
+    now = datetime.now(tz=timezone.utc)
     activity = Activity(
         route_id=route.id,
         user_id=current_user.id,
-        status=req_status,
+        status=request.status,
         location_verified=location_verified,
-        started_at=now,
-        ended_at=request.ended_at if req_status != ActivityStatus.STARTED else None,
+        started_at=request.started_at,
+        ended_at=request.ended_at,
         duration=duration,
         route_snapshot=snapshot,
         created_at=now,
     )
     await activity.save()
 
-    # 8. Stats 갱신
-    inc = _build_stats_inc(req_status, location_verified, duration, sign=1)
+    # 6. Stats 갱신
+    inc = _build_stats_inc(request.status, location_verified, duration, sign=1)
     await _update_route_stats(route.id, inc)
     await _update_user_route_stats(current_user.id, route.id, inc, activity_at=now)
-
-    return _activity_to_response(activity)
-
-
-@router.patch("/{route_id}/activity/{activity_id}", response_model=ActivityResponse)
-async def update_activity(
-    route_id: str,
-    activity_id: str,
-    request: UpdateActivityRequest,
-    current_user: User = Depends(get_current_user),
-):
-    # 1. Activity 존재 + 소유 확인
-    activity = await Activity.find_one(
-        Activity.id == ObjectId(activity_id),
-        Activity.route_id == ObjectId(route_id),
-        Activity.user_id == current_user.id,
-    )
-    if not activity:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Activity not found")
-
-    # 2. 이미 종료된 건 수정 불가
-    if activity.status != ActivityStatus.STARTED:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail="Only activities with status 'started' can be updated",
-        )
-
-    # 3. status 유효성
-    if request.status not in (ActivityStatus.COMPLETED, ActivityStatus.ATTEMPTED):
-        raise HTTPException(
-            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Status must be 'completed' or 'attempted'",
-        )
-
-    # 4. duration 계산 + 업데이트
-    now = datetime.now(tz=timezone.utc)
-    duration = _compute_duration(activity.started_at, request.ended_at)
-    activity.status = request.status
-    activity.ended_at = request.ended_at
-    activity.duration = duration
-    activity.updated_at = now
-    await activity.save()
-
-    # 5. Stats 갱신 — PATCH는 이미 total_count +1 되어 있으므로 count 증가 없이 duration + completed 관련만
-    inc: dict = {}
-    inc["totalDuration"] = duration
-    if request.status == ActivityStatus.COMPLETED:
-        inc["completedCount"] = 1
-        inc["completedDuration"] = duration
-        if activity.location_verified:
-            inc["verifiedCompletedCount"] = 1
-            inc["verifiedCompletedDuration"] = duration
-
-    await _update_route_stats(activity.route_id, inc)
-    await _update_user_route_stats(current_user.id, activity.route_id, inc, activity_at=now)
 
     return _activity_to_response(activity)
 

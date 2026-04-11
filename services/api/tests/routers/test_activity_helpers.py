@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from app.routers.activities import _build_stats_inc, _compute_duration
 from app.models.activity import ActivityStatus
 
@@ -22,16 +22,6 @@ def test_compute_duration_zero():
 # ---------------------------------------------------------------------------
 # _build_stats_inc — increment (sign=1)
 # ---------------------------------------------------------------------------
-
-
-def test_stats_inc_started():
-    inc = _build_stats_inc(ActivityStatus.STARTED, False, None, sign=1)
-    assert inc == {"totalCount": 1}
-
-
-def test_stats_inc_started_verified():
-    inc = _build_stats_inc(ActivityStatus.STARTED, True, None, sign=1)
-    assert inc == {"totalCount": 1}
 
 
 def test_stats_inc_completed_unverified():
@@ -67,11 +57,6 @@ def test_stats_inc_attempted():
 # ---------------------------------------------------------------------------
 # _build_stats_inc — decrement (sign=-1)
 # ---------------------------------------------------------------------------
-
-
-def test_stats_dec_started():
-    inc = _build_stats_inc(ActivityStatus.STARTED, False, None, sign=-1)
-    assert inc == {"totalCount": -1}
 
 
 def test_stats_dec_completed_verified():
