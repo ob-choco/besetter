@@ -10,6 +10,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/route_data.dart';
 import '../pages/viewers/route_viewer.dart';
+import '../providers/activity_refresh_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/activity_service.dart';
 import '../services/http_client.dart';
@@ -285,6 +286,18 @@ class MyPage extends HookConsumerWidget {
                   data: dailyRoutesData.value,
                   loading: dailyRoutesLoading.value,
                   selectedDay: selectedDay.value,
+                  onReturn: () {
+                    if (ref.read(activityDirtyProvider)) {
+                      ref.read(activityDirtyProvider.notifier).state = false;
+                      monthlySummaryCache.value.clear();
+                      dailyRoutesCache.value.clear();
+                      final tz = timezone.value;
+                      loadMonthlySummary(calendarYear.value, calendarMonth.value, tz);
+                      if (selectedDay.value != null) {
+                        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!, tz);
+                      }
+                    }
+                  },
                 ),
               ],
             ],
@@ -681,11 +694,13 @@ class _DailyRoutes extends StatelessWidget {
   final Map<String, dynamic>? data;
   final bool loading;
   final int? selectedDay;
+  final VoidCallback? onReturn;
 
   const _DailyRoutes({
     required this.data,
     required this.loading,
     required this.selectedDay,
+    this.onReturn,
   });
 
   String _formatDuration(double totalSeconds) {
@@ -736,7 +751,11 @@ class _DailyRoutes extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF595C5D)),
         ),
         const SizedBox(height: 16),
-        ...routes.map((route) => _DailyRouteCard(route: route, formatDuration: _formatDuration)),
+        ...routes.map((route) => _DailyRouteCard(
+          route: route,
+          formatDuration: _formatDuration,
+          onReturn: onReturn,
+        )),
       ],
     );
   }
@@ -745,8 +764,9 @@ class _DailyRoutes extends StatelessWidget {
 class _DailyRouteCard extends StatelessWidget {
   final Map<String, dynamic> route;
   final String Function(double) formatDuration;
+  final VoidCallback? onReturn;
 
-  const _DailyRouteCard({required this.route, required this.formatDuration});
+  const _DailyRouteCard({required this.route, required this.formatDuration, this.onReturn});
 
   @override
   Widget build(BuildContext context) {
@@ -846,9 +866,10 @@ class _DailyRouteCard extends StatelessWidget {
           jsonDecode(utf8.decode(response.bodyBytes)),
         );
         if (!context.mounted) return;
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => RouteViewer(routeData: routeData)),
         );
+        onReturn?.call();
       }
     } catch (_) {
       // silently fail
