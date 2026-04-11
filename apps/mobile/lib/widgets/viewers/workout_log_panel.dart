@@ -208,11 +208,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Don't show panel if stats are still loading or there are no activities at all
     if (_statsLoading) return const SizedBox.shrink();
-    if (_stats != null && (_stats!['totalCount'] as int) == 0) {
-      return const SizedBox.shrink();
-    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
