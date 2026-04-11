@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.route import Route
 from app.models.image import Image
 from app.models.hold_polygon import HoldPolygon
+from app.models.activity import Activity, UserRouteStats
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -133,6 +134,12 @@ async def delete_account(current_user: User = Depends(get_current_user)):
         HoldPolygon.user_id == current_user.id,
         HoldPolygon.is_deleted != True,
     ).update_many({"$set": {"isDeleted": True, "deletedAt": now}})
+
+    # Activity hard delete
+    await Activity.find(Activity.user_id == current_user.id).delete()
+
+    # UserRouteStats hard delete
+    await UserRouteStats.find(UserRouteStats.user_id == current_user.id).delete()
 
     # 유저 soft delete
     current_user.is_deleted = True
