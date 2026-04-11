@@ -397,7 +397,8 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
                 Text(
                   _formatDuration(duration),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF595C5D),
                   ),
                 ),
