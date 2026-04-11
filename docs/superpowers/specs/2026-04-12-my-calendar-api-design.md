@@ -113,6 +113,13 @@ MongoDB Aggregation Pipeline:
 **Response:**
 ```json
 {
+    "summary": {
+        "totalCount": 8,
+        "completedCount": 5,
+        "attemptedCount": 3,
+        "totalDuration": 2450.75,
+        "routeCount": 3
+    },
     "routes": [
         {
             "routeId": "507f1f77bcf86cd799439011",
@@ -135,14 +142,17 @@ MongoDB Aggregation Pipeline:
 }
 ```
 
+`summary`는 해당 날짜의 전체 통계 (모든 루트 합산), `routes`는 루트별 상세.
+
 **구현:**
-MongoDB Aggregation Pipeline:
+MongoDB Aggregation Pipeline (2단계 group):
 ```python
 [
     {"$match": {
         "userId": current_user_id,
         "startedAt": {"$gte": day_start_utc, "$lt": day_end_utc}
     }},
+    # Stage 1: 루트별 그룹핑
     {"$group": {
         "_id": "$routeId",
         "routeSnapshot": {"$first": "$routeSnapshot"},
@@ -152,6 +162,9 @@ MongoDB Aggregation Pipeline:
         "totalDuration": {"$sum": "$duration"}
     }}
 ]
+```
+
+`summary`는 루트별 집계 결과를 Python에서 합산하여 구성한다 (문서 수가 적으므로 추가 aggregation stage 불필요).
 ```
 
 - `day_start_utc` / `day_end_utc`는 전달받은 timezone 기준 해당 날짜의 00:00:00~23:59:59를 UTC로 변환
