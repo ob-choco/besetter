@@ -764,7 +764,12 @@ class _DailyRouteCard extends StatelessWidget {
                 width: 80, height: 80,
                 color: const Color(0xFFF0F0F0),
                 child: imageUrl != null
-                    ? Image.network(imageUrl, fit: BoxFit.cover)
+                    ? CachedNetworkImage(
+                        imageUrl: toThumbnailUrl(imageUrl, 's100'),
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
+                        errorWidget: (_, __, ___) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
+                      )
                     : const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
               ),
             ),
