@@ -47,6 +47,8 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
   List<int> _highlightedHoldIds = [];
   bool _showHoldOrder = true;
   String? _selectedHoldType;
+  // ignore: prefer_const_declarations
+  final _workoutLogKey = GlobalKey();
 
   @override
   void initState() {
@@ -311,9 +313,17 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                             ),
                     ),
                   // Activity panel (slide-to-start / timer / confirmation)
-                  ActivityPanel(routeId: widget.routeData.id),
+                  ActivityPanel(
+                    routeId: widget.routeData.id,
+                    onActivityCreated: () {
+                      (_workoutLogKey.currentState as dynamic).refresh();
+                    },
+                  ),
                   // Workout log (stats + activity list)
-                  WorkoutLogPanel(routeId: widget.routeData.id),
+                  WorkoutLogPanel(
+                    key: _workoutLogKey,
+                    routeId: widget.routeData.id,
+                  ),
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     height: 1,

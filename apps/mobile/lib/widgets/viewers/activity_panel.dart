@@ -13,9 +13,11 @@ enum _PanelState { slider, timer, confirmation }
 
 class ActivityPanel extends StatefulWidget {
   final String routeId;
+  final VoidCallback? onActivityCreated;
 
   const ActivityPanel({
     required this.routeId,
+    this.onActivityCreated,
     Key? key,
   }) : super(key: key);
 
@@ -76,13 +78,13 @@ class _ActivityPanelState extends State<ActivityPanel> {
     }
   }
 
-  void _onSlideComplete() async {
-    await _captureLocation();
-    if (!mounted) return;
+  void _onSlideComplete() {
     setState(() {
       _startedAt = DateTime.now();
       _state = _PanelState.timer;
     });
+    // GPS 위치는 비동기로 백그라운드에서 캡처
+    _captureLocation();
   }
 
   void _onReset() {
@@ -94,6 +96,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
   Future<void> _onFinish(bool completed) async {
     final endedAt = DateTime.now();
     final elapsed = endedAt.difference(_startedAt!);
+
     final status = completed ? 'completed' : 'attempted';
 
     try {
@@ -113,6 +116,8 @@ class _ActivityPanelState extends State<ActivityPanel> {
         _lastWasCompleted = completed;
         _state = _PanelState.confirmation;
       });
+
+      widget.onActivityCreated?.call();
 
       if (completed) {
         _confettiController.play();
