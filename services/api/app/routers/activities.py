@@ -50,10 +50,21 @@ class ActivityResponse(BaseModel):
     location_verified: bool
     started_at: datetime
     ended_at: datetime
-    duration: int
+    duration: float
     route_snapshot: RouteSnapshot
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class MyStatsResponse(BaseModel):
+    model_config = model_config
+
+    total_count: int = 0
+    total_duration: float = 0
+    completed_count: int = 0
+    completed_duration: float = 0
+    verified_completed_count: int = 0
+    verified_completed_duration: float = 0
 
 
 # ---------------------------------------------------------------------------
@@ -61,15 +72,15 @@ class ActivityResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _compute_duration(started_at: datetime, ended_at: datetime) -> int:
-    """Return duration in seconds between started_at and ended_at."""
-    return int((ended_at - started_at).total_seconds())
+def _compute_duration(started_at: datetime, ended_at: datetime) -> float:
+    """Return duration in seconds between started_at and ended_at (2 decimal places)."""
+    return round((ended_at - started_at).total_seconds(), 2)
 
 
 def _build_stats_inc(
     status: ActivityStatus,
     location_verified: bool,
-    duration: int,
+    duration: float,
     sign: int = 1,
 ) -> dict:
     """Build a MongoDB $inc dict for activity_stats / UserRouteStats fields.
@@ -115,6 +126,13 @@ async def _update_user_route_stats(
         on_insert=UserRouteStats(
             user_id=user_id,
             route_id=route_id,
+            total_count=inc.get("totalCount", 0),
+            total_duration=inc.get("totalDuration", 0),
+            completed_count=inc.get("completedCount", 0),
+            completed_duration=inc.get("completedDuration", 0),
+            verified_completed_count=inc.get("verifiedCompletedCount", 0),
+            verified_completed_duration=inc.get("verifiedCompletedDuration", 0),
+            last_activity_at=activity_at,
         ),
     )
 
@@ -246,3 +264,25 @@ async def delete_activity(
 
     # 3. Hard delete
     await activity.delete()
+
+
+@router.get("/{route_id}/my-stats", response_model=MyStatsResponse)
+async def get_my_stats(
+    route_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    stats = await UserRouteStats.find_one(
+        UserRouteStats.user_id == current_user.id,
+        UserRouteStats.route_id == ObjectId(route_id),
+    )
+    if not stats:
+        return MyStatsResponse()
+
+    return MyStatsResponse(
+        total_count=stats.total_count,
+        total_duration=stats.total_duration,
+        completed_count=stats.completed_count,
+        completed_duration=stats.completed_duration,
+        verified_completed_count=stats.verified_completed_count,
+        verified_completed_duration=stats.verified_completed_duration,
+    )
