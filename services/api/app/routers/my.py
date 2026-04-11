@@ -147,7 +147,7 @@ async def get_monthly_summary(
         {"$sort": {"_id": 1}},
     ]
 
-    collection = Activity.get_motor_collection()
+    collection = Activity.get_pymongo_collection()
     cursor = collection.aggregate(pipeline)
     results = await cursor.to_list(length=None)
     active_dates = [doc["_id"] for doc in results]
@@ -187,7 +187,7 @@ async def get_daily_routes(
         }},
     ]
 
-    collection = Activity.get_motor_collection()
+    collection = Activity.get_pymongo_collection()
     cursor = collection.aggregate(pipeline)
     results = await cursor.to_list(length=None)
 
