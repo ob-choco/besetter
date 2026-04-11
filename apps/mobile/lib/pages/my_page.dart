@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +8,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../models/route_data.dart';
+import '../pages/viewers/route_viewer.dart';
 import '../providers/user_provider.dart';
 import '../services/activity_service.dart';
+import '../services/http_client.dart';
 import '../utils/thumbnail_url.dart';
 import 'setting.dart';
 
@@ -747,6 +751,7 @@ class _DailyRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final routeId = route['routeId'] as String;
     final snapshot = route['routeSnapshot'] as Map<String, dynamic>;
     final title = snapshot['title'] as String? ?? '';
     final grade = snapshot['grade'] as String? ?? '';
@@ -762,13 +767,15 @@ class _DailyRouteCard extends StatelessWidget {
         ? Color(int.parse(gradeColorHex.replaceFirst('#', ''), radix: 16) | 0xFF000000)
         : const Color(0xFF0066FF);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [BoxShadow(color: Color(0x0A2C2F30), blurRadius: 16, offset: Offset(0, 4))],
+    return GestureDetector(
+      onTap: () => _navigateToRoute(context, routeId),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [BoxShadow(color: Color(0x0A2C2F30), blurRadius: 16, offset: Offset(0, 4))],
         ),
         child: Row(
           children: [
@@ -827,7 +834,25 @@ class _DailyRouteCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  Future<void> _navigateToRoute(BuildContext context, String routeId) async {
+    try {
+      final response = await AuthorizedHttpClient.get('/routes/$routeId');
+      if (response.statusCode == 200) {
+        final routeData = RouteData.fromJson(
+          jsonDecode(utf8.decode(response.bodyBytes)),
+        );
+        if (!context.mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => RouteViewer(routeData: routeData)),
+        );
+      }
+    } catch (_) {
+      // silently fail
+    }
   }
 }
 
