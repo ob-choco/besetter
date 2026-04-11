@@ -5,7 +5,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from bson import ObjectId
 from app.models.user import User
-from app.routers.authentications import Claim
 from jose import jwe
 import pytz
 from app.core.config import get
@@ -23,6 +22,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> User:
     try:
+        from app.routers.authentications import Claim
         claim = Claim.model_validate_json(jwe.decrypt(credentials.credentials, get("authentication.key")))
         
         if claim.exp < int(datetime.now(tz=pytz.UTC).timestamp()):
