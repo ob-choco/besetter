@@ -814,7 +814,7 @@ class _DailyRouteCard extends StatelessWidget {
                       // Bottom: stat boxes row (A style)
                       Row(
                         children: [
-                          Expanded(child: _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase())),
+                          Expanded(child: _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase(), valueColor: const Color(0xFF0066FF))),
                           Expanded(child: _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase())),
                           Expanded(child: _StatBox(value: formatDuration(totalDuration), label: 'DURATION')),
                         ],
@@ -834,8 +834,9 @@ class _DailyRouteCard extends StatelessWidget {
 class _StatBox extends StatelessWidget {
   final String value;
   final String label;
+  final Color? valueColor;
 
-  const _StatBox({required this.value, required this.label});
+  const _StatBox({required this.value, required this.label, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -844,7 +845,7 @@ class _StatBox extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30), height: 1),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: valueColor ?? const Color(0xFF2C2F30), height: 1),
         ),
         const SizedBox(height: 2),
         Text(
