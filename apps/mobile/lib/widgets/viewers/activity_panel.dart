@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../services/activity_service.dart';
@@ -100,6 +101,8 @@ class _ActivityPanelState extends State<ActivityPanel> {
     final status = completed ? 'completed' : 'attempted';
 
     try {
+      final timezone = await FlutterTimezone.getLocalTimezone();
+
       await ActivityService.createActivity(
         routeId: widget.routeId,
         status: status,
@@ -107,6 +110,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
         endedAt: endedAt,
         latitude: _latitude,
         longitude: _longitude,
+        timezone: timezone,
       );
 
       if (!mounted) return;
