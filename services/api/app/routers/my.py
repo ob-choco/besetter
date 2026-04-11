@@ -6,7 +6,6 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from app.core.gcs import extract_blob_path_from_url, generate_signed_url
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.activity import Activity, RouteSnapshot
@@ -57,17 +56,6 @@ def _day_utc_range(date_str: str, tz_name: str) -> tuple[datetime, datetime]:
         local_start.astimezone(timezone.utc),
         local_end.astimezone(timezone.utc),
     )
-
-
-def _sign_snapshot_urls(snapshot: dict) -> dict:
-    """Replace raw GCS URLs in a routeSnapshot dict with signed URLs."""
-    for key in ("imageUrl", "overlayImageUrl"):
-        url = snapshot.get(key)
-        if url:
-            blob_path = extract_blob_path_from_url(url)
-            if blob_path:
-                snapshot[key] = generate_signed_url(blob_path)
-    return snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +205,7 @@ async def get_daily_routes(
     routes = [
         DailyRouteItem(
             route_id=str(r["_id"]),
-            route_snapshot=RouteSnapshot(**_sign_snapshot_urls(r["routeSnapshot"])),
+            route_snapshot=RouteSnapshot(**r["routeSnapshot"]),
             total_count=r["totalCount"],
             completed_count=r["completedCount"],
             attempted_count=r["attemptedCount"],
