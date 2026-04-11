@@ -7,6 +7,7 @@ from beanie.odm.fields import PydanticObjectId
 
 from pymongo import IndexModel, ASCENDING
 from . import model_config
+from app.models.activity import ActivityStats
 
 
 class RouteType(str, Enum):
@@ -63,6 +64,8 @@ class Route(Document):
     overlay_processing: bool = Field(False, description="오버레이 이미지 생성 작업 중 여부")
     overlay_started_at: Optional[datetime] = Field(None, description="오버레이 작업 시작 시간")
     overlay_completed_at: Optional[datetime] = Field(None, description="오버레이 작업 완료 시간")
+
+    activity_stats: ActivityStats = Field(default_factory=ActivityStats)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)
