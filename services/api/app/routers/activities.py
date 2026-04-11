@@ -1,5 +1,6 @@
+import base64
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
@@ -65,6 +66,25 @@ class MyStatsResponse(BaseModel):
     completed_duration: float = 0
     verified_completed_count: int = 0
     verified_completed_duration: float = 0
+
+
+class ActivityListItem(BaseModel):
+    model_config = model_config
+
+    id: str
+    status: ActivityStatus
+    location_verified: bool
+    started_at: datetime
+    ended_at: datetime
+    duration: float
+    created_at: datetime
+
+
+class MyActivitiesResponse(BaseModel):
+    model_config = model_config
+
+    activities: List[ActivityListItem]
+    next_cursor: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -191,6 +211,17 @@ async def _verify_location(route: Route, latitude: float, longitude: float) -> b
     return distance <= LOCATION_VERIFICATION_RADIUS_M
 
 
+def _encode_activity_cursor(started_at_iso: str, last_id: str) -> str:
+    cursor_str = f"{started_at_iso}|{last_id}"
+    return base64.b64encode(cursor_str.encode()).decode()
+
+
+def _decode_activity_cursor(cursor: str) -> tuple[str, str]:
+    decoded = base64.b64decode(cursor.encode()).decode()
+    started_at_str, last_id = decoded.split("|")
+    return started_at_str, last_id
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -285,4 +316,73 @@ async def get_my_stats(
         completed_duration=stats.completed_duration,
         verified_completed_count=stats.verified_completed_count,
         verified_completed_duration=stats.verified_completed_duration,
+    )
+
+
+@router.get("/{route_id}/my-activities", response_model=MyActivitiesResponse)
+async def get_my_activities(
+    route_id: str,
+    current_user: User = Depends(get_current_user),
+    status: Optional[ActivityStatus] = None,
+    limit: int = 10,
+    cursor: Optional[str] = None,
+):
+    query_filters = [
+        Activity.route_id == ObjectId(route_id),
+        Activity.user_id == current_user.id,
+    ]
+
+    if status:
+        query_filters.append(Activity.status == status)
+
+    if cursor:
+        started_at_str, last_id = _decode_activity_cursor(cursor)
+        cursor_started_at = datetime.fromisoformat(started_at_str)
+        cursor_id = ObjectId(last_id)
+        # startedAt DESC, _id DESC: get items before cursor
+        from beanie.odm.operators.find.comparison import LT
+        from beanie.odm.operators.find.logical import Or, And
+        from beanie.odm.operators.find.comparison import Eq
+
+        query_filters.append(
+            Or(
+                LT(Activity.started_at, cursor_started_at),
+                And(
+                    Eq(Activity.started_at, cursor_started_at),
+                    LT(Activity.id, cursor_id),
+                ),
+            )
+        )
+
+    activities = (
+        await Activity.find(*query_filters)
+        .sort([("started_at", -1), ("_id", -1)])
+        .limit(limit + 1)
+        .to_list()
+    )
+
+    has_next = len(activities) > limit
+    next_cursor = None
+
+    if has_next:
+        activities = activities[:limit]
+        last = activities[-1]
+        next_cursor = _encode_activity_cursor(
+            last.started_at.isoformat(), str(last.id)
+        )
+
+    return MyActivitiesResponse(
+        activities=[
+            ActivityListItem(
+                id=str(a.id),
+                status=a.status,
+                location_verified=a.location_verified,
+                started_at=a.started_at,
+                ended_at=a.ended_at,
+                duration=a.duration,
+                created_at=a.created_at,
+            )
+            for a in activities
+        ],
+        next_cursor=next_cursor,
     )
