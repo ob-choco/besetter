@@ -58,13 +58,13 @@ def get_or_create_thumbnail(blob_path: str, preset: str) -> str | None:
     Returns the public URL of the thumbnail, or None if the original doesn't exist.
     Raises ValueError if the original is not a valid image.
     """
-    from app.core.gcs import bucket, get_base_url
+    from app.core.gcs import bucket, get_public_url
 
     thumb_path = compute_thumbnail_path(blob_path, preset)
     thumb_blob = bucket.blob(thumb_path)
 
     if thumb_blob.exists():
-        return f"{get_base_url()}/{thumb_path}"
+        return get_public_url(thumb_path)
 
     original_blob = bucket.blob(blob_path)
     if not original_blob.exists():
@@ -74,4 +74,4 @@ def get_or_create_thumbnail(blob_path: str, preset: str) -> str | None:
     thumb_bytes = generate_thumbnail(original_bytes, preset)
     thumb_blob.upload_from_string(thumb_bytes, content_type="image/jpeg")
 
-    return f"{get_base_url()}/{thumb_path}"
+    return get_public_url(thumb_path)

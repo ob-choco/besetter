@@ -18,7 +18,7 @@ from beanie.odm.operators.find.comparison import LT, GT, Eq, In
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
 from fastapi.responses import RedirectResponse
 from app.services.thumbnail import PRESETS, get_or_create_thumbnail
-from app.core.gcs import get_base_url as gcs_get_base_url
+from app.core.gcs import get_public_url as gcs_get_public_url
 
 from app.models import model_config
 from app.routers.places import PlaceView, place_to_view
@@ -351,8 +351,7 @@ async def get_image_by_blob_path(
     With ?type=<preset>: generates thumbnail on first request, then redirects to cached version.
     """
     if type is None:
-        base_url = gcs_get_base_url()
-        return RedirectResponse(url=f"{base_url}/{blob_path}", status_code=302)
+        return RedirectResponse(url=gcs_get_public_url(blob_path), status_code=302)
 
     if type not in PRESETS:
         raise HTTPException(

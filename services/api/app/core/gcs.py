@@ -26,6 +26,12 @@ def get_base_url():
     return get("google_cloud.storage.base_url")
 
 
+def get_public_url(blob_path: str) -> str:
+    """Return a publicly accessible URL for a GCS blob (for redirects)."""
+    bucket_name = get("google_cloud.storage.bucket_name")
+    return f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
+
+
 # 자주 사용하는 인스턴스 미리 생성
 storage_client = get_gcs_client()
 bucket = get_bucket()
