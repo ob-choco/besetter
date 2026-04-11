@@ -231,5 +231,28 @@
   "noWorkoutRecords": "No workout records yet",
   "deleteActivityConfirm": "Delete this record?",
   "activityDeleted": "Record deleted",
-  "failedDeleteActivity": "Failed to delete record"
+  "failedDeleteActivity": "Failed to delete record",
+  "dailyWorkoutSummary": "{count} sessions | Sent {completed} | Attempted {attempted}",
+  "@dailyWorkoutSummary": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "routeAttemptsSummary": "Sent {completed} / Attempted {attempted}",
+  "@routeAttemptsSummary": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "noActivitiesYet": "No workout records yet",
+  "noActivitiesOnDay": "No workouts on this day",
+  "totalDurationLabel": "Total {duration}",
+  "@totalDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  }
 }

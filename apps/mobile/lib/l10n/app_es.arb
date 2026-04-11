@@ -232,5 +232,28 @@
   "noWorkoutRecords": "Aún no hay registros de ejercicio",
   "deleteActivityConfirm": "¿Eliminar este registro?",
   "activityDeleted": "Registro eliminado",
-  "failedDeleteActivity": "No se pudo eliminar el registro"
+  "failedDeleteActivity": "No se pudo eliminar el registro",
+  "dailyWorkoutSummary": "{count} sesiones | Completados {completed} | Intentados {attempted}",
+  "@dailyWorkoutSummary": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "routeAttemptsSummary": "Completados {completed} / Intentados {attempted}",
+  "@routeAttemptsSummary": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "noActivitiesYet": "Aun no hay registros de entrenamiento",
+  "noActivitiesOnDay": "No hay entrenamientos en este dia",
+  "totalDurationLabel": "Total {duration}",
+  "@totalDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  }
 }

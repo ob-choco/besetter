@@ -231,5 +231,28 @@
   "noWorkoutRecords": "ワークアウト記録がありません",
   "deleteActivityConfirm": "この記録を削除しますか？",
   "activityDeleted": "記録が削除されました",
-  "failedDeleteActivity": "記録の削除に失敗しました"
+  "failedDeleteActivity": "記録の削除に失敗しました",
+  "dailyWorkoutSummary": "{count}回運動 | 完登 {completed} | 未完登 {attempted}",
+  "@dailyWorkoutSummary": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "routeAttemptsSummary": "完登 {completed} / 未完登 {attempted}",
+  "@routeAttemptsSummary": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "noActivitiesYet": "まだトレーニング記録がありません",
+  "noActivitiesOnDay": "この日のトレーニング記録はありません",
+  "totalDurationLabel": "合計 {duration}",
+  "@totalDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  }
 }

@@ -232,5 +232,28 @@
   "noWorkoutRecords": "운동 기록이 없습니다",
   "deleteActivityConfirm": "이 기록을 삭제하시겠습니까?",
   "activityDeleted": "기록이 삭제되었습니다",
-  "failedDeleteActivity": "기록 삭제에 실패했습니다"
+  "failedDeleteActivity": "기록 삭제에 실패했습니다",
+  "dailyWorkoutSummary": "{count}회 운동 | 완등 {completed} | 미완등 {attempted}",
+  "@dailyWorkoutSummary": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "routeAttemptsSummary": "완등 {completed} / 미완등 {attempted}",
+  "@routeAttemptsSummary": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "attempted": {"type": "int"}
+    }
+  },
+  "noActivitiesYet": "아직 운동 기록이 없습니다",
+  "noActivitiesOnDay": "이 날에는 운동 기록이 없습니다",
+  "totalDurationLabel": "총 {duration}",
+  "@totalDurationLabel": {
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  }
 }
