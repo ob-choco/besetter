@@ -40,7 +40,7 @@ class MainTabPage extends HookConsumerWidget {
             label: AppLocalizations.of(context)!.navHome,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.list),
+            icon: const Icon(Icons.terrain),
             label: AppLocalizations.of(context)!.navRoutes,
           ),
           BottomNavigationBarItem(
