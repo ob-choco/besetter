@@ -11,7 +11,6 @@ from . import model_config
 
 
 class ActivityStatus(str, Enum):
-    STARTED = "started"
     COMPLETED = "completed"
     ATTEMPTED = "attempted"
 
@@ -45,11 +44,11 @@ class Activity(Document):
 
     route_id: PydanticObjectId
     user_id: PydanticObjectId
-    status: ActivityStatus = ActivityStatus.STARTED
+    status: ActivityStatus
     location_verified: bool = False
     started_at: datetime
-    ended_at: Optional[datetime] = None
-    duration: Optional[int] = None
+    ended_at: datetime
+    duration: int
     route_snapshot: RouteSnapshot
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -58,7 +57,7 @@ class Activity(Document):
         name = "activities"
         indexes = [
             IndexModel([("userId", ASCENDING), ("startedAt", ASCENDING)]),
-            IndexModel([("routeId", ASCENDING), ("userId", ASCENDING), ("status", ASCENDING)]),
+            IndexModel([("routeId", ASCENDING), ("userId", ASCENDING)]),
         ]
         keep_nulls = True
 

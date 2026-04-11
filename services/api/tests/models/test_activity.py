@@ -9,9 +9,9 @@ from app.models.activity import (
 
 
 def test_activity_status_values():
-    assert ActivityStatus.STARTED == "started"
     assert ActivityStatus.COMPLETED == "completed"
     assert ActivityStatus.ATTEMPTED == "attempted"
+    assert len(ActivityStatus) == 2
 
 
 def test_route_snapshot_minimal():
@@ -59,21 +59,23 @@ def test_activity_stats_camel_case_alias():
     assert "verifiedCompletedCount" in dumped
 
 
-def test_activity_default_status():
+def test_activity_completed():
     from bson import ObjectId
     snap = RouteSnapshot(grade_type="v_scale", grade="V7")
     now = datetime.now(tz=timezone.utc)
     activity = Activity(
         route_id=ObjectId(),
         user_id=ObjectId(),
+        status=ActivityStatus.COMPLETED,
         location_verified=True,
         started_at=now,
+        ended_at=now,
+        duration=154,
         route_snapshot=snap,
         created_at=now,
     )
-    assert activity.status == ActivityStatus.STARTED
-    assert activity.ended_at is None
-    assert activity.duration is None
+    assert activity.status == ActivityStatus.COMPLETED
+    assert activity.duration == 154
 
 
 def test_user_route_stats_defaults():
