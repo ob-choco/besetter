@@ -4,6 +4,7 @@ from PIL import Image as PILImage
 PRESETS = {
     "w400": {"mode": "width", "size": 400},
     "s100": {"mode": "square", "size": 100},
+    "s200": {"mode": "square", "size": 200},
 }
 
 

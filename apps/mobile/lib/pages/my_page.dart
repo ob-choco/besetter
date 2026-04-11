@@ -775,11 +775,11 @@ class _DailyRouteCard extends StatelessWidget {
             ClipRRect(
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
               child: Container(
-                width: 80, height: 80,
+                width: 120, height: 120,
                 color: const Color(0xFFF0F0F0),
                 child: imageUrl != null
                     ? CachedNetworkImage(
-                        imageUrl: toThumbnailUrl(imageUrl, 's100'),
+                        imageUrl: toThumbnailUrl(imageUrl, 's200'),
                         fit: BoxFit.cover,
                         placeholder: (_, __) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
                         errorWidget: (_, __, ___) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
