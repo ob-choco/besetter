@@ -163,7 +163,7 @@ class _ActivityTimerPanelState extends State<ActivityTimerPanel> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Completed button
+              // Completed button (enabled after 5 seconds)
               Expanded(
                 flex: 2,
                 child: _ActionButton(
@@ -172,6 +172,7 @@ class _ActivityTimerPanelState extends State<ActivityTimerPanel> {
                   color: Colors.white,
                   backgroundColor: const Color(0xFF0066FF),
                   onTap: widget.onCompleted,
+                  disabled: _elapsed.inSeconds < 5,
                 ),
               ),
             ],
@@ -188,6 +189,7 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final Color backgroundColor;
   final VoidCallback onTap;
+  final bool disabled;
 
   const _ActionButton({
     required this.icon,
@@ -195,16 +197,20 @@ class _ActionButton extends StatelessWidget {
     required this.color,
     required this.backgroundColor,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = disabled ? color.withValues(alpha: 0.4) : color;
+    final effectiveBg = disabled ? backgroundColor.withValues(alpha: 0.4) : backgroundColor;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: Container(
         height: 64,
         decoration: BoxDecoration(
-          color: backgroundColor,
+          color: effectiveBg,
           borderRadius: BorderRadius.circular(12),
           boxShadow: label != null
               ? const [
@@ -219,13 +225,13 @@ class _ActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 17),
+            Icon(icon, color: effectiveColor, size: 17),
             if (label != null) ...[
               const SizedBox(width: 8),
               Text(
                 label!,
                 style: TextStyle(
-                  color: color,
+                  color: effectiveColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
