@@ -152,6 +152,86 @@ class MyPage extends HookConsumerWidget {
       loadDailyRoutes(calendarYear.value, calendarMonth.value, day);
     }
 
+    Future<void> handleRouteGroupDelete(String routeId) async {
+      final year = calendarYear.value;
+      final month = calendarMonth.value;
+      final day = selectedDay.value;
+      if (day == null) return;
+      final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+
+      try {
+        await ActivityService.deleteDailyRouteGroup(routeId: routeId, date: dateStr);
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')),
+        );
+        return;
+      }
+
+      final data = dailyRoutesData.value;
+      if (data == null) return;
+      final routes = List<Map<String, dynamic>>.from(data['routes'] ?? []);
+      final removedIndex = routes.indexWhere((r) => r['routeId'] == routeId);
+      if (removedIndex == -1) return;
+      final removed = routes.removeAt(removedIndex);
+
+      final newSummary = Map<String, dynamic>.from(data['summary'] as Map);
+      newSummary['totalCount'] = (newSummary['totalCount'] as int) - ((removed['totalCount'] as int?) ?? 0);
+      newSummary['completedCount'] = (newSummary['completedCount'] as int) - ((removed['completedCount'] as int?) ?? 0);
+      newSummary['attemptedCount'] = (newSummary['attemptedCount'] as int) - ((removed['attemptedCount'] as int?) ?? 0);
+      newSummary['totalDuration'] = (newSummary['totalDuration'] as num).toDouble() - ((removed['totalDuration'] as num?)?.toDouble() ?? 0.0);
+      newSummary['routeCount'] = (newSummary['routeCount'] as int) - 1;
+
+      dailyRoutesCache.value.remove(dateStr);
+      final monthKey = '$year-${month.toString().padLeft(2, '0')}';
+      monthlySummaryCache.value.remove(monthKey);
+
+      if (routes.isNotEmpty) {
+        dailyRoutesData.value = {'summary': newSummary, 'routes': routes};
+        return;
+      }
+
+      // This day is now empty — drop it from activeDates.
+      final updatedActiveDates = [...activeDates.value]..remove(day);
+      activeDates.value = updatedActiveDates;
+      dailyRoutesData.value = null;
+
+      // Prefer earlier days in same month.
+      final previousDays = updatedActiveDates.where((d) => d < day).toList();
+      if (previousDays.isNotEmpty) {
+        final target = previousDays.reduce((a, b) => a > b ? a : b);
+        selectedDay.value = target;
+        await loadDailyRoutes(year, month, target);
+        return;
+      }
+
+      // Then later days in same month.
+      final nextDays = updatedActiveDates.where((d) => d > day).toList();
+      if (nextDays.isNotEmpty) {
+        final target = nextDays.reduce((a, b) => a < b ? a : b);
+        selectedDay.value = target;
+        await loadDailyRoutes(year, month, target);
+        return;
+      }
+
+      // Otherwise jump to /last-activity-date.
+      final lastDate = await ActivityService.getLastActivityDate();
+      if (!context.mounted) return;
+      if (lastDate == null) {
+        selectedDay.value = null;
+        return;
+      }
+      final parts = lastDate.split('-').map(int.parse).toList();
+      calendarYear.value = parts[0];
+      calendarMonth.value = parts[1];
+      selectedDay.value = parts[2];
+      await Future.wait([
+        loadMonthlySummary(parts[0], parts[1]),
+        loadDailyRoutes(parts[0], parts[1], parts[2]),
+      ]);
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F7),
       appBar: AppBar(
@@ -281,6 +361,7 @@ class MyPage extends HookConsumerWidget {
                   data: dailyRoutesData.value,
                   loading: dailyRoutesLoading.value,
                   selectedDay: selectedDay.value,
+                  onDeleteConfirmed: handleRouteGroupDelete,
                   onReturn: () {
                     if (ref.read(activityDirtyProvider)) {
                       ref.read(activityDirtyProvider.notifier).state = false;
@@ -689,11 +770,13 @@ class _DailyRoutes extends StatelessWidget {
   final bool loading;
   final int? selectedDay;
   final VoidCallback? onReturn;
+  final Future<void> Function(String routeId) onDeleteConfirmed;
 
   const _DailyRoutes({
     required this.data,
     required this.loading,
     required this.selectedDay,
+    required this.onDeleteConfirmed,
     this.onReturn,
   });
 
@@ -749,6 +832,7 @@ class _DailyRoutes extends StatelessWidget {
           route: route,
           formatDuration: _formatDuration,
           onReturn: onReturn,
+          onDeleteConfirmed: onDeleteConfirmed,
         )),
       ],
     );
@@ -759,8 +843,40 @@ class _DailyRouteCard extends StatelessWidget {
   final Map<String, dynamic> route;
   final String Function(double) formatDuration;
   final VoidCallback? onReturn;
+  final Future<void> Function(String routeId) onDeleteConfirmed;
 
-  const _DailyRouteCard({required this.route, required this.formatDuration, this.onReturn});
+  const _DailyRouteCard({
+    required this.route,
+    required this.formatDuration,
+    required this.onDeleteConfirmed,
+    this.onReturn,
+  });
+
+  Future<void> _confirmAndDelete(BuildContext context, String routeId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('액티비티 삭제'),
+        content: const Text('해당 루트의 액티비티가 모두 삭제 됩니다. 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    await onDeleteConfirmed(routeId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -823,37 +939,63 @@ class _DailyRouteCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Top: grade + title + place
-                      Column(
+                      // Top: grade + title + place + overflow menu
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                            decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(6)),
-                            child: Text(grade, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
-                          const SizedBox(height: 2),
-                          Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
-                          if (isBlocked) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(blockedIcon, style: const TextStyle(fontSize: 11)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  blockedText,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF8A8F94),
-                                    fontWeight: FontWeight.w500,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(6)),
+                                  child: Text(grade, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
+                                const SizedBox(height: 2),
+                                Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
+                                if (isBlocked) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(blockedIcon, style: const TextStyle(fontSize: 11)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        blockedText,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF8A8F94),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF8A8F94)),
+                              onSelected: (value) {
+                                if (value == 'delete') {
+                                  _confirmAndDelete(context, routeId);
+                                }
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('삭제하기', style: TextStyle(color: Colors.red)),
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ],
                       ),
                       // Bottom: stat boxes row (A style)
