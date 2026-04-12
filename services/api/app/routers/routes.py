@@ -31,6 +31,18 @@ from app.services.route_overlay import generate_route_overlay
 router = APIRouter(prefix="/routes", tags=["routes"])
 
 
+def _can_access_route(route, user) -> bool:
+    """Return True if `user` may access `route`.
+
+    Owner: always allowed (any visibility).
+    Non-owner: allowed unless visibility is explicitly PRIVATE.
+    UNLISTED is treated like PUBLIC for direct access (matches share.py).
+    """
+    if route.user_id == user.id:
+        return True
+    return route.visibility != Visibility.PRIVATE
+
+
 class CreateBoulderingHoldRequest(BaseModel):
     model_config = model_config
 
