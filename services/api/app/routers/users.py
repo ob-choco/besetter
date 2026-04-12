@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi import status as http_status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.gcs import bucket, generate_signed_url, extract_blob_path_from_url, get_base_url
 from app.dependencies import get_current_user
@@ -27,6 +27,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 class UserProfileResponse(BaseModel):
     model_config = model_config
 
+    id: str = Field(alias="id")
     name: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
@@ -49,6 +50,7 @@ def _build_profile_response(user: User) -> UserProfileResponse:
             signed_url = user.profile_image_url
 
     return UserProfileResponse(
+        id=str(user.id),
         name=user.name,
         email=user.email,
         bio=user.bio,
