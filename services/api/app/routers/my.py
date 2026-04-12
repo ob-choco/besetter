@@ -3,13 +3,18 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel
 
 from app.dependencies import get_current_user
 from app.models import model_config
-from app.models.activity import Activity, RouteSnapshot
+from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
 from app.models.route import Visibility
+from app.routers.activities import (
+    _build_stats_inc,
+    _update_route_stats,
+    _update_user_route_stats,
+)
 from app.models.user import User
 
 router = APIRouter(prefix="/my", tags=["my"])
@@ -302,3 +307,83 @@ async def get_daily_routes(
     ]
 
     return DailyRoutesResponse(summary=summary, routes=routes)
+
+
+@router.delete("/daily-routes/{route_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_daily_route_group(
+    route_id: str = Path(...),
+    date: str = Query(pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        route_object_id = ObjectId(route_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid route_id format",
+        )
+
+    utc_lo, utc_hi = _day_utc_superset(date)
+
+    pipeline = [
+        {"$match": {
+            "userId": current_user.id,
+            "routeId": route_object_id,
+            "startedAt": {"$gte": utc_lo, "$lt": utc_hi},
+        }},
+        {"$addFields": {
+            "localDate": {
+                "$dateToString": {
+                    "format": "%Y-%m-%d",
+                    "date": "$startedAt",
+                    "timezone": {"$ifNull": ["$timezone", "UTC"]},
+                }
+            }
+        }},
+        {"$match": {"localDate": date}},
+        {"$project": {
+            "_id": 1,
+            "status": 1,
+            "locationVerified": 1,
+            "duration": 1,
+        }},
+    ]
+
+    collection = Activity.get_pymongo_collection()
+    cursor = collection.aggregate(pipeline)
+    matched = await cursor.to_list(length=None)
+
+    if not matched:
+        return
+
+    activity_ids = [m["_id"] for m in matched]
+    incs = [
+        _build_stats_inc(
+            ActivityStatus(m["status"]),
+            m.get("locationVerified", False),
+            m.get("duration", 0.0),
+            sign=-1,
+        )
+        for m in matched
+    ]
+    merged_inc = _merge_incs(incs)
+
+    # 1. Hard delete activities first (conservative drift direction).
+    await collection.delete_many({"_id": {"$in": activity_ids}})
+
+    # 2. Then apply the cumulative stats decrement.
+    await _update_route_stats(route_object_id, merged_inc)
+    await _update_user_route_stats(current_user.id, route_object_id, merged_inc)
+
+    # 3. Clean up empty UserRouteStats doc (same rule as single DELETE).
+    user_stats = await UserRouteStats.find_one(
+        UserRouteStats.user_id == current_user.id,
+        UserRouteStats.route_id == route_object_id,
+    )
+    if (
+        user_stats
+        and user_stats.total_count <= 0
+        and user_stats.completed_count <= 0
+        and user_stats.verified_completed_count <= 0
+    ):
+        await user_stats.delete()
