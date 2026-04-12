@@ -13,6 +13,7 @@ from app.models.image import Image
 from app.models.place import Place
 from app.models import IdView
 from app.models.route import Route, BoulderingHold, EnduranceHold, Visibility, RouteType
+from app.models.activity import Activity
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
 
 
@@ -388,12 +389,23 @@ async def _enrich_route_with_hold_polygon_data(route: Route) -> RouteDetailView:
 
 
 @router.get("/{route_id}", response_model=RouteDetailView)
-async def get_route(route_id: str, current_user: User = Depends(get_current_user)):
+async def get_route(
+    route_id: str,
+    with_activity_check: bool = Query(False, alias="withActivityCheck"),
+    current_user: User = Depends(get_current_user),
+):
     route = await Route.find_one(
-        Route.id == ObjectId(route_id), Route.user_id == current_user.id, Route.is_deleted != True
+        Route.id == ObjectId(route_id),
+        Route.is_deleted != True,
     )
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
+
+    if not _can_access_route(route, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"reason": "private"},
+        )
 
     blob_path = extract_blob_path_from_url(route.image_url)
     if blob_path:
@@ -403,7 +415,21 @@ async def get_route(route_id: str, current_user: User = Depends(get_current_user
         if overlay_blob_path:
             route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
 
-    return await _enrich_route_with_hold_polygon_data(route)
+    detail = await _enrich_route_with_hold_polygon_data(route)
+
+    is_owner = route.user_id == current_user.id
+    if is_owner and with_activity_check:
+        has_other = (
+            await Activity.find(
+                Activity.route_id == route.id,
+                Activity.user_id != current_user.id,
+            )
+            .limit(1)
+            .count()
+        ) > 0
+        detail.has_other_user_activities = has_other
+
+    return detail
 
 
 class UpdateRouteRequest(BaseModel):
