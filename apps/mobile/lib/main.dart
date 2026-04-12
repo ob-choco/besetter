@@ -53,7 +53,7 @@ void main() async {
     (prev, next) {
       next.whenData((user) {
         if (prev?.value?.id != user.id) {
-          PosthogService.identify(userId: user.id); // ignore: unawaited_futures
+          PosthogService.identify(userId: user.id);
         }
       });
     },
@@ -67,7 +67,7 @@ void main() async {
       final wasLoggedIn = prev?.value?.isLoggedIn ?? false;
       final isLoggedIn = next.value?.isLoggedIn ?? false;
       if (wasLoggedIn && !isLoggedIn) {
-        PosthogService.reset(); // ignore: unawaited_futures
+        PosthogService.reset();
       }
     },
   );
