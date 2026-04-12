@@ -17,6 +17,9 @@ import 'firebase_options.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
 import 'providers/auth_provider.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
+import 'services/posthog_service.dart';
+import 'providers/user_provider.dart';
 import 'models/route_data.dart';
 import 'pages/viewers/route_viewer.dart';
 
@@ -43,6 +46,31 @@ void main() async {
   );
 
   container = ProviderContainer();
+
+  // PostHog identify when we learn the user id from /users/me.
+  container.listen<AsyncValue<UserState>>(
+    userProfileProvider,
+    (prev, next) {
+      next.whenData((user) {
+        if (prev?.value?.id != user.id) {
+          PosthogService.identify(userId: user.id); // ignore: unawaited_futures
+        }
+      });
+    },
+    fireImmediately: true,
+  );
+
+  // PostHog reset on logout transition.
+  container.listen<AsyncValue<AuthState>>(
+    authProvider,
+    (prev, next) {
+      final wasLoggedIn = prev?.value?.isLoggedIn ?? false;
+      final isLoggedIn = next.value?.isLoggedIn ?? false;
+      if (wasLoggedIn && !isLoggedIn) {
+        PosthogService.reset(); // ignore: unawaited_futures
+      }
+    },
+  );
 
   runApp(
     UncontrolledProviderScope(
@@ -79,7 +107,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      navigatorObservers: [routeObserver],
+      navigatorObservers: [routeObserver, PosthogObserver()],
     );
   }
 }
