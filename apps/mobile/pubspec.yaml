@@ -79,6 +79,7 @@ dependencies:
   flutter_timezone: ^3.0.1
   image_cropper: ^8.0.2
   wakelock_plus: ^1.4.0
+  posthog_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
