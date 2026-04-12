@@ -4,6 +4,7 @@ import 'package:confetti/confetti.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../services/activity_service.dart';
 import 'slide_to_start.dart';
@@ -49,6 +50,9 @@ class _ActivityPanelState extends State<ActivityPanel> {
   void dispose() {
     _confettiController.dispose();
     _autoDismissTimer?.cancel();
+    if (_state != _PanelState.slider) {
+      WakelockPlus.disable();
+    }
     super.dispose();
   }
 
@@ -84,6 +88,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
       _startedAt = DateTime.now();
       _state = _PanelState.timer;
     });
+    WakelockPlus.enable();
     // GPS 위치는 비동기로 백그라운드에서 캡처
     _captureLocation();
   }
@@ -146,6 +151,7 @@ class _ActivityPanelState extends State<ActivityPanel> {
 
   void _dismiss() {
     _autoDismissTimer?.cancel();
+    WakelockPlus.disable();
     setState(() {
       _startedAt = null;
       _latitude = 0.0;
