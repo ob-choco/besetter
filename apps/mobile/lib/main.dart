@@ -45,6 +45,13 @@ void main() async {
     javaScriptAppKey: '6c0285165dddccdae02bffe935c47e72',
   );
 
+  final posthogConfig =
+      PostHogConfig('phc_wLKorSH6QdipSfGhpBF2cw8xMc6JrUKYY3trjfwzjnJW')
+        ..host = 'https://us.i.posthog.com'
+        ..captureApplicationLifecycleEvents = true
+        ..sessionReplay = true;
+  await Posthog().setup(posthogConfig);
+
   container = ProviderContainer();
 
   // PostHog identify when we learn the user id from /users/me.
@@ -85,29 +92,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      navigatorKey: AuthorizedHttpClient.navigatorKey,
-      title: 'Besetter',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.light,
-      initialRoute: skipSplash ? '/' : '/splash',
-      routes: {
-        '/': (context) => const MainMenuPage(),
-        '/splash': (context) => const SplashPage(),
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        '/images': (context) => const ImageListPage(),
-      },
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      navigatorObservers: [routeObserver, PosthogObserver()],
+    return PostHogWidget(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        navigatorKey: AuthorizedHttpClient.navigatorKey,
+        title: 'Besetter',
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.light,
+        initialRoute: skipSplash ? '/' : '/splash',
+        routes: {
+          '/': (context) => const MainMenuPage(),
+          '/splash': (context) => const SplashPage(),
+          '/login': (context) => const LoginPage(),
+          '/home': (context) => const HomePage(),
+          '/images': (context) => const ImageListPage(),
+        },
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        navigatorObservers: [routeObserver, PosthogObserver()],
+      ),
     );
   }
 }
