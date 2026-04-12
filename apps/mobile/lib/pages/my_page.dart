@@ -903,6 +903,8 @@ class _DailyRouteCard extends StatelessWidget {
         ? Color(int.parse(gradeColorHex.replaceFirst('#', ''), radix: 16) | 0xFF000000)
         : const Color(0xFF0066FF);
 
+    final thumbSize = MediaQuery.of(context).size.width * 0.33;
+
     return GestureDetector(
       onTap: () => _navigateToRoute(context, routeId),
       child: Padding(
@@ -918,7 +920,7 @@ class _DailyRouteCard extends StatelessWidget {
             ClipRRect(
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
               child: Container(
-                width: 150, height: 150,
+                width: thumbSize, height: thumbSize,
                 color: const Color(0xFFF0F0F0),
                 child: imageUrl != null
                     ? CachedNetworkImage(
@@ -932,7 +934,7 @@ class _DailyRouteCard extends StatelessWidget {
             ),
             Expanded(
               child: SizedBox(
-                height: 150,
+                height: thumbSize,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   child: Column(
