@@ -215,6 +215,9 @@ class _MainMenuPageState extends ConsumerState<MainMenuPage> {
         }
 
         return UpgradeAlert(
+          upgrader: Upgrader(
+            minAppVersion: '0.0.2',
+          ),
           child: authState.isLoggedIn ? const MainTabPage() : const LoginPage(),
         );
       },
