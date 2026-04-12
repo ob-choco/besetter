@@ -124,23 +124,38 @@ class _MainMenuPageState extends ConsumerState<MainMenuPage> {
   }
 
   Future<void> _navigateToRoute(String routeId) async {
-    // RouteViewer로 직접 이동
     final response = await AuthorizedHttpClient.get('/routes/$routeId');
+    if (!mounted) return;
+
     if (response.statusCode == 200) {
       final routeData = RouteData.fromJson(
         jsonDecode(utf8.decode(response.bodyBytes)),
       );
-      if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => RouteViewer(routeData: routeData),
         ),
       );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
-      );
+      return;
     }
+
+    if (response.statusCode == 403) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🔒 비공개된 루트입니다')),
+      );
+      return;
+    }
+
+    if (response.statusCode == 404) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🗑 삭제된 루트입니다')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
+    );
   }
 
   @override

@@ -885,18 +885,38 @@ class _DailyRouteCard extends StatelessWidget {
   Future<void> _navigateToRoute(BuildContext context, String routeId) async {
     try {
       final response = await AuthorizedHttpClient.get('/routes/$routeId');
+      if (!context.mounted) return;
+
       if (response.statusCode == 200) {
         final routeData = RouteData.fromJson(
           jsonDecode(utf8.decode(response.bodyBytes)),
         );
-        if (!context.mounted) return;
         await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => RouteViewer(routeData: routeData)),
         );
         onReturn?.call();
+        return;
       }
+
+      if (response.statusCode == 403) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🔒 비공개된 루트입니다')),
+        );
+        return;
+      }
+
+      if (response.statusCode == 404) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🗑 삭제된 루트입니다')),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
+      );
     } catch (_) {
-      // silently fail
+      // silently fail (network etc.)
     }
   }
 }
