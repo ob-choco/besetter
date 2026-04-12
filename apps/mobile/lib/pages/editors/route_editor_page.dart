@@ -83,6 +83,8 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
   String? _gradeError;
   String? _title;
   String? _description;
+  String _visibility = 'public';
+  bool _hasOtherUserActivities = false;
 
   // 저장 중인지 여부를 나타내는 상태 추가
   bool _isSaving = false;
@@ -326,6 +328,12 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
     _pendingOperations.remove(operation);
   }
 
+  void _onVisibilityChanged(bool goingPublic) {
+    setState(() {
+      _visibility = goingPublic ? 'public' : 'private';
+    });
+  }
+
   // 저장 메서드 추가
   Future<void> _saveRoute() async {
     if (_selectedGrade == null) {
@@ -406,6 +414,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
         'gradeColor': _selectedGradeColor?.value.toRadixString(16).padLeft(8, '0'),
         'title': _title,
         'description': _description,
+        'visibility': _visibility,
       };
 
       // 볼더링 모드일 경우
@@ -559,6 +568,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
         _description = routeData.description;
         _currentModeType =
             routeData.type == RouteType.bouldering ? RouteEditModeType.bouldering : RouteEditModeType.endurance;
+        _visibility = routeData.visibility;
       });
 
       // 4. 이미지 로드 시작
@@ -840,6 +850,43 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
                   gradeError: _gradeError,
                   title: _title,
                   description: _description,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7F9FC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE5E8EC)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _visibility == 'public' ? '공개' : '비공개',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2F30)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _visibility == 'public'
+                                    ? '다른 사람도 이 루트를 볼 수 있어요.'
+                                    : '다른 사람은 상세를 볼 수 없어요.',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF8A8F94)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _visibility == 'public',
+                          onChanged: (next) => _onVisibilityChanged(next),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
