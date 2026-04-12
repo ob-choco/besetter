@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.activity import Activity, RouteSnapshot
+from app.models.route import Visibility
 from app.models.user import User
 
 router = APIRouter(prefix="/my", tags=["my"])
@@ -90,6 +91,8 @@ class DailyRouteItem(BaseModel):
 
     route_id: str
     route_snapshot: RouteSnapshot
+    route_visibility: Visibility = Visibility.PUBLIC
+    is_deleted: bool = False
     total_count: int
     completed_count: int
     attempted_count: int

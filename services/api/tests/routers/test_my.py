@@ -104,6 +104,8 @@ def test_daily_routes_response_schema():
     route_item = DailyRouteItem(
         route_id="507f1f77bcf86cd799439011",
         route_snapshot=snapshot,
+        route_visibility="public",
+        is_deleted=False,
         total_count=3,
         completed_count=2,
         attempted_count=1,
@@ -124,8 +126,27 @@ def test_daily_routes_response_schema():
     assert len(dumped["routes"]) == 1
     assert dumped["routes"][0]["routeId"] == "507f1f77bcf86cd799439011"
     assert dumped["routes"][0]["routeSnapshot"]["gradeType"] == "v_grade"
+    assert dumped["routes"][0]["routeVisibility"] == "public"
+    assert dumped["routes"][0]["isDeleted"] is False
     assert dumped["routes"][0]["completedCount"] == 2
     assert dumped["routes"][0]["totalDuration"] == 845.50
+
+
+def test_daily_route_item_private_and_deleted_flags():
+    snapshot = RouteSnapshot(grade_type="v_grade", grade="V2")
+    item = DailyRouteItem(
+        route_id="507f1f77bcf86cd799439012",
+        route_snapshot=snapshot,
+        route_visibility="private",
+        is_deleted=True,
+        total_count=1,
+        completed_count=0,
+        attempted_count=1,
+        total_duration=12.0,
+    )
+    dumped = item.model_dump(by_alias=True)
+    assert dumped["routeVisibility"] == "private"
+    assert dumped["isDeleted"] is True
 
 
 def test_daily_routes_response_empty():
