@@ -90,6 +90,15 @@ def _month_utc_superset(year: int, month: int) -> tuple[datetime, datetime]:
     )
 
 
+def _merge_incs(incs: list[dict]) -> dict:
+    """Merge multiple $inc dicts by summing values of common keys."""
+    merged: dict = {}
+    for inc in incs:
+        for key, value in inc.items():
+            merged[key] = merged.get(key, 0) + value
+    return merged
+
+
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------

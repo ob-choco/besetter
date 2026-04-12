@@ -11,6 +11,7 @@ from app.routers.my import (
     _day_utc_range,
     _day_utc_superset,
     _month_utc_superset,
+    _merge_incs,
 )
 from app.models.activity import RouteSnapshot
 
@@ -186,3 +187,36 @@ def test_month_utc_superset_year_boundary():
     start, end = _month_utc_superset(2026, 12)
     assert start == datetime(2026, 11, 30, 10, 0, 0, tzinfo=tz.utc)
     assert end == datetime(2027, 1, 1, 14, 0, 0, tzinfo=tz.utc)
+
+
+def test_merge_incs_empty_list():
+    assert _merge_incs([]) == {}
+
+
+def test_merge_incs_single_dict():
+    assert _merge_incs([{"totalCount": 1, "totalDuration": 30.5}]) == {
+        "totalCount": 1,
+        "totalDuration": 30.5,
+    }
+
+
+def test_merge_incs_overlapping_keys():
+    merged = _merge_incs([
+        {"totalCount": 1, "totalDuration": 10.0, "completedCount": 1},
+        {"totalCount": 1, "totalDuration": 20.0},
+        {"totalCount": 1, "totalDuration": 5.5, "completedCount": 1, "completedDuration": 5.5},
+    ])
+    assert merged == {
+        "totalCount": 3,
+        "totalDuration": 35.5,
+        "completedCount": 2,
+        "completedDuration": 5.5,
+    }
+
+
+def test_merge_incs_negative_signs():
+    """Decrement dicts sum correctly."""
+    assert _merge_incs([
+        {"totalCount": -1, "totalDuration": -10.0},
+        {"totalCount": -1, "totalDuration": -20.0},
+    ]) == {"totalCount": -2, "totalDuration": -30.0}
