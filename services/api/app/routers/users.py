@@ -27,6 +27,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 class UserProfileResponse(BaseModel):
     model_config = model_config
 
+    # Explicit alias overrides model_config's to_camel generator,
+    # which would otherwise emit "_id" in the JSON response.
     id: str = Field(alias="id")
     name: Optional[str] = None
     email: Optional[str] = None
