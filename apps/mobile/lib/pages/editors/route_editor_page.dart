@@ -328,10 +328,43 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
     _pendingOperations.remove(operation);
   }
 
-  void _onVisibilityChanged(bool goingPublic) {
-    setState(() {
-      _visibility = goingPublic ? 'public' : 'private';
-    });
+  Future<void> _onVisibilityChanged(bool goingPublic) async {
+    if (goingPublic) {
+      setState(() => _visibility = 'public');
+      return;
+    }
+
+    if (!_hasOtherUserActivities) {
+      setState(() => _visibility = 'private');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('비공개로 전환할까요?'),
+        content: const Text(
+          '다른 사람의 활동 기록에도 🔒 표시로 바뀌고 상세 진입이 막혀요. 계속할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('비공개로 전환'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (confirmed == true) {
+      setState(() => _visibility = 'private');
+    }
+    // If confirmed != true, we don't touch _visibility, so the Switch stays
+    // 'on' because it's bound to _visibility == 'public'.
   }
 
   // 저장 메서드 추가
@@ -514,7 +547,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
 
     try {
       // 1. 먼저 route 데이터를 가져옵니다
-      final response = await AuthorizedHttpClient.get('/routes/${widget.routeId}');
+      final response = await AuthorizedHttpClient.get('/routes/${widget.routeId}?withActivityCheck=true');
       if (response.statusCode != 200) {
         throw Exception('${AppLocalizations.of(context)!.failedLoadRouteData}: ${response.statusCode}');
       }
@@ -569,6 +602,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
         _currentModeType =
             routeData.type == RouteType.bouldering ? RouteEditModeType.bouldering : RouteEditModeType.endurance;
         _visibility = routeData.visibility;
+        _hasOtherUserActivities = routeData.hasOtherUserActivities ?? false;
       });
 
       // 4. 이미지 로드 시작
