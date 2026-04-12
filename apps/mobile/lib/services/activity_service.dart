@@ -98,13 +98,8 @@ class ActivityService {
   }
 
   /// Get the date of the user's most recent activity.
-  static Future<String?> getLastActivityDate({
-    required String timezone,
-  }) async {
-    final uri = Uri.parse('/my/last-activity-date')
-        .replace(queryParameters: {'timezone': timezone});
-
-    final response = await AuthorizedHttpClient.get(uri.toString());
+  static Future<String?> getLastActivityDate() async {
+    final response = await AuthorizedHttpClient.get('/my/last-activity-date');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -118,12 +113,10 @@ class ActivityService {
   static Future<List<int>> getMonthlySummary({
     required int year,
     required int month,
-    required String timezone,
   }) async {
     final uri = Uri.parse('/my/monthly-summary').replace(queryParameters: {
       'year': year.toString(),
       'month': month.toString(),
-      'timezone': timezone,
     });
 
     final response = await AuthorizedHttpClient.get(uri.toString());
@@ -139,11 +132,9 @@ class ActivityService {
   /// Get route groups for a specific date.
   static Future<Map<String, dynamic>> getDailyRoutes({
     required String date,
-    required String timezone,
   }) async {
     final uri = Uri.parse('/my/daily-routes').replace(queryParameters: {
       'date': date,
-      'timezone': timezone,
     });
 
     final response = await AuthorizedHttpClient.get(uri.toString());
@@ -152,6 +143,24 @@ class ActivityService {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception('Failed to load daily routes. Status: ${response.statusCode}');
+    }
+  }
+
+  /// Delete all of the current user's activities for (route, date).
+  /// Date is a local date string (YYYY-MM-DD) — server resolves using each
+  /// activity's stored timezone.
+  static Future<void> deleteDailyRouteGroup({
+    required String routeId,
+    required String date,
+  }) async {
+    final uri = Uri.parse('/my/daily-routes/$routeId').replace(queryParameters: {
+      'date': date,
+    });
+
+    final response = await AuthorizedHttpClient.delete(uri.toString());
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete daily route group. Status: ${response.statusCode}');
     }
   }
 }

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -40,7 +39,6 @@ class MyPage extends HookConsumerWidget {
     final dailyRoutesData = useState<Map<String, dynamic>?>(null);
     final calendarLoading = useState(true);
     final dailyRoutesLoading = useState(false);
-    final timezone = useState<String>('Asia/Seoul');
 
     // Caches (persist across rebuilds)
     final monthlySummaryCache = useRef(<String, List<int>>{});
@@ -53,14 +51,14 @@ class MyPage extends HookConsumerWidget {
     bool isToday(int y, int m, int d) => y == now.year && m == now.month && d == now.day;
 
     // Load monthly summary
-    Future<void> loadMonthlySummary(int year, int month, String tz) async {
+    Future<void> loadMonthlySummary(int year, int month) async {
       final cacheKey = '$year-${month.toString().padLeft(2, '0')}';
       if (!isCurrentMonth(year, month) && monthlySummaryCache.value.containsKey(cacheKey)) {
         activeDates.value = monthlySummaryCache.value[cacheKey]!;
         return;
       }
       try {
-        final dates = await ActivityService.getMonthlySummary(year: year, month: month, timezone: tz);
+        final dates = await ActivityService.getMonthlySummary(year: year, month: month);
         activeDates.value = dates;
         if (!isCurrentMonth(year, month)) {
           monthlySummaryCache.value[cacheKey] = dates;
@@ -71,7 +69,7 @@ class MyPage extends HookConsumerWidget {
     }
 
     // Load daily routes
-    Future<void> loadDailyRoutes(int year, int month, int day, String tz) async {
+    Future<void> loadDailyRoutes(int year, int month, int day) async {
       final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
       if (!isToday(year, month, day) && dailyRoutesCache.value.containsKey(dateStr)) {
         dailyRoutesData.value = dailyRoutesCache.value[dateStr];
@@ -79,7 +77,7 @@ class MyPage extends HookConsumerWidget {
       }
       dailyRoutesLoading.value = true;
       try {
-        final data = await ActivityService.getDailyRoutes(date: dateStr, timezone: tz);
+        final data = await ActivityService.getDailyRoutes(date: dateStr);
         dailyRoutesData.value = data;
         if (!isToday(year, month, day)) {
           dailyRoutesCache.value[dateStr] = data;
@@ -94,20 +92,18 @@ class MyPage extends HookConsumerWidget {
     // Initial load
     useEffect(() {
       () async {
-        final tz = await FlutterTimezone.getLocalTimezone();
-        timezone.value = tz;
-        final lastDate = await ActivityService.getLastActivityDate(timezone: tz);
+        final lastDate = await ActivityService.getLastActivityDate();
         if (lastDate != null) {
           final parts = lastDate.split('-').map(int.parse).toList();
           calendarYear.value = parts[0];
           calendarMonth.value = parts[1];
           selectedDay.value = parts[2];
           await Future.wait([
-            loadMonthlySummary(parts[0], parts[1], tz),
-            loadDailyRoutes(parts[0], parts[1], parts[2], tz),
+            loadMonthlySummary(parts[0], parts[1]),
+            loadDailyRoutes(parts[0], parts[1], parts[2]),
           ]);
         } else {
-          await loadMonthlySummary(now.year, now.month, tz);
+          await loadMonthlySummary(now.year, now.month);
         }
         calendarLoading.value = false;
       }();
@@ -119,10 +115,9 @@ class MyPage extends HookConsumerWidget {
       if (refreshSignal == 0) return null;
       monthlySummaryCache.value.clear();
       dailyRoutesCache.value.clear();
-      final tz = timezone.value;
-      loadMonthlySummary(calendarYear.value, calendarMonth.value, tz);
+      loadMonthlySummary(calendarYear.value, calendarMonth.value);
       if (selectedDay.value != null) {
-        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!, tz);
+        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!);
       }
       return null;
     }, [refreshSignal]);
@@ -137,7 +132,7 @@ class MyPage extends HookConsumerWidget {
       calendarMonth.value = newMonth;
       selectedDay.value = null;
       dailyRoutesData.value = null;
-      loadMonthlySummary(newYear, newMonth, timezone.value);
+      loadMonthlySummary(newYear, newMonth);
     }
 
     void goToNextMonth() {
@@ -149,12 +144,12 @@ class MyPage extends HookConsumerWidget {
       calendarMonth.value = newMonth;
       selectedDay.value = null;
       dailyRoutesData.value = null;
-      loadMonthlySummary(newYear, newMonth, timezone.value);
+      loadMonthlySummary(newYear, newMonth);
     }
 
     void onDaySelected(int day) {
       selectedDay.value = day;
-      loadDailyRoutes(calendarYear.value, calendarMonth.value, day, timezone.value);
+      loadDailyRoutes(calendarYear.value, calendarMonth.value, day);
     }
 
     return Scaffold(
@@ -291,10 +286,9 @@ class MyPage extends HookConsumerWidget {
                       ref.read(activityDirtyProvider.notifier).state = false;
                       monthlySummaryCache.value.clear();
                       dailyRoutesCache.value.clear();
-                      final tz = timezone.value;
-                      loadMonthlySummary(calendarYear.value, calendarMonth.value, tz);
+                      loadMonthlySummary(calendarYear.value, calendarMonth.value);
                       if (selectedDay.value != null) {
-                        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!, tz);
+                        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!);
                       }
                     }
                   },
