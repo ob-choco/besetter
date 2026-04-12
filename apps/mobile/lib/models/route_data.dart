@@ -52,6 +52,9 @@ class RouteData {
 
   final List<Polygon>? polygons;
 
+  final String visibility;
+  final bool? hasOtherUserActivities;
+
   RouteData({
     required this.id,
     required this.type,
@@ -74,6 +77,8 @@ class RouteData {
     this.overlayImageUrl,
     this.overlayProcessing = false,
     this.polygons,
+    this.visibility = 'public',
+    this.hasOtherUserActivities,
   });
 
   factory RouteData.fromJson(Map<String, dynamic> json) {
@@ -109,6 +114,8 @@ class RouteData {
       polygons: json['polygons'] != null
           ? (json['polygons'] as List).map((polygon) => Polygon.fromJson(polygon as Map<String, dynamic>)).toList()
           : null,
+      visibility: json['visibility'] as String? ?? 'public',
+      hasOtherUserActivities: json['hasOtherUserActivities'] as bool?,
     );
   }
 
@@ -134,6 +141,8 @@ class RouteData {
         'overlayImageUrl': overlayImageUrl,
         'overlayProcessing': overlayProcessing,
         'polygons': polygons?.map((polygon) => polygon.toJson()).toList(),
+        'visibility': visibility,
+        'hasOtherUserActivities': hasOtherUserActivities,
       };
 }
 
