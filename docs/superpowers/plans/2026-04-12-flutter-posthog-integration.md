@@ -106,12 +106,16 @@ Edit `services/api/app/routers/users.py`, replacing the `UserProfileResponse` cl
 class UserProfileResponse(BaseModel):
     model_config = model_config
 
-    id: str
+    # Override the class-level to_camel alias generator, which maps
+    # `id` -> `_id` for Beanie/Mongo. We want `id` on the wire.
+    id: str = Field(alias="id")
     name: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
     profile_image_url: Optional[str] = None
 ```
+
+(Requires `from pydantic import BaseModel, Field` — the existing import only has `BaseModel`.)
 
 - [ ] **Step 4: Populate `id` in the builder**
 
