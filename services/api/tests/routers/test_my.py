@@ -9,6 +9,8 @@ from app.routers.my import (
     _to_local_date_str,
     _month_utc_range,
     _day_utc_range,
+    _day_utc_superset,
+    _month_utc_superset,
 )
 from app.models.activity import RouteSnapshot
 
@@ -156,3 +158,31 @@ def test_daily_routes_response_empty():
     dumped = resp.model_dump(by_alias=True)
     assert dumped["summary"]["totalCount"] == 0
     assert dumped["routes"] == []
+
+
+def test_day_utc_superset_basic():
+    """±14h padded window around a calendar day in UTC."""
+    start, end = _day_utc_superset("2026-04-12")
+    assert start == datetime(2026, 4, 11, 10, 0, 0, tzinfo=tz.utc)
+    assert end == datetime(2026, 4, 13, 14, 0, 0, tzinfo=tz.utc)
+
+
+def test_day_utc_superset_year_boundary():
+    """Year rollover should not break the window."""
+    start, end = _day_utc_superset("2026-01-01")
+    assert start == datetime(2025, 12, 31, 10, 0, 0, tzinfo=tz.utc)
+    assert end == datetime(2026, 1, 2, 14, 0, 0, tzinfo=tz.utc)
+
+
+def test_month_utc_superset_basic():
+    """±14h padded window around a calendar month in UTC."""
+    start, end = _month_utc_superset(2026, 4)
+    assert start == datetime(2026, 3, 31, 10, 0, 0, tzinfo=tz.utc)
+    assert end == datetime(2026, 5, 1, 14, 0, 0, tzinfo=tz.utc)
+
+
+def test_month_utc_superset_year_boundary():
+    """December should roll over to next January correctly."""
+    start, end = _month_utc_superset(2026, 12)
+    assert start == datetime(2026, 11, 30, 10, 0, 0, tzinfo=tz.utc)
+    assert end == datetime(2027, 1, 1, 14, 0, 0, tzinfo=tz.utc)

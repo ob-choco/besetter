@@ -59,6 +59,37 @@ def _day_utc_range(date_str: str, tz_name: str) -> tuple[datetime, datetime]:
     )
 
 
+def _day_utc_superset(date_str: str) -> tuple[datetime, datetime]:
+    """UTC window guaranteed to contain every activity whose local date
+    (in its own stored timezone) equals date_str. Padded ±14h to cover
+    every possible IANA offset."""
+    from datetime import timedelta
+
+    year, month, day = map(int, date_str.split("-"))
+    naive_day_start = datetime(year, month, day, tzinfo=timezone.utc)
+    naive_day_end = naive_day_start + timedelta(days=1)
+    return (
+        naive_day_start - timedelta(hours=14),
+        naive_day_end + timedelta(hours=14),
+    )
+
+
+def _month_utc_superset(year: int, month: int) -> tuple[datetime, datetime]:
+    """UTC window guaranteed to contain every activity whose local year/month
+    (in its own stored timezone) equals year/month. Padded ±14h."""
+    from datetime import timedelta
+
+    naive_month_start = datetime(year, month, 1, tzinfo=timezone.utc)
+    if month == 12:
+        naive_month_end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        naive_month_end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+    return (
+        naive_month_start - timedelta(hours=14),
+        naive_month_end + timedelta(hours=14),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
