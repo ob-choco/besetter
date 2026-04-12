@@ -84,6 +84,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
   String? _title;
   String? _description;
   String _visibility = 'public';
+  // ignore: unused_field
   bool _hasOtherUserActivities = false;
 
   // 저장 중인지 여부를 나타내는 상태 추가
@@ -328,44 +329,45 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
     _pendingOperations.remove(operation);
   }
 
-  Future<void> _onVisibilityChanged(bool goingPublic) async {
-    if (goingPublic) {
-      setState(() => _visibility = 'public');
-      return;
-    }
-
-    if (!_hasOtherUserActivities) {
-      setState(() => _visibility = 'private');
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('비공개로 전환할까요?'),
-        content: const Text(
-          '다른 사람의 활동 기록에도 🔒 표시로 바뀌고 상세 진입이 막혀요. 계속할까요?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('비공개로 전환'),
-          ),
-        ],
-      ),
-    );
-
-    if (!mounted) return;
-    if (confirmed == true) {
-      setState(() => _visibility = 'private');
-    }
-    // If confirmed != true, we don't touch _visibility, so the Switch stays
-    // 'on' because it's bound to _visibility == 'public'.
-  }
+  // Visibility toggle handler — hidden along with the Switch UI above.
+  // Future<void> _onVisibilityChanged(bool goingPublic) async {
+  //   if (goingPublic) {
+  //     setState(() => _visibility = 'public');
+  //     return;
+  //   }
+  //
+  //   if (!_hasOtherUserActivities) {
+  //     setState(() => _visibility = 'private');
+  //     return;
+  //   }
+  //
+  //   final confirmed = await showDialog<bool>(
+  //     context: context,
+  //     builder: (ctx) => AlertDialog(
+  //       title: const Text('비공개로 전환할까요?'),
+  //       content: const Text(
+  //         '다른 사람의 활동 기록에도 🔒 표시로 바뀌고 상세 진입이 막혀요. 계속할까요?',
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(ctx).pop(false),
+  //           child: const Text('취소'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.of(ctx).pop(true),
+  //           child: const Text('비공개로 전환'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  //
+  //   if (!mounted) return;
+  //   if (confirmed == true) {
+  //     setState(() => _visibility = 'private');
+  //   }
+  //   // If confirmed != true, we don't touch _visibility, so the Switch stays
+  //   // 'on' because it's bound to _visibility == 'public'.
+  // }
 
   // 저장 메서드 추가
   Future<void> _saveRoute() async {
@@ -885,43 +887,46 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
                   title: _title,
                   description: _description,
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F9FC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5E8EC)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _visibility == 'public' ? '공개' : '비공개',
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2F30)),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _visibility == 'public'
-                                    ? '다른 사람도 이 루트를 볼 수 있어요.'
-                                    : '다른 사람은 상세를 볼 수 없어요.',
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF8A8F94)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: _visibility == 'public',
-                          onChanged: (next) => _onVisibilityChanged(next),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // Visibility toggle UI is temporarily hidden until the
+                // feed/discover feature ships. Save payload still includes
+                // `_visibility` (always 'public' in create, preserved on edit).
+                // Padding(
+                //   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                //   child: Container(
+                //     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                //     decoration: BoxDecoration(
+                //       color: const Color(0xFFF7F9FC),
+                //       borderRadius: BorderRadius.circular(10),
+                //       border: Border.all(color: const Color(0xFFE5E8EC)),
+                //     ),
+                //     child: Row(
+                //       children: [
+                //         Expanded(
+                //           child: Column(
+                //             crossAxisAlignment: CrossAxisAlignment.start,
+                //             children: [
+                //               Text(
+                //                 _visibility == 'public' ? '공개' : '비공개',
+                //                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2F30)),
+                //               ),
+                //               const SizedBox(height: 2),
+                //               Text(
+                //                 _visibility == 'public'
+                //                     ? '다른 사람도 이 루트를 볼 수 있어요.'
+                //                     : '다른 사람은 상세를 볼 수 없어요.',
+                //                 style: const TextStyle(fontSize: 11, color: Color(0xFF8A8F94)),
+                //               ),
+                //             ],
+                //           ),
+                //         ),
+                //         Switch(
+                //           value: _visibility == 'public',
+                //           onChanged: (next) => _onVisibilityChanged(next),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: FilledButton(
