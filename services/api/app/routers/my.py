@@ -201,16 +201,25 @@ async def get_monthly_summary(
 @router.get("/daily-routes", response_model=DailyRoutesResponse)
 async def get_daily_routes(
     date: str = Query(pattern=r"^\d{4}-\d{2}-\d{2}$"),
-    timezone_param: str = Query(alias="timezone", default=DEFAULT_TIMEZONE),
     current_user: User = Depends(get_current_user),
 ):
-    start_utc, end_utc = _day_utc_range(date, timezone_param)
+    utc_lo, utc_hi = _day_utc_superset(date)
 
     pipeline = [
         {"$match": {
             "userId": current_user.id,
-            "startedAt": {"$gte": start_utc, "$lt": end_utc},
+            "startedAt": {"$gte": utc_lo, "$lt": utc_hi},
         }},
+        {"$addFields": {
+            "localDate": {
+                "$dateToString": {
+                    "format": "%Y-%m-%d",
+                    "date": "$startedAt",
+                    "timezone": {"$ifNull": ["$timezone", "UTC"]},
+                }
+            }
+        }},
+        {"$match": {"localDate": date}},
         {"$group": {
             "_id": "$routeId",
             "routeSnapshot": {"$first": "$routeSnapshot"},
