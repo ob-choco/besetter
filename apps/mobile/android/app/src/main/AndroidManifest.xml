@@ -67,6 +67,7 @@
                 <data android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" android:host="oauth"/>
             </intent-filter>
         </activity>
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyAsGDjU2C3MuFczysmeuiVbkyAegbtlqhQ"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
