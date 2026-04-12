@@ -190,6 +190,22 @@ class _RouteInformationInputState extends State<RouteInformationInput> {
   }
 
   @override
+  void didUpdateWidget(RouteInformationInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.title != oldWidget.title && (widget.title ?? '') != _titleController.text) {
+      _titleController.text = widget.title ?? '';
+    }
+    if (widget.description != oldWidget.description &&
+        (widget.description ?? '') != _descriptionController.text) {
+      _descriptionController.text = widget.description ?? '';
+    }
+    if (widget.gradeScore != oldWidget.gradeScore &&
+        (widget.gradeScore?.toString() ?? '') != _scoreController.text) {
+      _scoreController.text = widget.gradeScore?.toString() ?? '';
+    }
+  }
+
+  @override
   void dispose() {
     _scoreController.dispose();
     _titleController.dispose();
