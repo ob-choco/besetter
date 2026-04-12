@@ -419,15 +419,11 @@ async def get_route(
 
     is_owner = route.user_id == current_user.id
     if is_owner and with_activity_check:
-        has_other = (
-            await Activity.find(
-                Activity.route_id == route.id,
-                Activity.user_id != current_user.id,
-            )
-            .limit(1)
-            .count()
-        ) > 0
-        detail.has_other_user_activities = has_other
+        other_activity = await Activity.find_one(
+            Activity.route_id == route.id,
+            Activity.user_id != current_user.id,
+        )
+        detail.has_other_user_activities = other_activity is not None
 
     return detail
 
