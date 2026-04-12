@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-12
 **Status:** Approved design, ready for plan
-**Scope:** `apps/mobile` (Flutter app only)
+**Scope:** `apps/mobile` (Flutter app) + minimal `services/api` change to expose user id
 
 ## Goal
 
@@ -21,7 +21,7 @@ No custom event taxonomy is defined in this spec — product events will be adde
 - Replacing or removing Firebase Analytics
 - Defining a product event taxonomy
 - Dashboards, feature flags, or A/B experiments configuration
-- Backend (Node API) integration
+- Backend event ingestion (PostHog server-side SDK). Backend change is limited to exposing the existing user id in `/users/me`.
 
 ## Project Configuration
 
@@ -117,6 +117,64 @@ class PosthogService {
 }
 ```
 
+### Backend — expose user id from `/users/me`
+
+**File:** `services/api/app/routers/users.py`
+
+Extend `UserProfileResponse` with an `id` field and populate it in `_build_profile_response`. The `User` model already has `.id` (Mongo ObjectId); we serialize to string.
+
+```python
+class UserProfileResponse(BaseModel):
+    model_config = model_config
+
+    id: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    bio: Optional[str] = None
+    profile_image_url: Optional[str] = None
+
+
+def _build_profile_response(user: User) -> UserProfileResponse:
+    # ... existing signed_url logic ...
+    return UserProfileResponse(
+        id=str(user.id),
+        name=user.name,
+        email=user.email,
+        bio=user.bio,
+        profile_image_url=signed_url,
+    )
+```
+
+No other endpoints change. No migration needed — the field already exists on the stored document.
+
+### Mobile — add `id` to `UserState`
+
+**File:** `apps/mobile/lib/providers/user_provider.dart`
+
+```dart
+class UserState {
+  final String id;
+  final String? name;
+  // ... existing fields ...
+
+  const UserState({
+    required this.id,
+    this.name,
+    // ...
+  });
+
+  factory UserState.fromJson(Map<String, dynamic> json) {
+    return UserState(
+      id: json['id'] as String,
+      name: json['name'] as String?,
+      // ...
+    );
+  }
+}
+```
+
+`id` is required. If the server response ever lacks it, the cast fails loudly — that is the desired behavior (identify would otherwise silently fall back to anonymous).
+
 ### `main.dart` — two changes
 
 **1. Register `PosthogObserver` alongside the existing `routeObserver`:**
@@ -127,32 +185,39 @@ navigatorObservers: [routeObserver, PosthogObserver()],
 
 This is the SDK-provided `NavigatorObserver` that emits a `$screen` event on each route push/pop. Uses the route's `settings.name` — works cleanly with the named routes already defined in `MaterialApp.routes` and also with `MaterialPageRoute` pushes that carry a `RouteSettings(name: ...)`. Unnamed pushes will be captured with an empty name; we accept this and can retrofit names later where analytics matter.
 
-**2. Wire identify/reset to `authProvider`:**
+**2. Wire identify/reset:**
+
+- `identify` is driven by `userProfileProvider` (the one that actually has the user id).
+- `reset` is driven by `authProvider` transitioning from logged-in → logged-out.
 
 After `container = ProviderContainer()`, before `runApp`:
 
 ```dart
-container.listen<AsyncValue<AuthState>>(
-  authProvider,
+container.listen<AsyncValue<UserState>>(
+  userProfileProvider,
   (prev, next) {
-    next.whenData((auth) {
-      final prevLoggedIn = prev?.value?.isLoggedIn ?? false;
-      if (auth.isLoggedIn && auth.userId != null) {
-        if (!prevLoggedIn || prev?.value?.userId != auth.userId) {
-          PosthogService.identify(userId: auth.userId!);
-        }
-      } else if (prevLoggedIn) {
-        PosthogService.reset();
+    next.whenData((user) {
+      if (prev?.value?.id != user.id) {
+        PosthogService.identify(userId: user.id);
       }
     });
   },
   fireImmediately: true,
 );
+
+container.listen<AsyncValue<AuthState>>(
+  authProvider,
+  (prev, next) {
+    final wasLoggedIn = prev?.value?.isLoggedIn ?? false;
+    final isLoggedIn = next.value?.isLoggedIn ?? false;
+    if (wasLoggedIn && !isLoggedIn) {
+      PosthogService.reset();
+    }
+  },
+);
 ```
 
-(Exact field names — `isLoggedIn`, `userId` — must be verified against the current `authProvider` / `AuthState` during implementation. The logic is: on transition to logged-in call `identify`, on transition to logged-out call `reset`. Idempotent calls on the same state are avoided.)
-
-`authProvider` itself is not modified.
+Neither `authProvider` nor `userProfileProvider` is modified.
 
 ## Session Replay & Masking
 
@@ -171,13 +236,25 @@ This spec does **not** commit to specific masking call sites. It commits only to
 
 | File | Change |
 |---|---|
+| `services/api/app/routers/users.py` | Add `id: str` to `UserProfileResponse`; populate in `_build_profile_response` |
 | `apps/mobile/pubspec.yaml` | Add `posthog_flutter` dependency |
 | `apps/mobile/ios/Runner/Info.plist` | Add 5 PostHog meta keys |
 | `apps/mobile/android/app/src/main/AndroidManifest.xml` | Add 5 PostHog `<meta-data>` entries inside `<application>` |
+| `apps/mobile/lib/providers/user_provider.dart` | Add required `id` field to `UserState` + `fromJson` |
 | `apps/mobile/lib/services/posthog_service.dart` | **NEW** — static wrapper |
-| `apps/mobile/lib/main.dart` | Add `PosthogObserver` to `navigatorObservers`; add `container.listen(authProvider, …)` for identify/reset |
+| `apps/mobile/lib/main.dart` | Add `PosthogObserver`; add `container.listen(userProfileProvider, …)` for identify and `container.listen(authProvider, …)` for reset |
 
-Nothing else is touched. `authProvider`, existing pages, Firebase setup — all unchanged.
+Nothing else is touched. Firebase setup, existing pages, auth logic — all unchanged.
+
+## Release Ordering
+
+Backend change (`UserProfileResponse.id`) must ship **before** the mobile client ships to a store. Order:
+
+1. Merge + deploy backend (`services/api/deploy.sh` → Cloud Run)
+2. Verify `/users/me` returns `id` against prod
+3. Merge mobile PR and cut a build
+
+Old mobile clients ignore the new field, so backend rollout is safe on its own.
 
 ## Verification
 
