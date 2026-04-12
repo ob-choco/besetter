@@ -6,12 +6,14 @@ import '../services/http_client.dart';
 part 'user_provider.g.dart';
 
 class UserState {
+  final String id;
   final String? name;
   final String? email;
   final String? bio;
   final String? profileImageUrl;
 
   const UserState({
+    required this.id,
     this.name,
     this.email,
     this.bio,
@@ -19,12 +21,14 @@ class UserState {
   });
 
   UserState copyWith({
+    String? id,
     String? name,
     String? email,
     String? bio,
     String? profileImageUrl,
   }) {
     return UserState(
+      id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
       bio: bio ?? this.bio,
@@ -34,6 +38,7 @@ class UserState {
 
   factory UserState.fromJson(Map<String, dynamic> json) {
     return UserState(
+      id: json['id'] as String,
       name: json['name'] as String?,
       email: json['email'] as String?,
       bio: json['bio'] as String?,
