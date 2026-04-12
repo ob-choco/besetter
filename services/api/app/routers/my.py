@@ -153,7 +153,6 @@ class DailyRoutesResponse(BaseModel):
 
 @router.get("/last-activity-date", response_model=LastActivityDateResponse)
 async def get_last_activity_date(
-    timezone_param: str = Query(alias="timezone", default=DEFAULT_TIMEZONE),
     current_user: User = Depends(get_current_user),
 ):
     activity = (
@@ -166,7 +165,9 @@ async def get_last_activity_date(
     if not activity:
         return LastActivityDateResponse()
 
-    date_str = _to_local_date_str(activity[0].started_at, timezone_param)
+    a = activity[0]
+    tz_name = a.timezone or "UTC"
+    date_str = _to_local_date_str(a.started_at, tz_name)
     return LastActivityDateResponse(last_activity_date=date_str)
 
 
