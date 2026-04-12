@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from bson import ObjectId
 
 from app.models.route import Visibility
-from app.routers.routes import _can_access_route
+from app.routers.routes import _can_access_route, RouteDetailView
 
 
 def _make_route(owner_id: ObjectId, visibility: Visibility) -> SimpleNamespace:
@@ -41,3 +41,20 @@ def test_non_owner_can_access_unlisted_route():
     owner = ObjectId()
     viewer = ObjectId()
     assert _can_access_route(_make_route(owner, Visibility.UNLISTED), _make_user(viewer)) is True
+
+
+def test_route_detail_view_has_optional_activity_flag():
+    """RouteDetailView must expose `hasOtherUserActivities` as optional camelCase field."""
+    fields = RouteDetailView.model_fields
+    assert "has_other_user_activities" in fields
+    # Optional → default None, not required
+    assert fields["has_other_user_activities"].is_required() is False
+
+
+def test_route_detail_view_serializes_activity_flag_camel_case():
+    """When set, the flag must serialize as `hasOtherUserActivities`."""
+    view = RouteDetailView.model_construct(
+        has_other_user_activities=True,
+    )
+    dumped = view.model_dump(by_alias=True, exclude_none=True)
+    assert dumped.get("hasOtherUserActivities") is True

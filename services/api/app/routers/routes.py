@@ -84,6 +84,11 @@ class RouteDetailView(Route):
 
     polygons: List[HoldPolygonData]
 
+    has_other_user_activities: Optional[bool] = Field(
+        None,
+        description="다른 사용자가 이 루트로 활동 기록을 남겼는지 (소유자 + withActivityCheck=true 때만 채움)",
+    )
+
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=RouteDetailView)
 async def create_route(request: CreateRouteRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user)):
