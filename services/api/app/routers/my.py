@@ -174,19 +174,33 @@ async def get_last_activity_date(
 async def get_monthly_summary(
     year: int = Query(ge=2026),
     month: int = Query(ge=1, le=12),
-    timezone_param: str = Query(alias="timezone", default=DEFAULT_TIMEZONE),
     current_user: User = Depends(get_current_user),
 ):
-    start_utc, end_utc = _month_utc_range(year, month, timezone_param)
+    utc_lo, utc_hi = _month_utc_superset(year, month)
+    year_month = f"{year:04d}-{month:02d}"
 
     pipeline = [
         {"$match": {
             "userId": current_user.id,
-            "startedAt": {"$gte": start_utc, "$lt": end_utc},
+            "startedAt": {"$gte": utc_lo, "$lt": utc_hi},
         }},
-        {"$group": {
-            "_id": {"$dayOfMonth": {"date": "$startedAt", "timezone": timezone_param}},
+        {"$addFields": {
+            "localYearMonth": {
+                "$dateToString": {
+                    "format": "%Y-%m",
+                    "date": "$startedAt",
+                    "timezone": {"$ifNull": ["$timezone", "UTC"]},
+                }
+            },
+            "localDay": {
+                "$dayOfMonth": {
+                    "date": "$startedAt",
+                    "timezone": {"$ifNull": ["$timezone", "UTC"]},
+                }
+            },
         }},
+        {"$match": {"localYearMonth": year_month}},
+        {"$group": {"_id": "$localDay"}},
         {"$sort": {"_id": 1}},
     ]
 
