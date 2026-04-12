@@ -1,5 +1,6 @@
 from beanie import Document
 from pydantic import ConfigDict
+from pymongo import IndexModel
 import datetime
 
 from . import model_config
@@ -15,3 +16,6 @@ class OpenIdNonce(Document):
     class Settings:
         name = "openIdNonces"
         keep_nulls = True
+        indexes = [
+            IndexModel("createdAt", expireAfterSeconds=86400),
+        ]
