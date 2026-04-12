@@ -179,6 +179,24 @@ async def get_daily_routes(
             "attemptedCount": {"$sum": {"$cond": [{"$eq": ["$status", "attempted"]}, 1, 0]}},
             "totalDuration": {"$sum": "$duration"},
         }},
+        {"$lookup": {
+            "from": "routes",
+            "localField": "_id",
+            "foreignField": "_id",
+            "as": "route",
+            "pipeline": [
+                {"$project": {"visibility": 1, "isDeleted": 1}},
+            ],
+        }},
+        {"$set": {
+            "routeVisibility": {
+                "$ifNull": [{"$first": "$route.visibility"}, "public"],
+            },
+            "isDeleted": {
+                "$ifNull": [{"$first": "$route.isDeleted"}, False],
+            },
+        }},
+        {"$unset": "route"},
         {"$group": {
             "_id": None,
             "routes": {"$push": "$$ROOT"},
@@ -209,6 +227,8 @@ async def get_daily_routes(
         DailyRouteItem(
             route_id=str(r["_id"]),
             route_snapshot=RouteSnapshot(**r["routeSnapshot"]),
+            route_visibility=r.get("routeVisibility", "public"),
+            is_deleted=r.get("isDeleted", False),
             total_count=r["totalCount"],
             completed_count=r["completedCount"],
             attempted_count=r["attemptedCount"],
