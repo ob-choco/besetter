@@ -2,9 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../models/place_data.dart';
 import '../../services/place_service.dart';
@@ -64,11 +63,13 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   bool _isPrivate = false;
   bool _isSubmitting = false;
   File? _registerImage;
+  GoogleMapController? _registerMapController;
 
   // --- Suggest mode state ---
   PlaceData? _suggestPlace;
   final TextEditingController _suggestNameController = TextEditingController();
   LatLng? _suggestNewPosition;
+  GoogleMapController? _suggestMapController;
 
   @override
   void initState() {
@@ -606,19 +607,34 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
                       height: 180,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: _registerMapCenter,
-                          initialZoom: 16,
-                          onTap: (_, point) => setState(() => _registerPinPosition = point),
-                        ),
+                      child: Stack(
                         children: [
-                          TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.besetter.app'),
-                          if (_registerPinPosition != null)
-                            MarkerLayer(markers: [
-                              Marker(point: _registerPinPosition!, width: 40, height: 40, child: const Icon(Icons.location_pin, color: Colors.red, size: 40)),
-                            ]),
-                          RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+                          GoogleMap(
+                            onMapCreated: (c) => _registerMapController = c,
+                            initialCameraPosition: CameraPosition(
+                              target: _registerMapCenter,
+                              zoom: 16,
+                            ),
+                            onTap: (point) => setState(() => _registerPinPosition = point),
+                            markers: _registerPinPosition != null
+                                ? {
+                                    Marker(
+                                      markerId: const MarkerId('register'),
+                                      position: _registerPinPosition!,
+                                    ),
+                                  }
+                                : {},
+                            myLocationButtonEnabled: false,
+                            zoomControlsEnabled: false,
+                          ),
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: _MapZoomControls(
+                              onZoomIn: () => _registerMapController?.animateCamera(CameraUpdate.zoomIn()),
+                              onZoomOut: () => _registerMapController?.animateCamera(CameraUpdate.zoomOut()),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -736,23 +752,46 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
                       height: 180,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: _suggestOriginalPosition!,
-                          initialZoom: 16,
-                          onTap: (_, point) => setState(() => _suggestNewPosition = point),
-                        ),
+                      child: Stack(
                         children: [
-                          TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.besetter.app'),
-                          MarkerLayer(markers: [
-                            if (_isGymSuggest)
-                              Marker(point: _suggestOriginalPosition!, width: 40, height: 40, child: const Icon(Icons.location_pin, color: Colors.grey, size: 40)),
-                            if (_isGymSuggest && _suggestNewPosition != null)
-                              Marker(point: _suggestNewPosition!, width: 40, height: 40, child: Icon(Icons.location_pin, color: _suggestAccentColor, size: 40)),
-                            if (!_isGymSuggest)
-                              Marker(point: _suggestNewPosition ?? _suggestOriginalPosition!, width: 40, height: 40, child: Icon(Icons.location_pin, color: _suggestAccentColor, size: 40)),
-                          ]),
-                          RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+                          GoogleMap(
+                            onMapCreated: (c) => _suggestMapController = c,
+                            initialCameraPosition: CameraPosition(
+                              target: _suggestOriginalPosition!,
+                              zoom: 16,
+                            ),
+                            onTap: (point) => setState(() => _suggestNewPosition = point),
+                            markers: {
+                              if (_isGymSuggest)
+                                Marker(
+                                  markerId: const MarkerId('original'),
+                                  position: _suggestOriginalPosition!,
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                                ),
+                              if (_isGymSuggest && _suggestNewPosition != null)
+                                Marker(
+                                  markerId: const MarkerId('suggest'),
+                                  position: _suggestNewPosition!,
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+                                ),
+                              if (!_isGymSuggest)
+                                Marker(
+                                  markerId: const MarkerId('position'),
+                                  position: _suggestNewPosition ?? _suggestOriginalPosition!,
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+                                ),
+                            },
+                            myLocationButtonEnabled: false,
+                            zoomControlsEnabled: false,
+                          ),
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: _MapZoomControls(
+                              onZoomIn: () => _suggestMapController?.animateCamera(CameraUpdate.zoomIn()),
+                              onZoomOut: () => _suggestMapController?.animateCamera(CameraUpdate.zoomOut()),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -789,6 +828,46 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       child: Container(
         width: 36, height: 4,
         decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+      ),
+    );
+  }
+}
+
+class _MapZoomControls extends StatelessWidget {
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+
+  const _MapZoomControls({required this.onZoomIn, required this.onZoomOut});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      borderRadius: BorderRadius.circular(6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: onZoomIn,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            child: const SizedBox(
+              width: 32,
+              height: 32,
+              child: Icon(Icons.add, size: 18, color: Color(0xFF2C2F30)),
+            ),
+          ),
+          Container(width: 32, height: 1, color: const Color(0xFFE0E0E0)),
+          InkWell(
+            onTap: onZoomOut,
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
+            child: const SizedBox(
+              width: 32,
+              height: 32,
+              child: Icon(Icons.remove, size: 18, color: Color(0xFF2C2F30)),
+            ),
+          ),
+        ],
       ),
     );
   }
