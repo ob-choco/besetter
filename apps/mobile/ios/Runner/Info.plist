@@ -79,5 +79,15 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>com.posthog.posthog.API_KEY</key>
+	<string>phc_wLKorSH6QdipSfGhpBF2cw8xMc6JrUKYY3trjfwzjnJW</string>
+	<key>com.posthog.posthog.POSTHOG_HOST</key>
+	<string>https://us.i.posthog.com</string>
+	<key>com.posthog.posthog.CAPTURE_APPLICATION_LIFECYCLE_EVENTS</key>
+	<true/>
+	<key>com.posthog.posthog.SESSION_REPLAY</key>
+	<true/>
+	<key>com.posthog.posthog.CAPTURE_NATIVE_CRASHES</key>
+	<true/>
 </dict>
 </plist>
