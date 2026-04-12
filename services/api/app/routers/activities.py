@@ -295,7 +295,15 @@ async def delete_activity(
     await _update_route_stats(activity.route_id, inc)
     await _update_user_route_stats(current_user.id, activity.route_id, inc)
 
-    # 3. Hard delete
+    # 3. UserRouteStats 문서 삭제 (모든 카운트가 0이면)
+    user_stats = await UserRouteStats.find_one(
+        UserRouteStats.user_id == current_user.id,
+        UserRouteStats.route_id == ObjectId(route_id),
+    )
+    if user_stats and user_stats.total_count <= 0 and user_stats.completed_count <= 0 and user_stats.verified_completed_count <= 0:
+        await user_stats.delete()
+
+    # 4. Hard delete
     await activity.delete()
 
 
