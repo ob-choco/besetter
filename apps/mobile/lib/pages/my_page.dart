@@ -779,6 +779,12 @@ class _DailyRouteCard extends StatelessWidget {
     final placeName = snapshot['placeName'] as String? ?? '';
     final imageUrl = snapshot['overlayImageUrl'] as String? ?? snapshot['imageUrl'] as String?;
 
+    final routeVisibility = route['routeVisibility'] as String? ?? 'public';
+    final isDeleted = route['isDeleted'] as bool? ?? false;
+    final isBlocked = isDeleted || routeVisibility == 'private';
+    final blockedIcon = isDeleted ? '🗑' : '🔒';
+    final blockedText = isDeleted ? '삭제된 루트입니다.' : '비공개된 루트입니다.';
+
     final completedCount = route['completedCount'] as int;
     final attemptedCount = route['attemptedCount'] as int;
     final totalDuration = (route['totalDuration'] as num).toDouble();
@@ -836,6 +842,24 @@ class _DailyRouteCard extends StatelessWidget {
                           Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
                           const SizedBox(height: 2),
                           Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
+                          if (isBlocked) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(blockedIcon, style: const TextStyle(fontSize: 11)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  blockedText,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF8A8F94),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                       // Bottom: stat boxes row (A style)
