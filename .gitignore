@@ -209,6 +209,9 @@ temp/
 migrate_working_dir/
 node_modules/
 
+# Superpowers brainstorming session artifacts
+.superpowers/
+
 # ================================
 # 설명
 # ================================
