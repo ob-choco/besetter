@@ -18,16 +18,16 @@
 
 현재 `Suggest` 모드는 `gym` 타입 장소의 **이름**과 **위치**만 검수 제안으로 제출한다(`PlaceService.createSuggestion`, JSON body `/places/suggestions`). 서버의 `PlaceSuggestion` 모델에는 이미 `image_url` 필드가 존재하지만 클라이언트 · 엔드포인트 모두 이 필드를 사용하지 않는다.
 
-같은 기회에, `Place.image_url`을 `Place.repr_image_url`로 리네임하고 `Place.thumbnail_url`은 **완전히 제거**한다. 서버는 이미 `/images/{blob}?type=<preset>` 동적 썸네일 엔드포인트(`routers/images.py:348`)를 제공하므로, Place 도큐먼트에 정적 `thumbnail_url` 필드를 따로 저장할 이유가 없다.
+같은 기회에, `Place.image_url`을 `Place.cover_image_url`로 리네임하고 `Place.thumbnail_url`은 **완전히 제거**한다. 서버는 이미 `/images/{blob}?type=<preset>` 동적 썸네일 엔드포인트(`routers/images.py:348`)를 제공하므로, Place 도큐먼트에 정적 `thumbnail_url` 필드를 따로 저장할 이유가 없다.
 
 ## Data Model Changes
 
 ### Server (`services/api/app/models/place.py`, `routers/places.py`)
 
-- `Place.image_url` → `Place.repr_image_url` (리네임)
+- `Place.image_url` → `Place.cover_image_url` (리네임)
 - `Place.thumbnail_url` **완전히 제거**
-- `PlaceSuggestion.image_url` → `PlaceSuggestion.repr_image_url` (리네임)
-- `PlaceResponse.image_url` → `PlaceResponse.repr_image_url` (리네임)
+- `PlaceSuggestion.image_url` → `PlaceSuggestion.cover_image_url` (리네임)
+- `PlaceResponse.image_url` → `PlaceResponse.cover_image_url` (리네임)
 - `PlaceResponse.thumbnail_url` **완전히 제거**
 - `_upload_place_image(content, ext) -> str` — 반환을 `(image_url, thumbnail_url)` 튜플에서 단일 URL로 변경, 200x200 `_thumb.jpg` 생성 · 업로드 코드 삭제
 - `create_place` 엔드포인트를 새 시그니처에 맞게 수정 (`thumbnail_url` 파라미터 · 저장 로직 제거)
@@ -36,10 +36,10 @@
 
 ### Mobile (`apps/mobile/lib/models/place_data.dart`)
 
-- `PlaceData.thumbnailUrl` → `PlaceData.reprImageUrl`
+- `PlaceData.thumbnailUrl` → `PlaceData.coverImageUrl`
 - 모든 참조(`place_selection_sheet.dart`, 기타 리스트 카드 등)도 따라서 리네임
 
-리스트 카드의 썸네일은 `reprImageUrl`에서 GCS blob path를 추출해 `{api_base}/images/{blob}?type=<preset>`로 조립한다. 프리셋 이름은 `services/api/app/services/thumbnail.py`의 `PRESETS`에서 확인하여 리스트용 작은 크기를 선택한다.
+리스트 카드의 썸네일은 `coverImageUrl`에서 GCS blob path를 추출해 `{api_base}/images/{blob}?type=<preset>`로 조립한다. 프리셋 이름은 `services/api/app/services/thumbnail.py`의 `PRESETS`에서 확인하여 리스트용 작은 크기를 선택한다.
 
 ## UI & Interaction
 
@@ -53,14 +53,14 @@ Suggest 모드 시트의 섹션 순서를 다음과 같이 변경:
 
 private 암장(`_isGymSuggest == false`)에서는 이미지 섹션 자체가 렌더되지 않는다.
 
-### 상태 1 — 기존 이미지 있음 (`_suggestPlace.reprImageUrl != null`)
+### 상태 1 — 기존 이미지 있음 (`_suggestPlace.coverImageUrl != null`)
 
 - 높이 120 정도의 원본 이미지 배경 (`CachedNetworkImage`)
 - 우측 하단에 반투명 "📷 사진 변경" pill 오버레이
 - 이미지 어디를 탭해도 피커 열림
 - 새 이미지 선택 후에는 선택한 로컬 파일(`Image.file`)로 교체 표시, 우측 상단 `X` 버튼으로 원본 복귀(register 모드 패턴 재사용)
 
-### 상태 2 — 이미지 없음 (`reprImageUrl == null`)
+### 상태 2 — 이미지 없음 (`coverImageUrl == null`)
 
 점선 테두리 CTA 카드 — 단순 placeholder가 아니라 적극적인 등록 유도:
 
@@ -138,7 +138,7 @@ static Future<void> createSuggestion({
 
 기존 JSON body → `Form(...)` + `image: Optional[UploadFile] = File(None)` 형태로 변경.
 
-- `image`가 제공되면 리팩터된 `_upload_place_image()`로 업로드 → 반환된 URL을 `PlaceSuggestion.repr_image_url`로 저장
+- `image`가 제공되면 리팩터된 `_upload_place_image()`로 업로드 → 반환된 URL을 `PlaceSuggestion.cover_image_url`로 저장
 - 이름 · 위치 · 이미지 중 **어떤 것도 제공되지 않으면** `400` 응답 (no-op 제안 방지)
 - 응답 모델 `PlaceSuggestionView`는 기존대로 유지
 
