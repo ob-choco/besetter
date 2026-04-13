@@ -59,6 +59,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   // --- Select mode state ---
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  DateTime? _lastSubmitAt;
   _SelectTab _activeTab = _SelectTab.nearby;
   List<PlaceData> _nearbyPlaces = [];
   List<PlaceData> _privatePlaces = [];
@@ -150,8 +151,14 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   }
 
   void _onSearchSubmitted(String query) {
-    _debounce?.cancel();
     if (query.isEmpty) return;
+    final now = DateTime.now();
+    if (_lastSubmitAt != null &&
+        now.difference(_lastSubmitAt!) < const Duration(seconds: 1)) {
+      return;
+    }
+    _lastSubmitAt = now;
+    _debounce?.cancel();
     _runSearch(query);
   }
 
