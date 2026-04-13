@@ -159,6 +159,7 @@ async def get_nearby_places(
 ):
     # $nearSphere with 2dsphere index — returns sorted by distance
     query_filter = {
+        "type": "gym",
         "location": {
             "$nearSphere": {
                 "$geometry": {
@@ -167,17 +168,21 @@ async def get_nearby_places(
                 },
                 "$maxDistance": radius,
             }
-        }
+        },
     }
 
     candidates = await Place.find(query_filter).to_list()
 
     results: List[PlaceView] = []
     for place in candidates:
-        if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
-            continue
-        distance = haversine_distance(latitude, longitude, place.latitude, place.longitude) if place.latitude and place.longitude else None
-        results.append(place_to_view(place, distance=round(distance, 2) if distance else None))
+        distance = (
+            haversine_distance(latitude, longitude, place.latitude, place.longitude)
+            if place.latitude and place.longitude
+            else None
+        )
+        results.append(
+            place_to_view(place, distance=round(distance, 2) if distance else None)
+        )
 
     return results
 
@@ -192,16 +197,16 @@ async def instant_search_places(
         return []
 
     candidates = await Place.find(
-        {"normalizedName": {"$regex": re.escape(normalized_query), "$options": "i"}}
+        {
+            "type": "gym",
+            "normalizedName": {
+                "$regex": re.escape(normalized_query),
+                "$options": "i",
+            },
+        }
     ).limit(20).to_list()
 
-    results: List[PlaceView] = []
-    for place in candidates:
-        if place.type == "private-gym" and str(place.created_by) != str(current_user.id):
-            continue
-        results.append(place_to_view(place))
-
-    return results
+    return [place_to_view(place) for place in candidates]
 
 
 @router.put("/{place_id}", response_model=PlaceView)
