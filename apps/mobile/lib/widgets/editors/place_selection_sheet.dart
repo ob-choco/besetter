@@ -104,11 +104,12 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
         longitude: widget.longitude!,
         radius: 5000,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _places = places;
           _isLoading = false;
         });
+      }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -128,11 +129,12 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       });
       try {
         final results = await PlaceService.instantSearch(query);
-        if (mounted)
+        if (mounted) {
           setState(() {
             _places = results;
             _isLoading = false;
           });
+        }
       } catch (e) {
         if (mounted) setState(() => _isLoading = false);
       }
