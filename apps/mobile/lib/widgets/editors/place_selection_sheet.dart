@@ -10,8 +10,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/place_data.dart';
 import '../../services/place_service.dart';
 import '../../utils/thumbnail_url.dart';
+import 'place_edit_pane.dart';
 
-enum _SheetMode { select, register, suggest }
+enum _SheetMode { select, register, edit }
 
 class PlaceSelectionSheet extends StatefulWidget {
   final double? latitude;
@@ -68,12 +69,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   File? _registerImage;
   GoogleMapController? _registerMapController;
 
-  // --- Suggest mode state ---
-  PlaceData? _suggestPlace;
-  final TextEditingController _suggestNameController = TextEditingController();
-  LatLng? _suggestNewPosition;
-  GoogleMapController? _suggestMapController;
-  File? _suggestImage;
+  // --- Edit mode state ---
+  PlaceData? _editTarget;
 
   @override
   void initState() {
@@ -89,7 +86,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     _searchController.dispose();
     _debounce?.cancel();
     _registerNameController.dispose();
-    _suggestNameController.dispose();
     super.dispose();
   }
 
@@ -151,12 +147,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     setState(() => _mode = _SheetMode.register);
   }
 
-  void _goToSuggest(PlaceData place) {
-    _suggestPlace = place;
-    _suggestNameController.text = place.type == 'gym' ? '' : place.name;
-    _suggestNewPosition = null;
-    _suggestImage = null;
-    setState(() => _mode = _SheetMode.suggest);
+  void _goToEdit(PlaceData place) {
+    setState(() {
+      _editTarget = place;
+      _mode = _SheetMode.edit;
+    });
   }
 
   void _goBackToSelect() {
@@ -192,15 +187,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     }
   }
 
-  Future<void> _pickSuggestImage() async {
-    final picker = ImagePicker();
-    final picked =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked != null) {
-      setState(() => _suggestImage = File(picked.path));
-    }
-  }
-
   Future<void> _submitRegister() async {
     final name = _registerNameController.text.trim();
     if (name.isEmpty) return;
@@ -226,121 +212,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     }
   }
 
-  // ==================== Suggest Mode ====================
-
-  bool get _isGymSuggest => _suggestPlace?.type == 'gym';
-
-  Color get _suggestAccentColor =>
-      _isGymSuggest ? const Color(0xFF6750A4) : const Color(0xFFF57C00);
-
-  LatLng? get _suggestOriginalPosition {
-    if (_suggestPlace?.latitude != null && _suggestPlace?.longitude != null) {
-      return LatLng(_suggestPlace!.latitude!, _suggestPlace!.longitude!);
-    }
-    return null;
-  }
-
-  bool get _hasSuggestChanges {
-    final nameChanged = _isGymSuggest
-        ? _suggestNameController.text.trim().isNotEmpty
-        : _suggestNameController.text.trim() != _suggestPlace?.name;
-    return nameChanged || _suggestNewPosition != null || _suggestImage != null;
-  }
-
-  Future<void> _submitSuggest() async {
-    if (!_hasSuggestChanges || _isSubmitting) return;
-    setState(() => _isSubmitting = true);
-
-    final newName = _suggestNameController.text.trim();
-    try {
-      if (_isGymSuggest) {
-        await PlaceService.createSuggestion(
-          placeId: _suggestPlace!.id,
-          name: newName.isNotEmpty ? newName : null,
-          latitude: _suggestNewPosition?.latitude,
-          longitude: _suggestNewPosition?.longitude,
-          imagePath: _suggestImage?.path,
-        );
-        if (mounted) {
-          setState(() {
-            _isSubmitting = false;
-            _mode = _SheetMode.select;
-            _suggestImage = null;
-          });
-          _showSuccessDialog();
-        }
-      } else {
-        await PlaceService.updatePlace(
-          _suggestPlace!.id,
-          name: newName.isNotEmpty && newName != _suggestPlace!.name
-              ? newName
-              : null,
-          latitude: _suggestNewPosition?.latitude,
-          longitude: _suggestNewPosition?.longitude,
-        );
-        if (mounted) {
-          setState(() {
-            _isSubmitting = false;
-            _mode = _SheetMode.select;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('수정되었습니다')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('요청에 실패했습니다. 다시 시도해주세요.')),
-        );
-      }
-    }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6750A4).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle,
-                  color: Color(0xFF6750A4), size: 32),
-            ),
-            const SizedBox(height: 16),
-            const Text('제안이 접수되었습니다',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('운영자 검수 후 반영됩니다.',
-                style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-            const SizedBox(height: 16),
-          ],
-        ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.pop(context),
-              style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF6750A4)),
-              child: const Text('확인'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ==================== Build ====================
 
   @override
@@ -356,8 +227,12 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             return _buildSelectMode(scrollController);
           case _SheetMode.register:
             return _buildRegisterMode();
-          case _SheetMode.suggest:
-            return _buildSuggestMode();
+          case _SheetMode.edit:
+            return PlaceEditPane(
+              place: _editTarget!,
+              onBack: _goBackToSelect,
+              onCompleted: (_) => _goBackToSelect(),
+            );
         }
       },
     );
@@ -588,7 +463,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                 if (isSelected) ...[
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: () => _goToSuggest(place),
+                    onTap: () => _goToEdit(place),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -809,342 +684,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           ),
         ),
       ],
-    );
-  }
-
-  // ==================== Suggest Mode UI ====================
-
-  Widget _buildSuggestMode() {
-    final hasCoords = _suggestOriginalPosition != null;
-
-    return Column(
-      children: [
-        _buildDragHandle(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            children: [
-              IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: _goBackToSelect),
-              Text(_isGymSuggest ? '정보 수정 제안' : '암장 정보 수정',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            _isGymSuggest ? '검수 후 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                if (_isGymSuggest) ...[
-                  const Text('대표 이미지',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  _buildSuggestImageSection(),
-                  const SizedBox(height: 16),
-                ],
-                const Text('이름',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                if (_isGymSuggest) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Row(
-                      children: [
-                        Text(_suggestPlace!.name,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                decoration: TextDecoration.lineThrough,
-                                color: Colors.grey)),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(4)),
-                          child: const Text('현재',
-                              style:
-                                  TextStyle(fontSize: 10, color: Colors.grey)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
-                    child: Icon(Icons.arrow_downward,
-                        size: 18, color: Colors.grey),
-                  ),
-                ],
-                TextField(
-                  controller: _suggestNameController,
-                  decoration: InputDecoration(
-                    hintText: _isGymSuggest ? '변경할 이름 입력' : '암장 이름',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: 16),
-                if (hasCoords) ...[
-                  const Text('위치',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  if (_isGymSuggest)
-                    Text('지도를 탭하여 올바른 위치를 지정하세요',
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[600])),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      height: 180,
-                      child: Stack(
-                        children: [
-                          GoogleMap(
-                            onMapCreated: (c) => _suggestMapController = c,
-                            initialCameraPosition: CameraPosition(
-                              target: _suggestOriginalPosition!,
-                              zoom: 16,
-                            ),
-                            onTap: (point) =>
-                                setState(() => _suggestNewPosition = point),
-                            markers: {
-                              if (_isGymSuggest)
-                                Marker(
-                                  markerId: const MarkerId('original'),
-                                  position: _suggestOriginalPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor.hueAzure),
-                                ),
-                              if (_isGymSuggest && _suggestNewPosition != null)
-                                Marker(
-                                  markerId: const MarkerId('suggest'),
-                                  position: _suggestNewPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor.hueViolet),
-                                ),
-                              if (!_isGymSuggest)
-                                Marker(
-                                  markerId: const MarkerId('position'),
-                                  position: _suggestNewPosition ??
-                                      _suggestOriginalPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor.hueOrange),
-                                ),
-                            },
-                            myLocationButtonEnabled: false,
-                            zoomControlsEnabled: false,
-                            gestureRecognizers: <Factory<
-                                OneSequenceGestureRecognizer>>{
-                              Factory<OneSequenceGestureRecognizer>(
-                                () => EagerGestureRecognizer(),
-                              ),
-                            },
-                          ),
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: _MapZoomControls(
-                              onZoomIn: () => _suggestMapController
-                                  ?.animateCamera(CameraUpdate.zoomIn()),
-                              onZoomOut: () => _suggestMapController
-                                  ?.animateCamera(CameraUpdate.zoomOut()),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _hasSuggestChanges && !_isSubmitting
-                    ? _submitSuggest
-                    : null,
-                style: FilledButton.styleFrom(
-                    backgroundColor: _suggestAccentColor),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : Text(_isGymSuggest ? '수정 제안하기' : '수정하기'),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuggestImageSection() {
-    final currentUrl = _suggestPlace?.coverImageUrl;
-    final pickedFile = _suggestImage;
-
-    return AspectRatio(
-      aspectRatio: 4 / 3,
-      child: _buildSuggestImageBody(currentUrl, pickedFile),
-    );
-  }
-
-  Widget _buildSuggestImageBody(String? currentUrl, File? pickedFile) {
-    // State: user has picked a new image (overrides both "has original" and "empty")
-    if (pickedFile != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.file(pickedFile, fit: BoxFit.cover),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: GestureDetector(
-                onTap: () => setState(() => _suggestImage = null),
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: const BoxDecoration(
-                      color: Colors.black54, shape: BoxShape.circle),
-                  child: const Icon(Icons.close, color: Colors.white, size: 18),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // State 1: existing cover image — overlay "사진 변경" button
-    if (currentUrl != null) {
-      return GestureDetector(
-        onTap: _pickSuggestImage,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: CachedNetworkImage(
-                  imageUrl: currentUrl,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                right: 8,
-                bottom: 8,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(9999),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                      SizedBox(width: 4),
-                      Text(
-                        '사진 변경',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // State 2: no existing image — CTA card encouraging first photo
-    return GestureDetector(
-      onTap: _pickSuggestImage,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-              color: _suggestAccentColor.withValues(alpha: 0.4),
-              width: 1.5,
-              style: BorderStyle.solid),
-          borderRadius: BorderRadius.circular(12),
-          color: _suggestAccentColor.withValues(alpha: 0.04),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.camera_alt_outlined,
-                  size: 32, color: _suggestAccentColor),
-              const SizedBox(height: 8),
-              const Text(
-                '이 암장에 아직 사진이 없어요',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '첫 대표 사진을 등록해 주세요',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: _suggestAccentColor,
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                    SizedBox(width: 6),
-                    Text('사진 선택',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
