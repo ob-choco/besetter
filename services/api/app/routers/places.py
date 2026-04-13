@@ -209,6 +209,19 @@ async def instant_search_places(
     return [place_to_view(place) for place in candidates]
 
 
+@router.get("/my-private", response_model=List[PlaceView])
+async def get_my_private_places(
+    current_user: User = Depends(get_current_user),
+):
+    """Return every private-gym place owned by the current user, newest first."""
+    candidates = await Place.find(
+        Place.type == "private-gym",
+        Place.created_by == current_user.id,
+    ).sort(-Place.created_at).to_list()
+
+    return [place_to_view(place) for place in candidates]
+
+
 @router.put("/{place_id}", response_model=PlaceView)
 async def update_place(
     place_id: str,
