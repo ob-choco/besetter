@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -626,6 +628,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                                 : {},
                             myLocationButtonEnabled: false,
                             zoomControlsEnabled: false,
+                            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                              Factory<OneSequenceGestureRecognizer>(
+                                () => EagerGestureRecognizer(),
+                              ),
+                            },
                           ),
                           Positioned(
                             right: 8,
@@ -783,6 +790,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                             },
                             myLocationButtonEnabled: false,
                             zoomControlsEnabled: false,
+                            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                              Factory<OneSequenceGestureRecognizer>(
+                                () => EagerGestureRecognizer(),
+                              ),
+                            },
                           ),
                           Positioned(
                             right: 8,
