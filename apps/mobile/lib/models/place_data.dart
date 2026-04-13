@@ -4,8 +4,7 @@ class PlaceData {
   final String type; // "gym" | "private-gym"
   final double? latitude;
   final double? longitude;
-  final String? imageUrl;
-  final String? thumbnailUrl;
+  final String? coverImageUrl;
   final String createdBy;
   final double? distance;
 
@@ -15,8 +14,7 @@ class PlaceData {
     required this.type,
     this.latitude,
     this.longitude,
-    this.imageUrl,
-    this.thumbnailUrl,
+    this.coverImageUrl,
     required this.createdBy,
     this.distance,
   });
@@ -28,8 +26,7 @@ class PlaceData {
       type: json['type'],
       latitude: json['latitude']?.toDouble(),
       longitude: json['longitude']?.toDouble(),
-      imageUrl: json['imageUrl'],
-      thumbnailUrl: json['thumbnailUrl'],
+      coverImageUrl: json['coverImageUrl'],
       createdBy: json['createdBy'],
       distance: json['distance']?.toDouble(),
     );

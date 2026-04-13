@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../models/place_data.dart';
 import '../../services/place_service.dart';
+import '../../utils/thumbnail_url.dart';
 
 enum _SheetMode { select, register, suggest }
 
@@ -432,9 +433,9 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                       borderRadius: BorderRadius.circular(8),
                       child: SizedBox(
                         width: 48, height: 48,
-                        child: place.thumbnailUrl != null
+                        child: place.coverImageUrl != null
                             ? CachedNetworkImage(
-                                imageUrl: place.thumbnailUrl!,
+                                imageUrl: toThumbnailUrl(place.coverImageUrl!, 's100'),
                                 fit: BoxFit.cover,
                                 placeholder: (_, __) => Container(color: Colors.grey[200], child: const Icon(Icons.store, color: Colors.grey)),
                                 errorWidget: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.store, color: Colors.grey)),
