@@ -40,13 +40,6 @@ class UpdatePlaceRequest(BaseModel):
     longitude: Optional[float] = None
 
 
-class CreatePlaceSuggestionRequest(BaseModel):
-    model_config = model_config
-
-    place_id: str
-    changes: PlaceSuggestionChanges
-
-
 class PlaceSuggestionView(BaseModel):
     model_config = model_config
 
@@ -239,10 +232,14 @@ async def update_place(
 
 @router.post("/suggestions", status_code=status.HTTP_201_CREATED, response_model=PlaceSuggestionView)
 async def create_place_suggestion(
-    request: CreatePlaceSuggestionRequest,
+    place_id: str = Form(...),
+    name: Optional[str] = Form(None),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
 ):
-    place = await Place.get(request.place_id)
+    place = await Place.get(place_id)
     if place is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
 
@@ -252,11 +249,37 @@ async def create_place_suggestion(
             detail="Suggestions are not allowed for private-gym places",
         )
 
+    # Upload image if provided
+    cover_image_url: Optional[str] = None
+    if image is not None and image.filename:
+        file_ext = os.path.splitext(image.filename)[1].lower()
+        if file_ext not in (".jpg", ".jpeg", ".png"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Only jpg/jpeg/png files are supported",
+            )
+        content = await image.read()
+        cover_image_url = _upload_place_image(content, file_ext)
+
+    # Reject no-op suggestions
+    if name is None and latitude is None and longitude is None and cover_image_url is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one of name, latitude/longitude, or image must be provided",
+        )
+
+    changes = PlaceSuggestionChanges(
+        name=name,
+        latitude=latitude,
+        longitude=longitude,
+        cover_image_url=cover_image_url,
+    )
+
     suggestion = PlaceSuggestion(
         place_id=place.id,
         requested_by=current_user.id,
         status="pending",
-        changes=request.changes,
+        changes=changes,
         created_at=datetime.now(tz=timezone.utc),
     )
     created = await suggestion.save()
