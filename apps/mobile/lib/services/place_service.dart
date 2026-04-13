@@ -75,9 +75,8 @@ class PlaceService {
     final response = await AuthorizedHttpClient.get('/places/my-private');
 
     if (response.statusCode == 200) {
-      final List<dynamic> data =
-          jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
-      return data.map((e) => PlaceData.fromJson(e as Map<String, dynamic>)).toList();
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((e) => PlaceData.fromJson(e)).toList();
     }
     throw Exception(
         'Failed to fetch my private places. Status: ${response.statusCode}');
