@@ -33,14 +33,6 @@ class CreatePlaceRequest(BaseModel):
     type: str = Field("gym", description="장소 유형 (gym | private-gym)")
 
 
-class UpdatePlaceRequest(BaseModel):
-    model_config = model_config
-
-    name: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-
-
 class PlaceSuggestionView(BaseModel):
     model_config = model_config
 
@@ -225,7 +217,10 @@ async def get_my_private_places(
 @router.put("/{place_id}", response_model=PlaceView)
 async def update_place(
     place_id: str,
-    request: UpdatePlaceRequest,
+    name: Optional[str] = Form(None),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
 ):
     place = await Place.get(place_id)
@@ -238,13 +233,24 @@ async def update_place(
             detail="You are not allowed to update this place",
         )
 
-    if request.name is not None:
-        place.name = request.name
-        place.normalized_name = normalize_name(request.name)
+    if name is not None:
+        place.name = name
+        place.normalized_name = normalize_name(name)
 
-    new_lat = request.latitude if request.latitude is not None else place.latitude
-    new_lng = request.longitude if request.longitude is not None else place.longitude
+    new_lat = latitude if latitude is not None else place.latitude
+    new_lng = longitude if longitude is not None else place.longitude
     place.set_location_from(new_lat, new_lng)
+
+    if image is not None and image.filename:
+        file_ext = os.path.splitext(image.filename)[1].lower()
+        if file_ext not in (".jpg", ".jpeg", ".png"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Only jpg/jpeg/png files are supported",
+            )
+        content = await image.read()
+        place.cover_image_url = _upload_place_image(content, file_ext)
+
     await place.save()
     return place_to_view(place)
 
