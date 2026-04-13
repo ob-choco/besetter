@@ -369,7 +369,7 @@ async def get_my_activities(
 
     activities = (
         await Activity.find(*query_filters)
-        .sort([("started_at", -1), ("_id", -1)])
+        .sort([("startedAt", -1), ("_id", -1)])
         .limit(limit + 1)
         .to_list()
     )

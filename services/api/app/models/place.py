@@ -60,8 +60,8 @@ class Place(Document):
         name = "places"
         indexes = [
             IndexModel([("location", GEOSPHERE)], sparse=True),
-            IndexModel([("created_by", ASCENDING)]),
-            IndexModel([("normalized_name", ASCENDING)]),
+            IndexModel([("createdBy", ASCENDING)]),
+            IndexModel([("normalizedName", ASCENDING)]),
         ]
         keep_nulls = True
 
@@ -89,7 +89,7 @@ class PlaceSuggestion(Document):
     class Settings:
         name = "placeSuggestions"
         indexes = [
-            IndexModel([("place_id", ASCENDING)]),
+            IndexModel([("placeId", ASCENDING)]),
             IndexModel([("status", ASCENDING)]),
         ]
         keep_nulls = True

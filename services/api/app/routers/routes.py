@@ -228,7 +228,7 @@ async def get_routes(
 
     # 정렬 옵션 처리
     sort_field, sort_order = sort.split(":")
-    db_field = "created_at" if sort_field == "createdAt" else sort_field
+    attr_field = "created_at" if sort_field == "createdAt" else sort_field
 
     # 커서 처리
     if next:
@@ -243,29 +243,29 @@ async def get_routes(
         last_doc = await Route.get(ObjectId(last_id))
 
         if last_doc:
-            cursor_value = getattr(last_doc, db_field)
+            cursor_value = getattr(last_doc, attr_field)
             cursor_id = last_doc.id
 
             if sort_order == "desc":
                 query = query.find(
                     Or(
-                        LT(getattr(Route, db_field), cursor_value),
-                        And(Eq(getattr(Route, db_field), cursor_value), LT(Route.id, cursor_id)),
+                        LT(getattr(Route, attr_field), cursor_value),
+                        And(Eq(getattr(Route, attr_field), cursor_value), LT(Route.id, cursor_id)),
                     )
                 )
             else:
                 query = query.find(
                     Or(
-                        GT(getattr(Route, db_field), cursor_value),
-                        And(Eq(getattr(Route, db_field), cursor_value), GT(Route.id, cursor_id)),
+                        GT(getattr(Route, attr_field), cursor_value),
+                        And(Eq(getattr(Route, attr_field), cursor_value), GT(Route.id, cursor_id)),
                     )
                 )
 
-    # 정렬 적용
+    # 정렬 적용 — sort_field는 API 파라미터의 camelCase 값
     if sort_order == "desc":
-        query = query.sort([(db_field, -1), ("_id", -1)])
+        query = query.sort([(sort_field, -1), ("_id", -1)])
     else:
-        query = query.sort([(db_field, 1), ("_id", 1)])
+        query = query.sort([(sort_field, 1), ("_id", 1)])
 
     # 제한 적용 (프로젝션 제거 — place 조인을 위해 full document 조회)
     query = query.limit(limit + 1)

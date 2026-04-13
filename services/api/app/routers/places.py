@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -191,7 +192,7 @@ async def instant_search_places(
         return []
 
     candidates = await Place.find(
-        {"normalized_name": {"$regex": normalized_query, "$options": "i"}}
+        {"normalizedName": {"$regex": re.escape(normalized_query), "$options": "i"}}
     ).limit(20).to_list()
 
     results: List[PlaceView] = []

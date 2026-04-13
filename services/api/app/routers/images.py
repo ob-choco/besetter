@@ -92,24 +92,24 @@ async def get_images(
     
     # 정렬 옵션 처리
     sort_field, sort_order = sort.split(':')
-    db_field = "uploaded_at" if sort_field == "uploadedAt" else sort_field
-    
+    attr_field = "uploaded_at" if sort_field == "uploadedAt" else sort_field
+
     # 커서 처리
     if next:
         cursor_sort_field, cursor_sort_order, last_id = decode_cursor(next)
         last_doc = await Image.get(ObjectId(last_id))
-        
+
         if last_doc:
-            cursor_value = getattr(last_doc, db_field)
+            cursor_value = getattr(last_doc, attr_field)
             cursor_id = last_doc.id
-            
+
             if sort_order == "desc":
                 # (field < cursor_value) OR (field == cursor_value AND _id < cursor_id)
                 query = query.find(
                     Or(
-                        LT(getattr(Image, db_field), cursor_value),
+                        LT(getattr(Image, attr_field), cursor_value),
                         And(
-                            Eq(getattr(Image, db_field), cursor_value),
+                            Eq(getattr(Image, attr_field), cursor_value),
                             LT(Image.id, cursor_id)
                         )
                     )
@@ -118,23 +118,23 @@ async def get_images(
                 # (field > cursor_value) OR (field == cursor_value AND _id > cursor_id)
                 query = query.find(
                     Or(
-                        GT(getattr(Image, db_field), cursor_value),
+                        GT(getattr(Image, attr_field), cursor_value),
                         And(
-                            Eq(getattr(Image, db_field), cursor_value),
+                            Eq(getattr(Image, attr_field), cursor_value),
                             GT(Image.id, cursor_id)
                         )
                     )
                 )
-    
-    # 정렬 적용 (복합 정렬: field와 _id로 정렬)
+
+    # 정렬 적용 (복합 정렬: field와 _id로 정렬) — sort_field는 API 파라미터의 camelCase 값
     if sort_order == "desc":
         query = query.sort([
-            (db_field, -1),
+            (sort_field, -1),
             ("_id", -1)
         ])
     else:
         query = query.sort([
-            (db_field, 1),
+            (sort_field, 1),
             ("_id", 1)
         ])
     
