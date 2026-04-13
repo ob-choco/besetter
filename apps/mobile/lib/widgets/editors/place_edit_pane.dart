@@ -9,16 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/place_data.dart';
 import '../../services/place_service.dart';
 
-class PlaceEditResult {
-  final PlaceData? updatedPlace;
-  final bool suggestionSubmitted;
-  const PlaceEditResult({this.updatedPlace, this.suggestionSubmitted = false});
-}
-
 class PlaceEditPane extends StatefulWidget {
   final PlaceData place;
   final VoidCallback onBack;
-  final ValueChanged<PlaceEditResult> onCompleted;
+  final VoidCallback onCompleted;
 
   const PlaceEditPane({
     super.key,
@@ -97,9 +91,9 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         if (!mounted) return;
         setState(() => _isSubmitting = false);
         _showSuccessDialog();
-        widget.onCompleted(const PlaceEditResult(suggestionSubmitted: true));
+        widget.onCompleted();
       } else {
-        final updated = await PlaceService.updatePlace(
+        await PlaceService.updatePlace(
           widget.place.id,
           name: newName.isNotEmpty && newName != widget.place.name
               ? newName
@@ -113,7 +107,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('수정되었습니다')),
         );
-        widget.onCompleted(PlaceEditResult(updatedPlace: updated));
+        widget.onCompleted();
       }
     } catch (e) {
       if (!mounted) return;

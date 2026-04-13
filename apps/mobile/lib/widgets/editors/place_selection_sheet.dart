@@ -231,7 +231,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             return PlaceEditPane(
               place: _editTarget!,
               onBack: _goBackToSelect,
-              onCompleted: (_) => _goBackToSelect(),
+              onCompleted: _goBackToSelect,
             );
         }
       },
