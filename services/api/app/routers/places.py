@@ -66,8 +66,7 @@ class PlaceView(BaseModel):
     type: str
     latitude: Optional[float]
     longitude: Optional[float]
-    image_url: Optional[str]
-    thumbnail_url: Optional[str]
+    cover_image_url: Optional[str]
     created_by: PydanticObjectId
     distance: Optional[float] = None
 
@@ -75,8 +74,7 @@ class PlaceView(BaseModel):
 class PlaceImageUploadResponse(BaseModel):
     model_config = model_config
 
-    image_url: str
-    thumbnail_url: str
+    cover_image_url: str
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +89,7 @@ def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
         type=place.type,
         latitude=place.latitude,
         longitude=place.longitude,
-        image_url=place.image_url,
-        thumbnail_url=place.thumbnail_url,
+        cover_image_url=place.cover_image_url,
         created_by=place.created_by,
         distance=distance,
     )
@@ -134,8 +131,7 @@ async def create_place(
         )
 
     # 이미지 처리
-    image_url = None
-    thumbnail_url = None
+    cover_image_url = None
     if image is not None and image.filename:
         file_ext = os.path.splitext(image.filename)[1].lower()
         if file_ext not in (".jpg", ".jpeg", ".png"):
@@ -144,14 +140,13 @@ async def create_place(
                 detail="Only jpg/jpeg/png files are supported",
             )
         content = await image.read()
-        image_url, thumbnail_url = _upload_place_image(content, file_ext)
+        cover_image_url = _upload_place_image(content, file_ext)
 
     place = Place(
         name=name,
         normalized_name=normalize_name(name),
         type=type,
-        image_url=image_url,
-        thumbnail_url=thumbnail_url,
+        cover_image_url=cover_image_url,
         created_by=current_user.id,
         created_at=datetime.now(tz=timezone.utc),
     )
