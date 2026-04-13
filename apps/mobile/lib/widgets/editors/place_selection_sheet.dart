@@ -623,60 +623,63 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               children: [
                 const SizedBox(height: 8),
                 // 이미지 선택
-                GestureDetector(
-                  onTap: _pickRegisterImage,
-                  child: _registerImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 120,
-                                child: Image.file(_registerImage!,
-                                    fit: BoxFit.cover),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _registerImage = null),
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle),
-                                    child: const Icon(Icons.close,
-                                        color: Colors.white, size: 18),
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: GestureDetector(
+                    onTap: _pickRegisterImage,
+                    child: _registerImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: Image.file(_registerImage!,
+                                      fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: GestureDetector(
+                                    onTap: () =>
+                                        setState(() => _registerImage = null),
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.white, size: 18),
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.grey[300]!,
+                                  style: BorderStyle.solid),
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[50],
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.camera_alt,
+                                      size: 28, color: Colors.grey[400]),
+                                  const SizedBox(height: 4),
+                                  Text('대표 사진 선택 (선택)',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[500])),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        )
-                      : Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                                color: Colors.grey[300]!,
-                                style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.grey[50],
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(Icons.camera_alt,
-                                  size: 28, color: Colors.grey[400]),
-                              const SizedBox(height: 4),
-                              Text('대표 사진 선택 (선택)',
-                                  style: TextStyle(
-                                      fontSize: 13, color: Colors.grey[500])),
-                            ],
-                          ),
-                        ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
