@@ -569,12 +569,12 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () => _goToEdit(place),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('✏️ ', style: TextStyle(fontSize: 12)),
-                        Text('정보 수정 제안',
-                            style: TextStyle(
+                        const Text('✏️ ', style: TextStyle(fontSize: 12)),
+                        Text(isPrivate ? '정보 수정' : '정보 수정 제안',
+                            style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF6750A4),
                                 decoration: TextDecoration.underline)),
