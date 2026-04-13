@@ -146,23 +146,31 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       });
       return;
     }
-    _debounce = Timer(const Duration(seconds: 1), () async {
-      setState(() {
-        _isSearchMode = true;
-        _loadingSearch = true;
-      });
-      try {
-        final results = await PlaceService.instantSearch(query);
-        if (mounted) {
-          setState(() {
-            _searchResults = results;
-            _loadingSearch = false;
-          });
-        }
-      } catch (e) {
-        if (mounted) setState(() => _loadingSearch = false);
-      }
+    _debounce = Timer(const Duration(seconds: 1), () => _runSearch(query));
+  }
+
+  void _onSearchSubmitted(String query) {
+    _debounce?.cancel();
+    if (query.isEmpty) return;
+    _runSearch(query);
+  }
+
+  Future<void> _runSearch(String query) async {
+    setState(() {
+      _isSearchMode = true;
+      _loadingSearch = true;
     });
+    try {
+      final results = await PlaceService.instantSearch(query);
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _loadingSearch = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loadingSearch = false);
+    }
   }
 
   String _formatDistance(double? distance) {
@@ -280,6 +288,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
             controller: _searchController,
+            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
               hintText: '암장 이름으로 검색',
@@ -289,6 +298,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onChanged: _onSearchChanged,
+            onSubmitted: _onSearchSubmitted,
           ),
         ),
         // TODO(private-gym): re-enable when private gym feature ships
