@@ -14,6 +14,8 @@ import 'place_edit_pane.dart';
 
 enum _SheetMode { select, register, edit }
 
+enum _SelectTab { nearby, private }
+
 class PlaceSelectionSheet extends StatefulWidget {
   final double? latitude;
   final double? longitude;
@@ -57,8 +59,13 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   // --- Select mode state ---
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
-  List<PlaceData> _places = [];
-  bool _isLoading = false;
+  _SelectTab _activeTab = _SelectTab.nearby;
+  List<PlaceData> _nearbyPlaces = [];
+  List<PlaceData> _privatePlaces = [];
+  List<PlaceData> _searchResults = [];
+  bool _loadingNearby = false;
+  bool _loadingPrivate = false;
+  bool _loadingSearch = false;
   bool _isSearchMode = false;
 
   // --- Register mode state ---
@@ -79,6 +86,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       _registerPinPosition = LatLng(widget.latitude!, widget.longitude!);
     }
     _loadNearbyPlaces();
+    _loadMyPrivatePlaces();
   }
 
   @override
@@ -93,7 +101,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   Future<void> _loadNearbyPlaces() async {
     if (widget.latitude == null || widget.longitude == null) return;
-    setState(() => _isLoading = true);
+    setState(() => _loadingNearby = true);
     try {
       final places = await PlaceService.getNearbyPlaces(
         latitude: widget.latitude!,
@@ -102,37 +110,55 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       );
       if (mounted) {
         setState(() {
-          _places = places;
-          _isLoading = false;
+          _nearbyPlaces = places;
+          _loadingNearby = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loadingNearby = false);
+    }
+  }
+
+  Future<void> _loadMyPrivatePlaces() async {
+    setState(() => _loadingPrivate = true);
+    try {
+      final places = await PlaceService.getMyPrivatePlaces();
+      if (mounted) {
+        setState(() {
+          _privatePlaces = places;
+          _loadingPrivate = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loadingPrivate = false);
     }
   }
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
     if (query.isEmpty) {
-      setState(() => _isSearchMode = false);
-      _loadNearbyPlaces();
+      setState(() {
+        _isSearchMode = false;
+        _searchResults = [];
+        _loadingSearch = false;
+      });
       return;
     }
     _debounce = Timer(const Duration(seconds: 1), () async {
       setState(() {
         _isSearchMode = true;
-        _isLoading = true;
+        _loadingSearch = true;
       });
       try {
         final results = await PlaceService.instantSearch(query);
         if (mounted) {
           setState(() {
-            _places = results;
-            _isLoading = false;
+            _searchResults = results;
+            _loadingSearch = false;
           });
         }
       } catch (e) {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) setState(() => _loadingSearch = false);
       }
     });
   }
@@ -264,38 +290,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             onChanged: _onSearchChanged,
           ),
         ),
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _places.isEmpty
-                  ? Center(
-                      child: Text(
-                        _isSearchMode ? '검색 결과가 없습니다' : '근처에 등록된 암장이 없습니다',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _places.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          if (!_isSearchMode) {
-                            return const Padding(
-                              padding: EdgeInsets.only(top: 8, bottom: 4),
-                              child: Text('📍 근처 암장',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey)),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        }
-                        return _buildPlaceItem(_places[index - 1]);
-                      },
-                    ),
-        ),
+        if (!_isSearchMode) _buildTabBar(),
+        Expanded(child: _buildListArea(scrollController)),
         const Divider(height: 1),
         SafeArea(
           child: Padding(
@@ -327,6 +323,116 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _tabButton(
+              label: '📍 근처 암장',
+              active: _activeTab == _SelectTab.nearby,
+              onTap: () => setState(() => _activeTab = _SelectTab.nearby),
+            ),
+          ),
+          Expanded(
+            child: _tabButton(
+              label: '🔒 내 프라이빗',
+              active: _activeTab == _SelectTab.private,
+              onTap: () => setState(() => _activeTab = _SelectTab.private),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabButton({
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: active ? const Color(0xFF6750A4) : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: active ? const Color(0xFF6750A4) : Colors.grey[600],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListArea(ScrollController scrollController) {
+    if (_isSearchMode) {
+      if (_loadingSearch) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_searchResults.isEmpty) {
+        return Center(
+          child: Text('검색 결과가 없습니다',
+              style: TextStyle(color: Colors.grey[500])),
+        );
+      }
+      return ListView.builder(
+        controller: scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _searchResults.length,
+        itemBuilder: (context, index) => _buildPlaceItem(_searchResults[index]),
+      );
+    }
+
+    if (_activeTab == _SelectTab.nearby) {
+      if (_loadingNearby) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_nearbyPlaces.isEmpty) {
+        return Center(
+          child: Text('근처에 등록된 암장이 없습니다',
+              style: TextStyle(color: Colors.grey[500])),
+        );
+      }
+      return ListView.builder(
+        controller: scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _nearbyPlaces.length,
+        itemBuilder: (context, index) => _buildPlaceItem(_nearbyPlaces[index]),
+      );
+    }
+
+    // private tab
+    if (_loadingPrivate) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_privatePlaces.isEmpty) {
+      return Center(
+        child: Text('등록된 프라이빗 암장이 없습니다',
+            style: TextStyle(color: Colors.grey[500])),
+      );
+    }
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _privatePlaces.length,
+      itemBuilder: (context, index) => _buildPlaceItem(_privatePlaces[index]),
     );
   }
 
