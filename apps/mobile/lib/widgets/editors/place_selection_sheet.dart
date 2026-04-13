@@ -187,7 +187,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   // ==================== Register Mode ====================
 
   bool get _showRegisterMap {
-    if (_isPrivate) return false;
     return _registerPinPosition != null ||
         (widget.latitude != null && widget.longitude != null);
   }
