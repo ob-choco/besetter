@@ -104,7 +104,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
         longitude: widget.longitude!,
         radius: 5000,
       );
-      if (mounted) setState(() { _places = places; _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _places = places;
+          _isLoading = false;
+        });
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -118,10 +122,17 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       return;
     }
     _debounce = Timer(const Duration(seconds: 1), () async {
-      setState(() { _isSearchMode = true; _isLoading = true; });
+      setState(() {
+        _isSearchMode = true;
+        _isLoading = true;
+      });
       try {
         final results = await PlaceService.instantSearch(query);
-        if (mounted) setState(() { _places = results; _isLoading = false; });
+        if (mounted)
+          setState(() {
+            _places = results;
+            _isLoading = false;
+          });
       } catch (e) {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -154,7 +165,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   bool get _showRegisterMap {
     if (_isPrivate) return false;
-    return _registerPinPosition != null || (widget.latitude != null && widget.longitude != null);
+    return _registerPinPosition != null ||
+        (widget.latitude != null && widget.longitude != null);
   }
 
   LatLng get _registerMapCenter {
@@ -171,7 +183,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   Future<void> _pickRegisterImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {
       setState(() => _registerImage = File(picked.path));
     }
@@ -179,7 +192,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   Future<void> _pickSuggestImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {
       setState(() => _suggestImage = File(picked.path));
     }
@@ -256,12 +270,17 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       } else {
         await PlaceService.updatePlace(
           _suggestPlace!.id,
-          name: newName.isNotEmpty && newName != _suggestPlace!.name ? newName : null,
+          name: newName.isNotEmpty && newName != _suggestPlace!.name
+              ? newName
+              : null,
           latitude: _suggestNewPosition?.latitude,
           longitude: _suggestNewPosition?.longitude,
         );
         if (mounted) {
-          setState(() { _isSubmitting = false; _mode = _SheetMode.select; });
+          setState(() {
+            _isSubmitting = false;
+            _mode = _SheetMode.select;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('수정되었습니다')),
           );
@@ -287,17 +306,21 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 56, height: 56,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: const Color(0xFF6750A4).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: Color(0xFF6750A4), size: 32),
+              child: const Icon(Icons.check_circle,
+                  color: Color(0xFF6750A4), size: 32),
             ),
             const SizedBox(height: 16),
-            const Text('제안이 접수되었습니다', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('제안이 접수되었습니다',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('운영자 검수 후 반영됩니다.', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+            Text('운영자 검수 후 반영됩니다.',
+                style: TextStyle(fontSize: 13, color: Colors.grey[600])),
             const SizedBox(height: 16),
           ],
         ),
@@ -306,7 +329,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             width: double.infinity,
             child: FilledButton(
               onPressed: () => Navigator.pop(context),
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6750A4)),
+              style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF6750A4)),
               child: const Text('확인'),
             ),
           ),
@@ -345,7 +369,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
         _buildDragHandle(),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text('암장 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text('암장 선택',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -354,8 +379,10 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
               hintText: '암장 이름으로 검색',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onChanged: _onSearchChanged,
           ),
@@ -379,7 +406,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                           if (!_isSearchMode) {
                             return const Padding(
                               padding: EdgeInsets.only(top: 8, bottom: 4),
-                              child: Text('📍 근처 암장', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
+                              child: Text('📍 근처 암장',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey)),
                             );
                           }
                           return const SizedBox.shrink();
@@ -407,7 +438,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   children: [
                     Icon(Icons.add, size: 18, color: Colors.grey[700]),
                     const SizedBox(width: 8),
-                    Text('새 암장 등록하기', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                    Text('새 암장 등록하기',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700])),
                   ],
                 ),
               ),
@@ -435,7 +470,9 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               color: isPrivate ? const Color(0xFFFFF8E1) : null,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? const Color(0xFF6750A4) : Colors.grey.withValues(alpha: 0.2),
+                color: isSelected
+                    ? const Color(0xFF6750A4)
+                    : Colors.grey.withValues(alpha: 0.2),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -447,15 +484,26 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: SizedBox(
-                        width: 48, height: 48,
+                        width: 48,
+                        height: 48,
                         child: place.coverImageUrl != null
                             ? CachedNetworkImage(
-                                imageUrl: toThumbnailUrl(place.coverImageUrl!, 's100'),
+                                imageUrl: toThumbnailUrl(
+                                    place.coverImageUrl!, 's100'),
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(color: Colors.grey[200], child: const Icon(Icons.store, color: Colors.grey)),
-                                errorWidget: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.store, color: Colors.grey)),
+                                placeholder: (_, __) => Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.store,
+                                        color: Colors.grey)),
+                                errorWidget: (_, __, ___) => Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.store,
+                                        color: Colors.grey)),
                               )
-                            : Container(color: Colors.grey[200], child: const Icon(Icons.store, color: Colors.grey)),
+                            : Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.store,
+                                    color: Colors.grey)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -465,19 +513,29 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                         children: [
                           Row(
                             children: [
-                              if (isPrivate) const Text('🔒 ', style: TextStyle(fontSize: 13)),
+                              if (isPrivate)
+                                const Text('🔒 ',
+                                    style: TextStyle(fontSize: 13)),
                               Flexible(
-                                child: Text(place.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                                child: Text(place.name,
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis),
                               ),
                             ],
                           ),
                           if (place.distance != null) ...[
                             const SizedBox(height: 2),
-                            Text(_formatDistance(place.distance), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            Text(_formatDistance(place.distance),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600])),
                           ],
                           if (isPrivate) ...[
                             const SizedBox(height: 2),
-                            Text('나만 보임', style: TextStyle(fontSize: 11, color: Colors.orange[700])),
+                            Text('나만 보임',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.orange[700])),
                           ],
                         ],
                       ),
@@ -486,25 +544,39 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isPrivate ? Colors.orange.withValues(alpha: 0.15) : Colors.green.withValues(alpha: 0.15),
+                            color: isPrivate
+                                ? Colors.orange.withValues(alpha: 0.15)
+                                : Colors.green.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             isPrivate ? 'private' : 'gym',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isPrivate ? Colors.orange[800] : Colors.green[800]),
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isPrivate
+                                    ? Colors.orange[800]
+                                    : Colors.green[800]),
                           ),
                         ),
                         if (isSelected) ...[
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6750A4).withValues(alpha: 0.15),
+                              color: const Color(0xFF6750A4)
+                                  .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('선택됨', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6750A4))),
+                            child: const Text('선택됨',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF6750A4))),
                           ),
                         ],
                       ],
@@ -519,7 +591,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('✏️ ', style: TextStyle(fontSize: 12)),
-                        Text('정보 수정 제안', style: TextStyle(fontSize: 12, color: Color(0xFF6750A4), decoration: TextDecoration.underline)),
+                        Text('정보 수정 제안',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6750A4),
+                                decoration: TextDecoration.underline)),
                       ],
                     ),
                   ),
@@ -543,14 +619,18 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
-              IconButton(icon: const Icon(Icons.arrow_back), onPressed: _goBackToSelect),
-              const Text('새 암장 등록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _goBackToSelect),
+              const Text('새 암장 등록',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('새로운 클라이밍 암장을 등록합니다', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+          child: Text('새로운 클라이밍 암장을 등록합니다',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600])),
         ),
         const SizedBox(height: 8),
         Expanded(
@@ -571,16 +651,23 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                               SizedBox(
                                 width: double.infinity,
                                 height: 120,
-                                child: Image.file(_registerImage!, fit: BoxFit.cover),
+                                child: Image.file(_registerImage!,
+                                    fit: BoxFit.cover),
                               ),
                               Positioned(
-                                top: 8, right: 8,
+                                top: 8,
+                                right: 8,
                                 child: GestureDetector(
-                                  onTap: () => setState(() => _registerImage = null),
+                                  onTap: () =>
+                                      setState(() => _registerImage = null),
                                   child: Container(
-                                    width: 28, height: 28,
-                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                    width: 28,
+                                    height: 28,
+                                    decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle),
+                                    child: const Icon(Icons.close,
+                                        color: Colors.white, size: 18),
                                   ),
                                 ),
                               ),
@@ -591,15 +678,20 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+                            border: Border.all(
+                                color: Colors.grey[300]!,
+                                style: BorderStyle.solid),
                             borderRadius: BorderRadius.circular(12),
                             color: Colors.grey[50],
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.camera_alt, size: 28, color: Colors.grey[400]),
+                              Icon(Icons.camera_alt,
+                                  size: 28, color: Colors.grey[400]),
                               const SizedBox(height: 4),
-                              Text('대표 사진 선택 (선택)', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                              Text('대표 사진 선택 (선택)',
+                                  style: TextStyle(
+                                      fontSize: 13, color: Colors.grey[500])),
                             ],
                           ),
                         ),
@@ -611,15 +703,19 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   decoration: InputDecoration(
                     labelText: '암장 이름',
                     hintText: '암장 이름을 입력하세요',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
                 if (_showRegisterMap) ...[
-                  const Text('위치 선택', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Text('위치 선택',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('지도를 탭하여 위치를 지정하세요', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  Text('지도를 탭하여 위치를 지정하세요',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -633,7 +729,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                               target: _registerMapCenter,
                               zoom: 16,
                             ),
-                            onTap: (point) => setState(() => _registerPinPosition = point),
+                            onTap: (point) =>
+                                setState(() => _registerPinPosition = point),
                             markers: _registerPinPosition != null
                                 ? {
                                     Marker(
@@ -644,7 +741,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                                 : {},
                             myLocationButtonEnabled: false,
                             zoomControlsEnabled: false,
-                            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                            gestureRecognizers: <Factory<
+                                OneSequenceGestureRecognizer>>{
                               Factory<OneSequenceGestureRecognizer>(
                                 () => EagerGestureRecognizer(),
                               ),
@@ -654,8 +752,10 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                             right: 8,
                             top: 8,
                             child: _MapZoomControls(
-                              onZoomIn: () => _registerMapController?.animateCamera(CameraUpdate.zoomIn()),
-                              onZoomOut: () => _registerMapController?.animateCamera(CameraUpdate.zoomOut()),
+                              onZoomIn: () => _registerMapController
+                                  ?.animateCamera(CameraUpdate.zoomIn()),
+                              onZoomOut: () => _registerMapController
+                                  ?.animateCamera(CameraUpdate.zoomOut()),
                             ),
                           ),
                         ],
@@ -665,15 +765,21 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   const SizedBox(height: 16),
                 ],
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                    border:
+                        Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                   ),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('개인 암장', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('나만 볼 수 있는 암장', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    title: const Text('개인 암장',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: Text('나만 볼 수 있는 암장',
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.grey[600])),
                     value: _isPrivate,
                     onChanged: (v) => setState(() => _isPrivate = v),
                   ),
@@ -690,7 +796,11 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               child: FilledButton(
                 onPressed: _canRegister ? _submitRegister : null,
                 child: _isSubmitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('등록하기'),
               ),
             ),
@@ -712,8 +822,12 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
-              IconButton(icon: const Icon(Icons.arrow_back), onPressed: _goBackToSelect),
-              Text(_isGymSuggest ? '정보 수정 제안' : '암장 정보 수정', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _goBackToSelect),
+              Text(_isGymSuggest ? '정보 수정 제안' : '암장 정보 수정',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -732,44 +846,72 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const Text('이름', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                if (_isGymSuggest) ...[
+                  const Text('대표 이미지',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  _buildSuggestImageSection(),
+                  const SizedBox(height: 16),
+                ],
+                const Text('이름',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 if (_isGymSuggest) ...[
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8)),
                     child: Row(
                       children: [
-                        Text(_suggestPlace!.name, style: const TextStyle(fontSize: 14, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+                        Text(_suggestPlace!.name,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                decoration: TextDecoration.lineThrough,
+                                color: Colors.grey)),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
-                          child: const Text('현재', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(4)),
+                          child: const Text('현재',
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.grey)),
                         ),
                       ],
                     ),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 4),
-                    child: Icon(Icons.arrow_downward, size: 18, color: Colors.grey),
+                    child: Icon(Icons.arrow_downward,
+                        size: 18, color: Colors.grey),
                   ),
                 ],
                 TextField(
                   controller: _suggestNameController,
                   decoration: InputDecoration(
                     hintText: _isGymSuggest ? '변경할 이름 입력' : '암장 이름',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
                 if (hasCoords) ...[
-                  const Text('위치', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Text('위치',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   if (_isGymSuggest)
-                    Text('지도를 탭하여 올바른 위치를 지정하세요', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    Text('지도를 탭하여 올바른 위치를 지정하세요',
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -783,30 +925,36 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                               target: _suggestOriginalPosition!,
                               zoom: 16,
                             ),
-                            onTap: (point) => setState(() => _suggestNewPosition = point),
+                            onTap: (point) =>
+                                setState(() => _suggestNewPosition = point),
                             markers: {
                               if (_isGymSuggest)
                                 Marker(
                                   markerId: const MarkerId('original'),
                                   position: _suggestOriginalPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                                      BitmapDescriptor.hueAzure),
                                 ),
                               if (_isGymSuggest && _suggestNewPosition != null)
                                 Marker(
                                   markerId: const MarkerId('suggest'),
                                   position: _suggestNewPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                                      BitmapDescriptor.hueViolet),
                                 ),
                               if (!_isGymSuggest)
                                 Marker(
                                   markerId: const MarkerId('position'),
-                                  position: _suggestNewPosition ?? _suggestOriginalPosition!,
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+                                  position: _suggestNewPosition ??
+                                      _suggestOriginalPosition!,
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                                      BitmapDescriptor.hueOrange),
                                 ),
                             },
                             myLocationButtonEnabled: false,
                             zoomControlsEnabled: false,
-                            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                            gestureRecognizers: <Factory<
+                                OneSequenceGestureRecognizer>>{
                               Factory<OneSequenceGestureRecognizer>(
                                 () => EagerGestureRecognizer(),
                               ),
@@ -816,8 +964,10 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                             right: 8,
                             top: 8,
                             child: _MapZoomControls(
-                              onZoomIn: () => _suggestMapController?.animateCamera(CameraUpdate.zoomIn()),
-                              onZoomOut: () => _suggestMapController?.animateCamera(CameraUpdate.zoomOut()),
+                              onZoomIn: () => _suggestMapController
+                                  ?.animateCamera(CameraUpdate.zoomIn()),
+                              onZoomOut: () => _suggestMapController
+                                  ?.animateCamera(CameraUpdate.zoomOut()),
                             ),
                           ),
                         ],
@@ -835,10 +985,17 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: _hasSuggestChanges && !_isSubmitting ? _submitSuggest : null,
-                style: FilledButton.styleFrom(backgroundColor: _suggestAccentColor),
+                onPressed: _hasSuggestChanges && !_isSubmitting
+                    ? _submitSuggest
+                    : null,
+                style: FilledButton.styleFrom(
+                    backgroundColor: _suggestAccentColor),
                 child: _isSubmitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : Text(_isGymSuggest ? '수정 제안하기' : '수정하기'),
               ),
             ),
@@ -848,14 +1005,152 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     );
   }
 
+  Widget _buildSuggestImageSection() {
+    final currentUrl = _suggestPlace?.coverImageUrl;
+    final pickedFile = _suggestImage;
+
+    // State: user has picked a new image (overrides both "has original" and "empty")
+    if (pickedFile != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 120,
+              child: Image.file(pickedFile, fit: BoxFit.cover),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => setState(() => _suggestImage = null),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: const BoxDecoration(
+                      color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // State 1: existing cover image — overlay "사진 변경" button
+    if (currentUrl != null) {
+      return GestureDetector(
+        onTap: _pickSuggestImage,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 120,
+                child: CachedNetworkImage(
+                  imageUrl: currentUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text(
+                        '사진 변경',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // State 2: no existing image — CTA card encouraging first photo
+    return GestureDetector(
+      onTap: _pickSuggestImage,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: _suggestAccentColor.withValues(alpha: 0.4),
+              width: 1.5,
+              style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(12),
+          color: _suggestAccentColor.withValues(alpha: 0.04),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.camera_alt_outlined,
+                size: 32, color: _suggestAccentColor),
+            const SizedBox(height: 8),
+            const Text(
+              '이 암장에 아직 사진이 없어요',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '첫 대표 사진을 등록해 주세요',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _suggestAccentColor,
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                  SizedBox(width: 6),
+                  Text('사진 선택',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ==================== Common Widgets ====================
 
   Widget _buildDragHandle() {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 8),
       child: Container(
-        width: 36, height: 4,
-        decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+        width: 36,
+        height: 4,
+        decoration: BoxDecoration(
+            color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
@@ -888,7 +1183,8 @@ class _MapZoomControls extends StatelessWidget {
           Container(width: 32, height: 1, color: const Color(0xFFE0E0E0)),
           InkWell(
             onTap: onZoomOut,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(6)),
             child: const SizedBox(
               width: 32,
               height: 32,
