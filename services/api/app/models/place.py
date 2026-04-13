@@ -72,7 +72,7 @@ class PlaceSuggestionChanges(BaseModel):
     name: Optional[str] = Field(None, description="변경 제안된 이름")
     latitude: Optional[float] = Field(None, description="변경 제안된 위도")
     longitude: Optional[float] = Field(None, description="변경 제안된 경도")
-    image_url: Optional[str] = Field(None, description="변경 제안된 이미지 URL")
+    cover_image_url: Optional[str] = Field(None, description="변경 제안된 대표 이미지 URL")
 
 
 class PlaceSuggestion(Document):
