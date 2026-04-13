@@ -73,6 +73,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   final TextEditingController _suggestNameController = TextEditingController();
   LatLng? _suggestNewPosition;
   GoogleMapController? _suggestMapController;
+  File? _suggestImage;
 
   @override
   void initState() {
@@ -141,6 +142,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     _suggestPlace = place;
     _suggestNameController.text = place.type == 'gym' ? '' : place.name;
     _suggestNewPosition = null;
+    _suggestImage = null;
     setState(() => _mode = _SheetMode.suggest);
   }
 
@@ -172,6 +174,14 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {
       setState(() => _registerImage = File(picked.path));
+    }
+  }
+
+  Future<void> _pickSuggestImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      setState(() => _suggestImage = File(picked.path));
     }
   }
 
@@ -218,7 +228,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     final nameChanged = _isGymSuggest
         ? _suggestNameController.text.trim().isNotEmpty
         : _suggestNameController.text.trim() != _suggestPlace?.name;
-    return nameChanged || _suggestNewPosition != null;
+    return nameChanged || _suggestNewPosition != null || _suggestImage != null;
   }
 
   Future<void> _submitSuggest() async {
@@ -233,9 +243,14 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           name: newName.isNotEmpty ? newName : null,
           latitude: _suggestNewPosition?.latitude,
           longitude: _suggestNewPosition?.longitude,
+          imagePath: _suggestImage?.path,
         );
         if (mounted) {
-          setState(() { _isSubmitting = false; _mode = _SheetMode.select; });
+          setState(() {
+            _isSubmitting = false;
+            _mode = _SheetMode.select;
+            _suggestImage = null;
+          });
           _showSuccessDialog();
         }
       } else {
