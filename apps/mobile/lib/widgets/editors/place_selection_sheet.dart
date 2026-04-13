@@ -86,7 +86,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       _registerPinPosition = LatLng(widget.latitude!, widget.longitude!);
     }
     _loadNearbyPlaces();
-    _loadMyPrivatePlaces();
+    // TODO(private-gym): re-enable when private gym feature ships
+    // _loadMyPrivatePlaces();
   }
 
   @override
@@ -119,6 +120,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     }
   }
 
+  // ignore: unused_element
   Future<void> _loadMyPrivatePlaces() async {
     setState(() => _loadingPrivate = true);
     try {
@@ -289,7 +291,8 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
             onChanged: _onSearchChanged,
           ),
         ),
-        if (!_isSearchMode) _buildTabBar(),
+        // TODO(private-gym): re-enable when private gym feature ships
+        // if (!_isSearchMode) _buildTabBar(),
         Expanded(child: _buildListArea(scrollController)),
         const Divider(height: 1),
         SafeArea(
@@ -325,6 +328,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildTabBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -749,26 +753,27 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                  ),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('개인 암장',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('나만 볼 수 있는 암장',
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[600])),
-                    value: _isPrivate,
-                    onChanged: (v) => setState(() => _isPrivate = v),
-                  ),
-                ),
+                // TODO(private-gym): re-enable when private gym feature ships
+                // Container(
+                //   padding:
+                //       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                //   decoration: BoxDecoration(
+                //     borderRadius: BorderRadius.circular(12),
+                //     border:
+                //         Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                //   ),
+                //   child: SwitchListTile(
+                //     contentPadding: EdgeInsets.zero,
+                //     title: const Text('개인 암장',
+                //         style: TextStyle(
+                //             fontSize: 14, fontWeight: FontWeight.w600)),
+                //     subtitle: Text('나만 볼 수 있는 암장',
+                //         style:
+                //             TextStyle(fontSize: 12, color: Colors.grey[600])),
+                //     value: _isPrivate,
+                //     onChanged: (v) => setState(() => _isPrivate = v),
+                //   ),
+                // ),
               ],
             ),
           ),
