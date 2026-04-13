@@ -96,14 +96,20 @@ class PlaceService {
     String? name,
     double? latitude,
     double? longitude,
+    String? imagePath,
   }) async {
-    final body = <String, dynamic>{
-      'placeId': placeId,
+    final fields = <String, String>{
+      'place_id': placeId,
       if (name != null) 'name': name,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
+      if (latitude != null) 'latitude': latitude.toString(),
+      if (longitude != null) 'longitude': longitude.toString(),
     };
-    final response = await AuthorizedHttpClient.post('/places/suggestions', body: body);
+    final response = await AuthorizedHttpClient.multipartPost(
+      '/places/suggestions',
+      imagePath,
+      fieldName: 'image',
+      fields: fields,
+    );
 
     if (response.statusCode != 201) {
       throw Exception('Failed to create suggestion. Status: ${response.statusCode}');
