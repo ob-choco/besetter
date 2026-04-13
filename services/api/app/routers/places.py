@@ -1,4 +1,3 @@
-import io
 import os
 import uuid
 from datetime import datetime, timezone
@@ -7,7 +6,6 @@ from typing import List, Optional
 from beanie.odm.fields import PydanticObjectId
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi import status
-from PIL import Image as PILImage
 from pydantic import BaseModel, Field
 
 from app.core.geo import haversine_distance
@@ -105,29 +103,13 @@ def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
 # ---------------------------------------------------------------------------
 
 
-def _upload_place_image(content: bytes, file_ext: str) -> tuple[str, str]:
-    """Upload original + thumbnail to GCS, return (image_url, thumbnail_url)."""
+def _upload_place_image(content: bytes, file_ext: str) -> str:
+    """Upload the place cover image to GCS and return its public URL."""
     unique_name = str(uuid.uuid4())
-
-    # Original
     blob = bucket.blob(f"place_images/{unique_name}{file_ext}")
     content_type = "image/png" if file_ext == ".png" else "image/jpeg"
     blob.upload_from_string(data=content, content_type=content_type)
-    image_url = f"{get_base_url()}/place_images/{unique_name}{file_ext}"
-
-    # Thumbnail (200x200)
-    img = PILImage.open(io.BytesIO(content))
-    img = img.convert("RGB")
-    img.thumbnail((200, 200))
-    thumb_buffer = io.BytesIO()
-    img.save(thumb_buffer, format="JPEG", quality=85)
-    thumb_buffer.seek(0)
-
-    thumb_blob = bucket.blob(f"place_images/{unique_name}_thumb.jpg")
-    thumb_blob.upload_from_string(data=thumb_buffer.read(), content_type="image/jpeg")
-    thumbnail_url = f"{get_base_url()}/place_images/{unique_name}_thumb.jpg"
-
-    return image_url, thumbnail_url
+    return f"{get_base_url()}/place_images/{unique_name}{file_ext}"
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=PlaceView)
