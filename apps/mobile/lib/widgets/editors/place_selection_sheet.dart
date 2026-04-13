@@ -1013,13 +1013,16 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
     // State: user has picked a new image (overrides both "has original" and "empty")
     if (pickedFile != null) {
+      // When replacing the empty-state CTA card, match its taller height so the
+      // layout doesn't collapse after picking.
+      final previewHeight = currentUrl != null ? 120.0 : 170.0;
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
             SizedBox(
               width: double.infinity,
-              height: 120,
+              height: previewHeight,
               child: Image.file(pickedFile, fit: BoxFit.cover),
             ),
             Positioned(
