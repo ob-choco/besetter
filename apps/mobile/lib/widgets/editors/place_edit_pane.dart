@@ -203,14 +203,12 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                if (_isGym) ...[
-                  const Text('대표 이미지',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  _buildImageSection(),
-                  const SizedBox(height: 16),
-                ],
+                const Text('대표 이미지',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                _buildImageSection(),
+                const SizedBox(height: 16),
                 const Text('이름',
                     style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600)),
