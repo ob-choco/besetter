@@ -33,8 +33,7 @@ class Place(Document):
     normalized_name: str = Field(..., description="정규화된 장소 이름 (공백/기호 제거, 소문자)")
     type: Literal["gym", "private-gym"] = Field(..., description="장소 유형")
     location: Optional[GeoJsonPoint] = Field(None, description="GeoJSON Point [lng, lat]")
-    image_url: Optional[str] = Field(None, description="장소 이미지 URL")
-    thumbnail_url: Optional[str] = Field(None, description="장소 썸네일 URL")
+    cover_image_url: Optional[str] = Field(None, description="대표 이미지 URL")
     created_by: PydanticObjectId = Field(..., description="생성한 사용자의 ID")
     created_at: datetime = Field(..., description="생성 시간")
 
