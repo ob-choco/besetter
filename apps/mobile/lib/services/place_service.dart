@@ -71,24 +71,42 @@ class PlaceService {
     }
   }
 
+  static Future<List<PlaceData>> getMyPrivatePlaces() async {
+    final response = await AuthorizedHttpClient.get('/places/my-private');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data =
+          jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+      return data.map((e) => PlaceData.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    throw Exception(
+        'Failed to fetch my private places. Status: ${response.statusCode}');
+  }
+
   static Future<PlaceData> updatePlace(
     String placeId, {
     String? name,
     double? latitude,
     double? longitude,
+    String? imagePath,
   }) async {
-    final body = <String, dynamic>{
+    final fields = <String, String>{
       if (name != null) 'name': name,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
+      if (latitude != null) 'latitude': latitude.toString(),
+      if (longitude != null) 'longitude': longitude.toString(),
     };
-    final response = await AuthorizedHttpClient.put('/places/$placeId', body: body);
+    final response = await AuthorizedHttpClient.multipartRequest(
+      '/places/$placeId',
+      imagePath,
+      fieldName: 'image',
+      fields: fields,
+      method: 'PUT',
+    );
 
     if (response.statusCode == 200) {
       return PlaceData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
-    } else {
-      throw Exception('Failed to update place. Status: ${response.statusCode}');
     }
+    throw Exception('Failed to update place. Status: ${response.statusCode}');
   }
 
   static Future<void> createSuggestion({
