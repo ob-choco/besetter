@@ -18,18 +18,19 @@
 
 현재 `Suggest` 모드는 `gym` 타입 장소의 **이름**과 **위치**만 검수 제안으로 제출한다(`PlaceService.createSuggestion`, JSON body `/places/suggestions`). 서버의 `PlaceSuggestion` 모델에는 이미 `image_url` 필드가 존재하지만 클라이언트 · 엔드포인트 모두 이 필드를 사용하지 않는다.
 
-같은 기회에, 의미가 불분명한 `Place.image_url` / `Place.thumbnail_url` 이중 필드 구조를 단순화한다. 서버는 이미 `/images/{blob}?type=<preset>` 동적 썸네일 엔드포인트(`routers/images.py:348`)를 제공하므로, 정적인 `thumbnail_url` 필드는 불필요하다.
+같은 기회에, `Place.image_url`을 `Place.repr_image_url`로 리네임하고 `Place.thumbnail_url`은 **완전히 제거**한다. 서버는 이미 `/images/{blob}?type=<preset>` 동적 썸네일 엔드포인트(`routers/images.py:348`)를 제공하므로, Place 도큐먼트에 정적 `thumbnail_url` 필드를 따로 저장할 이유가 없다.
 
 ## Data Model Changes
 
 ### Server (`services/api/app/models/place.py`, `routers/places.py`)
 
-- `Place.image_url` → `Place.repr_image_url`
-- `Place.thumbnail_url` **제거**
-- `PlaceSuggestion.image_url` → `PlaceSuggestion.repr_image_url`
-- `PlaceResponse`: `image_url` / `thumbnail_url` → `repr_image_url` (단일 필드)
-- `_upload_place_image(content, ext) -> str` — 반환을 튜플에서 단일 URL로 변경, 200x200 `_thumb.jpg` 생성 코드 삭제
-- `create_place` 엔드포인트를 새 시그니처에 맞게 수정
+- `Place.image_url` → `Place.repr_image_url` (리네임)
+- `Place.thumbnail_url` **완전히 제거**
+- `PlaceSuggestion.image_url` → `PlaceSuggestion.repr_image_url` (리네임)
+- `PlaceResponse.image_url` → `PlaceResponse.repr_image_url` (리네임)
+- `PlaceResponse.thumbnail_url` **완전히 제거**
+- `_upload_place_image(content, ext) -> str` — 반환을 `(image_url, thumbnail_url)` 튜플에서 단일 URL로 변경, 200x200 `_thumb.jpg` 생성 · 업로드 코드 삭제
+- `create_place` 엔드포인트를 새 시그니처에 맞게 수정 (`thumbnail_url` 파라미터 · 저장 로직 제거)
 
 **DB 마이그레이션 없음.** 기존 도큐먼트에 대한 필드 리네임/드롭 스크립트는 실행하지 않는다.
 
