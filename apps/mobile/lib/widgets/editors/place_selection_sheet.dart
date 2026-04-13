@@ -346,7 +346,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
+      initialChildSize: 0.8,
       minChildSize: 0.4,
       maxChildSize: 0.9,
       expand: false,
@@ -1011,18 +1011,20 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     final currentUrl = _suggestPlace?.coverImageUrl;
     final pickedFile = _suggestImage;
 
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: _buildSuggestImageBody(currentUrl, pickedFile),
+    );
+  }
+
+  Widget _buildSuggestImageBody(String? currentUrl, File? pickedFile) {
     // State: user has picked a new image (overrides both "has original" and "empty")
     if (pickedFile != null) {
-      // When replacing the empty-state CTA card, match its taller height so the
-      // layout doesn't collapse after picking.
-      final previewHeight = currentUrl != null ? 120.0 : 170.0;
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
-            SizedBox(
-              width: double.infinity,
-              height: previewHeight,
+            Positioned.fill(
               child: Image.file(pickedFile, fit: BoxFit.cover),
             ),
             Positioned(
@@ -1052,9 +1054,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           borderRadius: BorderRadius.circular(12),
           child: Stack(
             children: [
-              SizedBox(
-                width: double.infinity,
-                height: 120,
+              Positioned.fill(
                 child: CachedNetworkImage(
                   imageUrl: currentUrl,
                   fit: BoxFit.cover,
@@ -1096,8 +1096,6 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
     return GestureDetector(
       onTap: _pickSuggestImage,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         decoration: BoxDecoration(
           border: Border.all(
               color: _suggestAccentColor.withValues(alpha: 0.4),
@@ -1106,41 +1104,45 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
           borderRadius: BorderRadius.circular(12),
           color: _suggestAccentColor.withValues(alpha: 0.04),
         ),
-        child: Column(
-          children: [
-            Icon(Icons.camera_alt_outlined,
-                size: 32, color: _suggestAccentColor),
-            const SizedBox(height: 8),
-            const Text(
-              '이 암장에 아직 사진이 없어요',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '첫 대표 사진을 등록해 주세요',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _suggestAccentColor,
-                borderRadius: BorderRadius.circular(9999),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.camera_alt_outlined,
+                  size: 32, color: _suggestAccentColor),
+              const SizedBox(height: 8),
+              const Text(
+                '이 암장에 아직 사진이 없어요',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                  SizedBox(width: 6),
-                  Text('사진 선택',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600)),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                '첫 대표 사진을 등록해 주세요',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _suggestAccentColor,
+                  borderRadius: BorderRadius.circular(9999),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text('사진 선택',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
