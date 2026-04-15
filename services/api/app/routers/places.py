@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import uuid
@@ -13,8 +14,11 @@ from app.core.geo import haversine_distance
 from app.core.gcs import bucket, get_base_url
 from app.dependencies import get_current_user
 from app.models import model_config
+from app.models.notification import Notification
 from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/places", tags=["places"])
 
@@ -308,6 +312,28 @@ async def create_place_suggestion(
         created_at=datetime.now(tz=timezone.utc),
     )
     created = await suggestion.save()
+
+    # Best-effort: notify the requester with a thank-you message.
+    try:
+        place_name_snapshot = place.name
+        notif = Notification(
+            user_id=current_user.id,
+            type="place_suggestion_ack",
+            title="정보 수정 제안이 접수되었습니다",
+            body=(
+                f"{place_name_snapshot}에 대한 소중한 제보 감사합니다 🙌 "
+                "운영진이 확인하고 반영할게요."
+            ),
+            link=f"/places/{place.id}",
+            created_at=datetime.now(tz=timezone.utc),
+        )
+        await notif.save()
+        await User.get_motor_collection().update_one(
+            {"_id": current_user.id},
+            {"$inc": {"unreadNotificationCount": 1}},
+        )
+    except Exception as exc:  # best-effort; do not block suggestion creation
+        logger.warning("notification creation failed for place %s: %s", place.id, exc)
 
     return PlaceSuggestionView(
         id=created.id,
