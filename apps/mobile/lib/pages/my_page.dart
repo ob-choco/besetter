@@ -24,10 +24,8 @@ class MyPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider);
-    final unreadNotifCount = ref.watch(userProfileProvider).whenOrNull(
-              data: (u) => u.unreadNotificationCount,
-            ) ??
-        0;
+    final unreadNotifCount =
+        userAsync.whenOrNull(data: (u) => u.unreadNotificationCount) ?? 0;
     final isEditing = useState(false);
     final croppedImage = useState<File?>(null);
     final nameController = useTextEditingController();
