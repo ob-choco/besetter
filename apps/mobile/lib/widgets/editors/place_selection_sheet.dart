@@ -7,7 +7,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../models/place_data.dart';
+import '../../providers/user_provider.dart';
 import '../../services/place_service.dart';
 import '../../utils/thumbnail_url.dart';
 import 'place_edit_pane.dart';
@@ -16,7 +18,7 @@ enum _SheetMode { select, register, edit }
 
 enum _SelectTab { nearby, private }
 
-class PlaceSelectionSheet extends StatefulWidget {
+class PlaceSelectionSheet extends ConsumerStatefulWidget {
   final double? latitude;
   final double? longitude;
   final PlaceData? currentPlace;
@@ -49,10 +51,10 @@ class PlaceSelectionSheet extends StatefulWidget {
   }
 
   @override
-  State<PlaceSelectionSheet> createState() => _PlaceSelectionSheetState();
+  ConsumerState<PlaceSelectionSheet> createState() => _PlaceSelectionSheetState();
 }
 
-class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
+class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   // --- Shared state ---
   _SheetMode _mode = _SheetMode.select;
 
@@ -198,6 +200,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   }
 
   void _goBackToSelect() {
+    ref.invalidate(userProfileProvider);
     setState(() => _mode = _SheetMode.select);
   }
 
