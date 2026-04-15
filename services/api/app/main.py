@@ -12,6 +12,7 @@ from app.models.place import Place as PlaceModel
 from app.models.place import PlaceSuggestion as PlaceSuggestionModel
 from app.models.activity import Activity as ActivityModel
 from app.models.activity import UserRouteStats as UserRouteStatsModel
+from app.models.notification import Notification as NotificationModel
 from contextlib import asynccontextmanager
 from logging import info
 from app.routers import images
@@ -28,7 +29,7 @@ async def lifespan(app: FastAPI):
     app.database = app.mongodb_client.get_database(get("mongodb.name"))
     await init_beanie(
         database=app.database,
-        document_models=[OpenIdNonceModel, UserModel, HoldPolygonModel, ImageModel, RouteModel, PlaceModel, PlaceSuggestionModel, ActivityModel, UserRouteStatsModel],
+        document_models=[OpenIdNonceModel, UserModel, HoldPolygonModel, ImageModel, RouteModel, PlaceModel, PlaceSuggestionModel, ActivityModel, UserRouteStatsModel, NotificationModel],
     )
     ping_response = await app.database.command("ping")
     if int(ping_response["ok"]) != 1:
