@@ -333,7 +333,12 @@ async def create_place_suggestion(
             {"$inc": {"unreadNotificationCount": 1}},
         )
     except Exception as exc:  # best-effort; do not block suggestion creation
-        logger.warning("notification creation failed for place %s: %s", place.id, exc)
+        logger.warning(
+            "notification creation failed for place %s: %s",
+            place.id,
+            exc,
+            exc_info=True,
+        )
 
     return PlaceSuggestionView(
         id=created.id,
