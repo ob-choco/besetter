@@ -34,6 +34,7 @@ class UserProfileResponse(BaseModel):
     email: Optional[str] = None
     bio: Optional[str] = None
     profile_image_url: Optional[str] = None
+    unread_notification_count: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +58,7 @@ def _build_profile_response(user: User) -> UserProfileResponse:
         email=user.email,
         bio=user.bio,
         profile_image_url=signed_url,
+        unread_notification_count=max(0, user.unread_notification_count),
     )
 
 
