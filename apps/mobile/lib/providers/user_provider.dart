@@ -11,6 +11,7 @@ class UserState {
   final String? email;
   final String? bio;
   final String? profileImageUrl;
+  final int unreadNotificationCount;
 
   const UserState({
     required this.id,
@@ -18,6 +19,7 @@ class UserState {
     this.email,
     this.bio,
     this.profileImageUrl,
+    this.unreadNotificationCount = 0,
   });
 
   UserState copyWith({
@@ -26,6 +28,7 @@ class UserState {
     String? email,
     String? bio,
     String? profileImageUrl,
+    int? unreadNotificationCount,
   }) {
     return UserState(
       id: id ?? this.id,
@@ -33,6 +36,8 @@ class UserState {
       email: email ?? this.email,
       bio: bio ?? this.bio,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      unreadNotificationCount:
+          unreadNotificationCount ?? this.unreadNotificationCount,
     );
   }
 
@@ -43,6 +48,8 @@ class UserState {
       email: json['email'] as String?,
       bio: json['bio'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
+      unreadNotificationCount:
+          (json['unreadNotificationCount'] as int?) ?? 0,
     );
   }
 }
