@@ -12,6 +12,7 @@ def _make_user(
     email: str | None = None,
     bio: str | None = None,
     profile_image_url: str | None = None,
+    unread_notification_count: int = 0,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         id=id,
@@ -19,6 +20,7 @@ def _make_user(
         email=email,
         bio=bio,
         profile_image_url=profile_image_url,
+        unread_notification_count=unread_notification_count,
     )
 
 
