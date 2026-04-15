@@ -19,6 +19,7 @@ from app.routers import images
 from app.routers import routes
 from app.routers import users
 from app.routers import my
+from app.routers import notifications
 from app.core.config import get
 
 
@@ -55,6 +56,7 @@ app.include_router(activities.router)
 app.include_router(share.router)
 app.include_router(well_known.router)
 app.include_router(my.router)
+app.include_router(notifications.router)
 app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 
