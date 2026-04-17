@@ -230,6 +230,10 @@ async def instant_search_places(
     candidates = await Place.find(
         {
             "type": "gym",
+            "$or": [
+                {"status": "approved"},
+                {"status": "pending", "createdBy": current_user.id},
+            ],
             "normalizedName": {
                 "$regex": re.escape(normalized_query),
                 "$options": "i",
