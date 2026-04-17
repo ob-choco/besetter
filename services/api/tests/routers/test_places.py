@@ -42,3 +42,26 @@ def test_upload_place_image_uses_png_content_type(mock_get_base_url, mock_bucket
 
     kwargs = mock_blob.upload_from_string.call_args.kwargs
     assert kwargs["content_type"] == "image/png"
+
+
+def test_place_defaults_to_approved_status():
+    """Place() without explicit status defaults to approved — preserves backward
+    compatibility when Pydantic hydrates legacy documents that lack the field."""
+    from datetime import datetime, timezone
+    from bson import ObjectId
+    from app.models.place import Place
+
+    # model_construct bypasses Beanie's DB-initialisation guard while still
+    # applying Pydantic field defaults for any key not supplied.
+    p = Place.model_construct(
+        name="Foo",
+        normalized_name="foo",
+        type="private-gym",
+        created_by=ObjectId(),
+        created_at=datetime.now(tz=timezone.utc),
+    )
+    # Verify defaults are applied correctly via the field metadata.
+    status_field = Place.model_fields["status"]
+    assert status_field.default == "approved"
+    merged_field = Place.model_fields["merged_into_place_id"]
+    assert merged_field.default is None

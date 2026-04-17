@@ -36,6 +36,14 @@ class Place(Document):
     cover_image_url: Optional[str] = Field(None, description="대표 이미지 URL")
     created_by: PydanticObjectId = Field(..., description="생성한 사용자의 ID")
     created_at: datetime = Field(..., description="생성 시간")
+    status: Literal["pending", "approved", "rejected", "merged"] = Field(
+        default="approved",
+        description="장소 상태. gym 최초 생성은 pending, private-gym은 approved.",
+    )
+    merged_into_place_id: Optional[PydanticObjectId] = Field(
+        default=None,
+        description="merged 상태일 때 병합 대상 place의 ID. 검수 툴이 설정.",
+    )
 
     def set_location_from(self, latitude: Optional[float], longitude: Optional[float]):
         """lat/lng으로 GeoJSON location 설정"""
@@ -62,6 +70,7 @@ class Place(Document):
             IndexModel([("location", GEOSPHERE)], sparse=True),
             IndexModel([("createdBy", ASCENDING)]),
             IndexModel([("normalizedName", ASCENDING)]),
+            IndexModel([("type", ASCENDING), ("status", ASCENDING)]),
         ]
         keep_nulls = True
 
