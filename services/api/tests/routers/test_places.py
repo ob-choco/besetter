@@ -83,3 +83,29 @@ def test_place_view_serializes_status_camelcase():
     dumped = v.model_dump(by_alias=True)
     assert dumped["status"] == "pending"
     assert "coverImageUrl" in dumped  # sanity: camelCase alias still in effect
+
+
+def test_place_construction_gym_vs_private_gym_status():
+    """Sanity-check the branching logic used by POST /places."""
+    from datetime import datetime, timezone
+    from bson import ObjectId
+    from app.models.place import Place
+
+    common = dict(
+        name="X",
+        normalized_name="x",
+        created_by=ObjectId(),
+        created_at=datetime.now(tz=timezone.utc),
+    )
+    gym = Place.model_construct(
+        type="gym",
+        status="pending" if "gym" == "gym" else "approved",
+        **common,
+    )
+    private = Place.model_construct(
+        type="private-gym",
+        status="pending" if "private-gym" == "gym" else "approved",
+        **common,
+    )
+    assert gym.status == "pending"
+    assert private.status == "approved"

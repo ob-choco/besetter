@@ -138,6 +138,7 @@ async def create_place(
         name=name,
         normalized_name=normalize_name(name),
         type=type,
+        status="pending" if type == "gym" else "approved",
         cover_image_url=cover_image_url,
         created_by=current_user.id,
         created_at=datetime.now(tz=timezone.utc),
