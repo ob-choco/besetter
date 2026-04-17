@@ -95,6 +95,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 
   Future<void> _markReadAfterLoad() async {
+    // Only call mark-read if the newest notification is still unread.
+    if (_items.isEmpty || _items.first.readAt != null) return;
     try {
       await NotificationService.markRead(_enteredAt);
       if (!mounted) return;
