@@ -7,7 +7,7 @@
 - `POST /places` 동작 변경: `gym`=pending, `private-gym`=approved. gym 생성 시 요청자에게 감사 알림 1건 생성 (type=`place_registration_ack`).
 - `GET /places/nearby`, `GET /places/instant-search` 필터에 상태 조건 추가 (본인 pending 포함, 타인의 pending은 제외).
 - `PUT /places/{place_id}` 권한 확장: 본인 소유 pending gym도 허용.
-- `DELETE /places/{place_id}` 신규: 본인 소유 pending gym만 허용, 연결된 Route/Image/GCS blob을 순차 best-effort cascade로 삭제.
+- `DELETE /places/{place_id}` 신규: 본인 소유 pending gym 또는 본인 소유 private-gym만 허용, 연결된 Route/Image/GCS blob을 순차 best-effort cascade로 삭제.
 - `POST /places/suggestions` 정책 업데이트: `status != "approved"`는 400. 기존 `place_suggestion_ack` 알림 body 문구 교체.
 - 이미지/루트의 place_id를 받는 등록/수정 엔드포인트에 stale 장소 방어: `merged`는 서버가 `merged_into_place_id`로 투명 리다이렉트, `rejected`/남의 `pending`은 `PLACE_NOT_USABLE` 409.
 - 모바일: pending 장소 "검수중" 뱃지, pending 장소 정보 수정 버튼 + 가이드 배너, 삭제 버튼, rejected·남의 pending 409 stale 장소 팝업 (작업 상태 보존). merged는 팝업 없이 투명 처리.
@@ -128,10 +128,11 @@ async def delete_place(place_id, current_user):
     place = await Place.get(place_id)
     if place is None:
         raise HTTPException(404, ...)
-    if not (place.type == "gym"
-            and place.status == "pending"
-            and place.created_by == current_user.id):
-        raise HTTPException(403, "Only your own pending gym place can be deleted")
+    is_owner = place.created_by == current_user.id
+    is_own_pending_gym = place.type == "gym" and place.status == "pending" and is_owner
+    is_own_private_gym = place.type == "private-gym" and is_owner
+    if not (is_own_pending_gym or is_own_private_gym):
+        raise HTTPException(403, "Only your own pending gym or private-gym place can be deleted")
 
     # 순차 best-effort cascade (MongoDB 트랜잭션 미도입)
     #   1) 해당 place에 묶인 Route 전부 삭제 (hard delete)

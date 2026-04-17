@@ -577,10 +577,14 @@ async def delete_place(
         )
 
     is_owner = str(place.created_by) == str(current_user.id)
-    if not (place.type == "gym" and place.status == "pending" and is_owner):
+    is_own_pending_gym = (
+        place.type == "gym" and place.status == "pending" and is_owner
+    )
+    is_own_private_gym = place.type == "private-gym" and is_owner
+    if not (is_own_pending_gym or is_own_private_gym):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only your own pending gym place can be deleted",
+            detail="Only your own pending gym or private-gym place can be deleted",
         )
 
     # Collect images belonging to this place.
