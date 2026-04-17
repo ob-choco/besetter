@@ -5,7 +5,7 @@ mongodb:
 google_cloud:
   storage:
     bucket_name: "besetter"
-    base_url: "https://storage.cloud.google.com/besetter"
+    base_url: "https://storage.googleapis.com/besetter"
     account_info:
       type: "service_account"
       project_id: "regal-operand-451709-f4"
