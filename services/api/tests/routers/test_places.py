@@ -45,14 +45,16 @@ def test_upload_place_image_uses_png_content_type(mock_get_base_url, mock_bucket
 
 
 def test_place_defaults_to_approved_status():
-    """Place() without explicit status defaults to approved — preserves backward
-    compatibility when Pydantic hydrates legacy documents that lack the field."""
+    """Declared defaults: status='approved', merged_into_place_id=None.
+
+    Both Place() and Place.model_validate() trigger Beanie's
+    CollectionWasNotInitialized guard without a live DB connection, so we
+    construct via model_construct which still applies field defaults for
+    omitted keys."""
     from datetime import datetime, timezone
     from bson import ObjectId
     from app.models.place import Place
 
-    # model_construct bypasses Beanie's DB-initialisation guard while still
-    # applying Pydantic field defaults for any key not supplied.
     p = Place.model_construct(
         name="Foo",
         normalized_name="foo",
