@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -73,10 +75,12 @@ async def share_route(request: Request, route_id: str):
 
     # 설명 생성
     description_parts = [route.grade]
+    place_status: Optional[str] = None
     if image and image.place_id:
         place = await Place.get(image.place_id)
         if place:
             description_parts.append(place.name)
+            place_status = place.status
     description = " · ".join(description_parts)
 
     share_url = str(request.url)
@@ -95,5 +99,6 @@ async def share_route(request: Request, route_id: str):
             "deep_link_url": deep_link_url,
             "app_store_url": APP_STORE_URL,
             "play_store_url": PLAY_STORE_URL,
+            "place_status": place_status,
         },
     )
