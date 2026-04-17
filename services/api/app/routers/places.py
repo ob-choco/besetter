@@ -353,7 +353,7 @@ async def create_place_suggestion(
             title="정보 수정 제안이 접수되었습니다",
             body=(
                 f"{place_name_snapshot}에 대한 소중한 제보 감사합니다 🙌 "
-                "운영진이 확인하고 반영할게요."
+                "서비스에 반영될 수 있도록 빠르게 처리해서 알려드리겠습니다."
             ),
             link=f"/places/{place.id}",
             created_at=datetime.now(tz=timezone.utc),
