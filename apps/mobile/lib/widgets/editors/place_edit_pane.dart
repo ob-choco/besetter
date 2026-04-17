@@ -82,7 +82,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
 
     final newName = _nameController.text.trim();
     try {
-      if (_isGym) {
+      if (_isGym && !widget.isDirectEdit) {
         await PlaceService.createSuggestion(
           placeId: widget.place.id,
           name: newName.isNotEmpty ? newName : null,
@@ -184,7 +184,10 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
             children: [
               IconButton(
                   icon: const Icon(Icons.arrow_back), onPressed: widget.onBack),
-              Text(_isGym ? '정보 수정 제안' : '암장 정보 수정',
+              Text(
+                  widget.isDirectEdit
+                      ? '암장 정보 수정'
+                      : (_isGym ? '정보 수정 제안' : '암장 정보 수정'),
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold)),
             ],
@@ -193,11 +196,28 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            _isGym ? '검수 후 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다',
+            widget.isDirectEdit
+                ? '즉시 반영됩니다'
+                : (_isGym ? '검수 후 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다'),
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
         ),
         const SizedBox(height: 8),
+        if (widget.place.isPending && widget.place.type == 'gym')
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: const Text(
+              '승인되기 전까지는 자유롭게 수정할 수 있어요. 승인된 이후에는 다른 분들도 쓰게 되므로, '
+              '그때부터는 "정보 수정 제안"으로 요청해주시면 반영해드립니다.',
+              style: TextStyle(fontSize: 13, color: Colors.black87, height: 1.45),
+            ),
+          ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
