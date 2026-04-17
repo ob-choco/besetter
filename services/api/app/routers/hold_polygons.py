@@ -247,6 +247,17 @@ async def update_hold_polygon(
         patch = jsonpatch.JsonPatch(patch)
         patched_data = patch.apply(hp_dict)
 
+        # place_id 먼저 검증 (실패 시 부분-쓰기 방지 — 저장 전에 409/404 raise)
+        incoming_place_id = patched_data.get("placeId")
+        if incoming_place_id:
+            place = await Place.get(ObjectId(incoming_place_id))
+            if place is None:
+                raise HTTPException(status_code=404, detail="Place not found")
+            effective = await resolve_place_for_use(place, current_user)
+            resolved_place_id = effective.id
+        else:
+            resolved_place_id = None
+
         # HoldPolygon 필드 업데이트 (polygons만)
         hold_polygon.polygons = HoldPolygon.model_validate(patched_data).polygons
         hold_polygon.updated_at = datetime.now(tz=pytz.UTC)
@@ -256,15 +267,7 @@ async def update_hold_polygon(
         image.wall_name = patched_data.get("wallName")
         wall_exp = patched_data.get("wallExpirationDate")
         image.wall_expiration_date = datetime.fromisoformat(wall_exp) if wall_exp else None
-        incoming_place_id = patched_data.get("placeId")
-        if incoming_place_id:
-            place = await Place.get(ObjectId(incoming_place_id))
-            if place is None:
-                raise HTTPException(status_code=404, detail="Place not found")
-            effective = await resolve_place_for_use(place, current_user)
-            image.place_id = effective.id
-        else:
-            image.place_id = None
+        image.place_id = resolved_place_id
         await image.save()
 
     except (jsonpatch.JsonPatchException, ValueError) as e:
