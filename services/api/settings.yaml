@@ -5,7 +5,14 @@ mongodb:
 google_cloud:
   storage:
     bucket_name: "besetter"
-    base_url: "https://storage.googleapis.com/besetter"
+    # Host used when constructing URLs that will be stored in the DB.
+    # Kept as storage.cloud.google.com for historical consistency with
+    # existing rows; clients must not read this host directly.
+    base_url: "https://storage.cloud.google.com/besetter"
+    # Host used when serving URLs back to clients. Must be a publicly
+    # reachable (no Google sign-in) endpoint. Response-time helpers swap
+    # base_url → public_base_url before returning to the client.
+    public_base_url: "https://storage.googleapis.com/besetter"
     account_info:
       type: "service_account"
       project_id: "regal-operand-451709-f4"

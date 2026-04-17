@@ -1,6 +1,9 @@
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
 from datetime import timedelta
+from typing import Optional
+from urllib.parse import urlparse
+
 from app.core.config import get
 
 
@@ -23,13 +26,43 @@ def get_bucket():
 
 
 def get_base_url():
+    """Host used when constructing URLs to store in the DB."""
     return get("google_cloud.storage.base_url")
+
+
+def get_public_base_url():
+    """Host used when serving URLs back to clients. Must be publicly
+    reachable (no Google sign-in). Falls back to the canonical public
+    host derived from `bucket_name` if `public_base_url` is not
+    configured (useful while the Secret Manager value is being rolled
+    out)."""
+    try:
+        return get("google_cloud.storage.public_base_url")
+    except ValueError:
+        bucket_name = get("google_cloud.storage.bucket_name")
+        return f"https://storage.googleapis.com/{bucket_name}"
 
 
 def get_public_url(blob_path: str) -> str:
     """Return a publicly accessible URL for a GCS blob (for redirects)."""
     bucket_name = get("google_cloud.storage.bucket_name")
     return f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
+
+
+def to_public_url(url: Optional[str]) -> Optional[str]:
+    """Rewrite a stored GCS URL from the DB host (`base_url`) to the
+    public-serving host (`public_base_url`). Safe for URLs already on the
+    public host, for empty input, and for URLs on unrelated hosts."""
+    if not url:
+        return url
+    url_str = str(url)
+    db_host = urlparse(get_base_url()).netloc
+    public_host = urlparse(get_public_base_url()).netloc
+    if not db_host or not public_host or db_host == public_host:
+        return url_str
+    if db_host not in url_str:
+        return url_str
+    return url_str.replace(db_host, public_host, 1)
 
 
 # 자주 사용하는 인스턴스 미리 생성

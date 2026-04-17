@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from beanie.odm.fields import PydanticObjectId
 from bson.errors import InvalidId
 
-from app.core.gcs import extract_blob_path_from_url, get_public_url
+from app.core.gcs import extract_blob_path_from_url, get_public_url, to_public_url
 from app.models.route import Route, Visibility
 from app.models.image import Image
 from app.models.place import Place
@@ -23,7 +23,7 @@ def _og_image_url(route: Route) -> str:
     source_str = str(source)
     blob_path = extract_blob_path_from_url(source_str)
     if not blob_path:
-        return source_str.replace("storage.cloud.google.com", "storage.googleapis.com")
+        return to_public_url(source_str) or source_str
     try:
         thumb_url = get_or_create_thumbnail(blob_path, "w400")
         if thumb_url:

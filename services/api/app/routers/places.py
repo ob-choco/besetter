@@ -11,7 +11,7 @@ from fastapi import status
 from pydantic import BaseModel, Field
 
 from app.core.geo import haversine_distance
-from app.core.gcs import bucket, extract_blob_path_from_url, get_base_url
+from app.core.gcs import bucket, extract_blob_path_from_url, get_base_url, to_public_url
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.image import Image
@@ -76,15 +76,6 @@ class PlaceImageUploadResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _normalize_public_url(url: Optional[str]) -> Optional[str]:
-    """Rewrite legacy `storage.cloud.google.com` URLs (the Cloud Console host
-    that requires sign-in) to `storage.googleapis.com` so clients can fetch
-    the blob directly. Safe for already-normalized URLs."""
-    if not url:
-        return url
-    return url.replace("storage.cloud.google.com", "storage.googleapis.com")
-
-
 def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
     return PlaceView(
         id=place.id,
@@ -93,7 +84,7 @@ def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
         status=place.status,
         latitude=place.latitude,
         longitude=place.longitude,
-        cover_image_url=_normalize_public_url(place.cover_image_url),
+        cover_image_url=to_public_url(place.cover_image_url),
         created_by=place.created_by,
         distance=round(distance, 2) if distance is not None else None,
     )
