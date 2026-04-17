@@ -274,14 +274,24 @@ async def update_place(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
 
     is_owner = str(place.created_by) == str(current_user.id)
-    is_own_private = place.type == "private-gym" and is_owner
-    is_own_pending_gym = (
-        place.type == "gym" and place.status == "pending" and is_owner
-    )
-    if not (is_own_private or is_own_pending_gym):
+    if not is_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to update this place",
+        )
+
+    if place.type == "gym" and place.status != "pending":
+        # Direct-edit only applies to own pending gyms. Reviewed gyms
+        # (approved / rejected / merged) must go through the suggestion flow
+        # or be treated as stale from the client's perspective.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "PLACE_NOT_USABLE",
+                "place_id": str(place.id),
+                "place_name": place.name,
+                "place_status": place.status,
+            },
         )
 
     if name is not None:

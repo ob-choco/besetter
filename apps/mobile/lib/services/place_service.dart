@@ -140,6 +140,7 @@ class PlaceService {
     if (response.statusCode == 200) {
       return PlaceData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     }
+    maybeThrowPlaceNotUsable(response);
     throw Exception('Failed to update place. Status: ${response.statusCode}');
   }
 

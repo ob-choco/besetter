@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../models/place_data.dart';
 import '../../services/place_service.dart';
+import '../place_not_usable_dialog.dart';
 
 class PlaceEditPane extends StatefulWidget {
   final PlaceData place;
@@ -112,6 +113,11 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         );
         widget.onCompleted();
       }
+    } on PlaceNotUsableException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      await showPlaceNotUsableDialog(context, placeName: e.placeName);
+      widget.onBack();
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
