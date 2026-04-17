@@ -6,11 +6,31 @@ from fastapi.templating import Jinja2Templates
 from beanie.odm.fields import PydanticObjectId
 from bson.errors import InvalidId
 
+from app.core.gcs import extract_blob_path_from_url, get_public_url
 from app.models.route import Route, Visibility
 from app.models.image import Image
 from app.models.place import Place
+from app.services.thumbnail import get_or_create_thumbnail
 
 router = APIRouter(prefix="/share", tags=["share"])
+
+
+def _og_image_url(route: Route) -> str:
+    """Pick the share-preview image URL: overlay first, wall photo as fallback,
+    always routed through the w400 thumbnail (with a public-URL fallback if the
+    thumbnail step fails)."""
+    source = route.overlay_image_url or route.image_url
+    source_str = str(source)
+    blob_path = extract_blob_path_from_url(source_str)
+    if not blob_path:
+        return source_str.replace("storage.cloud.google.com", "storage.googleapis.com")
+    try:
+        thumb_url = get_or_create_thumbnail(blob_path, "w400")
+        if thumb_url:
+            return thumb_url
+    except Exception:
+        pass
+    return get_public_url(blob_path)
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -92,9 +112,7 @@ async def share_route(request: Request, route_id: str):
             "request": request,
             "title": title,
             "description": description,
-            "image_url": str(route.image_url).replace(
-                "storage.cloud.google.com", "storage.googleapis.com"
-            ),
+            "image_url": _og_image_url(route),
             "share_url": share_url,
             "deep_link_url": deep_link_url,
             "app_store_url": APP_STORE_URL,
