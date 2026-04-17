@@ -3,6 +3,21 @@ import 'dart:ui';
 import '../models/place_data.dart';
 import 'http_client.dart';
 
+class PlaceNotUsableException implements Exception {
+  final String placeId;
+  final String placeName;
+  final String placeStatus;
+  PlaceNotUsableException({
+    required this.placeId,
+    required this.placeName,
+    required this.placeStatus,
+  });
+
+  @override
+  String toString() =>
+      'PlaceNotUsableException(placeId=$placeId, status=$placeStatus)';
+}
+
 class PlaceService {
   static Map<String, String> get _langHeader => {
     'Accept-Language': PlatformDispatcher.instance.locale.languageCode,
@@ -106,6 +121,13 @@ class PlaceService {
       return PlaceData.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     }
     throw Exception('Failed to update place. Status: ${response.statusCode}');
+  }
+
+  static Future<void> deletePlace(String placeId) async {
+    final response = await AuthorizedHttpClient.delete('/places/$placeId');
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete place. Status: ${response.statusCode}');
+    }
   }
 
   static Future<void> createSuggestion({
