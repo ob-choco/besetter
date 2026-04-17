@@ -105,15 +105,24 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
     if not image.hold_polygon_id:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Hold polygon not found")
 
-    # Stale-place defense: rejected/foreign-pending → 409;
+    # Stale-place defense: rejected/foreign-pending/deleted → 409;
     # merged → transparent redirect (also opportunistically fix the image's place_id).
     if image.place_id:
         place = await Place.get(image.place_id)
-        if place is not None:
-            effective = await resolve_place_for_use(place, current_user)
-            if effective.id != image.place_id:
-                image.place_id = effective.id
-                await image.save()
+        if place is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "code": "PLACE_NOT_USABLE",
+                    "place_id": str(image.place_id),
+                    "place_name": "",
+                    "place_status": "deleted",
+                },
+            )
+        effective = await resolve_place_for_use(place, current_user)
+        if effective.id != image.place_id:
+            image.place_id = effective.id
+            await image.save()
 
     hold_polygon = await HoldPolygon.find_one(HoldPolygon.id == image.hold_polygon_id, projection_model=IdView)
     if not hold_polygon:
@@ -472,16 +481,25 @@ async def update_route(route_id: str, request: UpdateRouteRequest, background_ta
             status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot update endurance holds for non-endurance route"
         )
 
-    # Stale-place defense: rejected/foreign-pending → 409;
+    # Stale-place defense: rejected/foreign-pending/deleted → 409;
     # merged → transparent redirect (also opportunistically fix the image's place_id).
     image = await Image.get(route.image_id)
     if image and image.place_id:
         place = await Place.get(image.place_id)
-        if place is not None:
-            effective = await resolve_place_for_use(place, current_user)
-            if effective.id != image.place_id:
-                image.place_id = effective.id
-                await image.save()
+        if place is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "code": "PLACE_NOT_USABLE",
+                    "place_id": str(image.place_id),
+                    "place_name": "",
+                    "place_status": "deleted",
+                },
+            )
+        effective = await resolve_place_for_use(place, current_user)
+        if effective.id != image.place_id:
+            image.place_id = effective.id
+            await image.save()
 
     # 업데이트할 데이터 준비
     update_data = request.model_dump(exclude_unset=True)
