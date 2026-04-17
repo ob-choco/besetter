@@ -309,6 +309,12 @@ async def create_place_suggestion(
             detail="Suggestions are not allowed for private-gym places",
         )
 
+    if place.status != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Suggestions are only allowed for approved places",
+        )
+
     # Upload image if provided
     cover_image_url: Optional[str] = None
     if image is not None and image.filename:
