@@ -35,6 +35,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
   bool _isSubmitting = false;
 
   bool get _isGym => widget.place.type == 'gym';
+  bool get _isSuggest => _isGym && !widget.isDirectEdit;
 
   Color get _accent =>
       _isGym ? const Color(0xFF6750A4) : const Color(0xFFF57C00);
@@ -47,7 +48,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
   }
 
   bool get _hasChanges {
-    final nameChanged = _isGym
+    final nameChanged = _isSuggest
         ? _nameController.text.trim().isNotEmpty
         : _nameController.text.trim() != widget.place.name;
     return nameChanged || _newPosition != null || _pickedImage != null;
@@ -57,7 +58,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(
-      text: _isGym ? '' : widget.place.name,
+      text: _isSuggest ? '' : widget.place.name,
     );
   }
 
@@ -82,7 +83,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
 
     final newName = _nameController.text.trim();
     try {
-      if (_isGym && !widget.isDirectEdit) {
+      if (_isSuggest) {
         await PlaceService.createSuggestion(
           placeId: widget.place.id,
           name: newName.isNotEmpty ? newName : null,
@@ -184,10 +185,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
             children: [
               IconButton(
                   icon: const Icon(Icons.arrow_back), onPressed: widget.onBack),
-              Text(
-                  widget.isDirectEdit
-                      ? '암장 정보 수정'
-                      : (_isGym ? '정보 수정 제안' : '암장 정보 수정'),
+              Text(_isSuggest ? '정보 수정 제안' : '암장 정보 수정',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold)),
             ],
@@ -196,9 +194,9 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            widget.isDirectEdit
-                ? '즉시 반영됩니다'
-                : (_isGym ? '검수 후 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다'),
+            _isSuggest
+                ? '검수 후 반영됩니다'
+                : (_isGym ? '즉시 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다'),
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
         ),
@@ -235,7 +233,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                     style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                if (_isGym) ...[
+                if (_isSuggest) ...[
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -273,7 +271,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    hintText: _isGym ? '변경할 이름 입력' : '암장 이름',
+                    hintText: _isSuggest ? '변경할 이름 입력' : '암장 이름',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -285,8 +283,12 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                       style: TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  if (_isGym)
+                  if (_isSuggest)
                     Text('지도를 탭하여 올바른 위치를 지정하세요',
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.grey[600]))
+                  else
+                    Text('지도를 탭하여 위치를 변경할 수 있어요',
                         style:
                             TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(height: 8),
@@ -305,27 +307,29 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                             onTap: (point) =>
                                 setState(() => _newPosition = point),
                             markers: {
-                              if (_isGym)
+                              if (_isSuggest)
                                 Marker(
                                   markerId: const MarkerId('original'),
                                   position: _originalPosition!,
                                   icon: BitmapDescriptor.defaultMarkerWithHue(
                                       BitmapDescriptor.hueAzure),
                                 ),
-                              if (_isGym && _newPosition != null)
+                              if (_isSuggest && _newPosition != null)
                                 Marker(
                                   markerId: const MarkerId('suggest'),
                                   position: _newPosition!,
                                   icon: BitmapDescriptor.defaultMarkerWithHue(
                                       BitmapDescriptor.hueViolet),
                                 ),
-                              if (!_isGym)
+                              if (!_isSuggest)
                                 Marker(
                                   markerId: const MarkerId('position'),
                                   position:
                                       _newPosition ?? _originalPosition!,
                                   icon: BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor.hueOrange),
+                                      _isGym
+                                          ? BitmapDescriptor.hueViolet
+                                          : BitmapDescriptor.hueOrange),
                                 ),
                             },
                             myLocationButtonEnabled: false,
@@ -370,7 +374,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text(_isGym ? '수정 제안하기' : '수정하기'),
+                    : Text(_isSuggest ? '수정 제안하기' : '수정하기'),
               ),
             ),
           ),
