@@ -2,6 +2,7 @@ class PlaceData {
   final String id;
   final String name;
   final String type; // "gym" | "private-gym"
+  final String status; // "pending" | "approved" | "rejected" | "merged"
   final double? latitude;
   final double? longitude;
   final String? coverImageUrl;
@@ -12,6 +13,7 @@ class PlaceData {
     required this.id,
     required this.name,
     required this.type,
+    required this.status,
     this.latitude,
     this.longitude,
     this.coverImageUrl,
@@ -24,6 +26,7 @@ class PlaceData {
       id: json['_id'],
       name: json['name'],
       type: json['type'],
+      status: (json['status'] as String?) ?? 'approved',
       latitude: json['latitude']?.toDouble(),
       longitude: json['longitude']?.toDouble(),
       coverImageUrl: json['coverImageUrl'],
@@ -31,4 +34,6 @@ class PlaceData {
       distance: json['distance']?.toDouble(),
     );
   }
+
+  bool get isPending => status == 'pending';
 }
