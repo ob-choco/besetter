@@ -328,7 +328,7 @@ async def create_place_suggestion(
             created_at=datetime.now(tz=timezone.utc),
         )
         await notif.save()
-        await User.get_motor_collection().update_one(
+        await User.get_pymongo_collection().update_one(
             {"_id": current_user.id},
             {"$inc": {"unreadNotificationCount": 1}},
         )

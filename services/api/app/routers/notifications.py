@@ -110,7 +110,7 @@ async def mark_notifications_read(
             detail="before must be <= now",
         )
 
-    notif_coll = Notification.get_motor_collection()
+    notif_coll = Notification.get_pymongo_collection()
     result = await notif_coll.update_many(
         {
             "userId": current_user.id,
@@ -122,7 +122,7 @@ async def mark_notifications_read(
     marked = result.modified_count
 
     if marked:
-        await User.get_motor_collection().update_one(
+        await User.get_pymongo_collection().update_one(
             {"_id": current_user.id},
             {"$inc": {"unreadNotificationCount": -marked}},
         )
