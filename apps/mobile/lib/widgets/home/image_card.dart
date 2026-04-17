@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/image_data.dart';
 import '../authorized_network_image.dart';
+import '../place_pending_badge.dart';
 
 class ImageCard extends StatelessWidget {
   final ImageData image;
@@ -53,14 +54,25 @@ class ImageCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            image.place!.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  image.place!.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (image.place!.isPending) ...[
+                                const SizedBox(width: 4),
+                                const PlacePendingBadge(),
+                              ],
+                            ],
                           ),
                         ],
                       ),

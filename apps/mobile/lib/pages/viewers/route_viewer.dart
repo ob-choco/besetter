@@ -19,6 +19,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../providers/activity_refresh_provider.dart'; // activityDirtyProvider
 import '../../widgets/viewers/activity_panel.dart';
 import '../../widgets/viewers/workout_log_panel.dart';
+import '../../widgets/place_pending_badge.dart';
 
 
 class RouteViewer extends StatefulWidget {
@@ -435,6 +436,9 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                             icon: Icons.location_on_outlined,
                             label: AppLocalizations.of(context)!.gymLabel,
                             value: widget.routeData.place!.name,
+                            trailing: widget.routeData.place!.isPending
+                                ? const PlacePendingBadge()
+                                : null,
                           ),
                         if (widget.routeData.wallName != null) ...[
                           const SizedBox(height: 24),
@@ -481,7 +485,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildMetaRow({required IconData icon, required String label, required String value}) {
+  Widget _buildMetaRow({required IconData icon, required String label, required String value, Widget? trailing}) {
     return Row(
       children: [
         SizedBox(
@@ -504,13 +508,24 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                 letterSpacing: 0.5,
               ),
             ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C2F30),
-              ),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C2F30),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing,
+                ],
+              ],
             ),
           ],
         ),

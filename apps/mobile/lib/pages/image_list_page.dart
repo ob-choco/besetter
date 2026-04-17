@@ -10,6 +10,7 @@ import '../widgets/authorized_network_image.dart';
 import 'package:intl/intl.dart';
 import '../models/paginated_response.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../widgets/place_pending_badge.dart';
 
 class ImageListPage extends StatefulWidget {
   const ImageListPage({Key? key}) : super(key: key);
@@ -268,14 +269,25 @@ class _ImageListPageState extends State<ImageListPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     if (image.place != null && image.place!.name.isNotEmpty)
-                      Text(
-                        image.place!.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              image.place!.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (image.place!.isPending) ...[
+                            const SizedBox(width: 4),
+                            const PlacePendingBadge(),
+                          ],
+                        ],
                       ),
                     Text(
                       DateFormat.yMd(AppLocalizations.of(context)!.localeName).format(image.uploadedAt),
