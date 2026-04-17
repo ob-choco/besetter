@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.image import Image
 from app.models.hold_polygon import HoldPolygon, HoldPolygonData
 from app.models.place import Place
+from app.services.place_status import resolve_place_for_use
 from app.models import model_config
 
 import aiohttp
@@ -255,7 +256,15 @@ async def update_hold_polygon(
         image.wall_name = patched_data.get("wallName")
         wall_exp = patched_data.get("wallExpirationDate")
         image.wall_expiration_date = datetime.fromisoformat(wall_exp) if wall_exp else None
-        image.place_id = ObjectId(patched_data["placeId"]) if patched_data.get("placeId") else None
+        incoming_place_id = patched_data.get("placeId")
+        if incoming_place_id:
+            place = await Place.get(ObjectId(incoming_place_id))
+            if place is None:
+                raise HTTPException(status_code=404, detail="Place not found")
+            effective = await resolve_place_for_use(place, current_user)
+            image.place_id = effective.id
+        else:
+            image.place_id = None
         await image.save()
 
     except (jsonpatch.JsonPatchException, ValueError) as e:
