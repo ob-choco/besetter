@@ -60,8 +60,5 @@ def test_place_defaults_to_approved_status():
         created_by=ObjectId(),
         created_at=datetime.now(tz=timezone.utc),
     )
-    # Verify defaults are applied correctly via the field metadata.
-    status_field = Place.model_fields["status"]
-    assert status_field.default == "approved"
-    merged_field = Place.model_fields["merged_into_place_id"]
-    assert merged_field.default is None
+    assert p.status == "approved"
+    assert p.merged_into_place_id is None
