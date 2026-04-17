@@ -19,6 +19,22 @@ enum _SheetMode { select, register, edit }
 
 enum _SelectTab { nearby, private }
 
+/// Result of the place selection sheet. `null` from `show()` means dismissed
+/// without action; a non-null result says whether a place was picked or the
+/// previously-selected place was deleted (and the caller should clear its
+/// selection).
+class PlaceSelectionResult {
+  final PlaceData? place;
+  final bool cleared;
+
+  const PlaceSelectionResult._({this.place, this.cleared = false});
+
+  factory PlaceSelectionResult.selected(PlaceData place) =>
+      PlaceSelectionResult._(place: place);
+  factory PlaceSelectionResult.cleared() =>
+      const PlaceSelectionResult._(cleared: true);
+}
+
 class PlaceSelectionSheet extends ConsumerStatefulWidget {
   final double? latitude;
   final double? longitude;
@@ -31,13 +47,13 @@ class PlaceSelectionSheet extends ConsumerStatefulWidget {
     this.currentPlace,
   });
 
-  static Future<PlaceData?> show(
+  static Future<PlaceSelectionResult?> show(
     BuildContext context, {
     double? latitude,
     double? longitude,
     PlaceData? currentPlace,
   }) {
-    return showModalBottomSheet<PlaceData>(
+    return showModalBottomSheet<PlaceSelectionResult>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -249,7 +265,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
         _searchResults.removeWhere((p) => p.id == place.id);
       });
       if (wasCurrent && mounted) {
-        Navigator.pop(context, null);
+        Navigator.pop(context, PlaceSelectionResult.cleared());
       }
     } catch (e) {
       if (mounted) {
@@ -309,7 +325,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
           ),
         );
       }
-      if (mounted) Navigator.pop(context, place);
+      if (mounted) Navigator.pop(context, PlaceSelectionResult.selected(place));
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -538,7 +554,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.pop(context, place),
+          onTap: () => Navigator.pop(context, PlaceSelectionResult.selected(place)),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(

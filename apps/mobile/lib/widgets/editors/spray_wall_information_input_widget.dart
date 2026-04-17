@@ -41,14 +41,17 @@ class SprayWallInformationInput extends StatefulWidget {
 
 class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
   Future<void> _showPlaceSelection() async {
-    final place = await PlaceSelectionSheet.show(
+    final result = await PlaceSelectionSheet.show(
       context,
       latitude: widget.exifLatitude,
       longitude: widget.exifLongitude,
       currentPlace: widget.selectedPlace,
     );
-    if (place != null) {
-      widget.onPlaceChanged(place);
+    if (result == null) return;
+    if (result.cleared) {
+      widget.onPlaceChanged(null);
+    } else if (result.place != null) {
+      widget.onPlaceChanged(result.place);
     }
   }
 
