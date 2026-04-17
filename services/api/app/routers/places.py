@@ -325,13 +325,28 @@ async def delete_place(
             detail="Only your own pending gym place can be deleted",
         )
 
+    # Pending gym 데이터는 서비스에 노출된 적이 없으므로 audit 이력을
+    # 남기지 않고 하드 삭제한다. Image/Route의 is_deleted soft-delete
+    # 패턴은 의도적으로 건너뛴다.
+
     # 이 장소에 속한 이미지 수집
     images = await Image.find(Image.place_id == place.id).to_list()
     image_ids = [img.id for img in images]
 
-    # 1) 이미지에 연결된 루트 하드 삭제
+    # 1) 루트 overlay 블롭 정리 후 루트 하드 삭제
     if image_ids:
         try:
+            routes = await Route.find(In(Route.image_id, image_ids)).to_list()
+            for route in routes:
+                try:
+                    overlay_blob = extract_blob_path_from_url(route.overlay_image_url)
+                    if overlay_blob:
+                        bucket.blob(overlay_blob).delete()
+                except Exception as exc:
+                    logger.warning(
+                        "delete_place: route %s overlay GCS delete failed: %s",
+                        route.id, exc, exc_info=True,
+                    )
             await Route.find(In(Route.image_id, image_ids)).delete()
         except Exception as exc:
             logger.warning("delete_place: route cleanup failed for place %s: %s", place.id, exc, exc_info=True)
