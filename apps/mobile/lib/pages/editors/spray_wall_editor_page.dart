@@ -356,8 +356,13 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
 
       final currentWallName = _wallNameController.text.trim();
 
+      // _jsonPatchOperations는 유저가 이미 수행한 폴리곤 편집(삭제 등)만 보관.
+      // 폼 기반 필드 변경분과 새로 추가한 홀드는 매 저장마다 현재 상태에서
+      // 다시 만들어 로컬 ops에 담아야 재시도 시 중복이 쌓이지 않는다.
+      final ops = List<Map<String, dynamic>>.from(_jsonPatchOperations);
+
       if (_selectedPlace != null && _selectedPlace!.id != initialPlaceId) {
-        _jsonPatchOperations.add({
+        ops.add({
           "op": "replace",
           "path": "/placeId",
           "value": _selectedPlace!.id,
@@ -365,7 +370,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
       }
 
       if (currentWallName != initialWallName) {
-        _jsonPatchOperations.add({
+        ops.add({
           "op": "replace",
           "path": "/wallName",
           "value": currentWallName,
@@ -373,7 +378,7 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
       }
 
       if (_wallExpirationDate != initialWallExpirationDate) {
-        _jsonPatchOperations.add({
+        ops.add({
           "op": "replace",
           "path": "/wallExpirationDate",
           "value": _wallExpirationDate?.toIso8601String(),
@@ -391,14 +396,14 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
           feedbackStatus: 'pending',
         );
 
-        _jsonPatchOperations.add({
+        ops.add({
           "op": "add",
           "path": "/polygons/-",
           "value": newPolygon.toJson(),
         });
       }
 
-      if (_jsonPatchOperations.isEmpty) {
+      if (ops.isEmpty) {
         return showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -482,10 +487,11 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
 
       final response = await AuthorizedHttpClient.patch(
         '/hold-polygons/${widget.polygonData.id}',
-        body: _jsonPatchOperations,
+        body: ops,
       );
 
       if (response.statusCode == 204) {
+        _jsonPatchOperations.clear();
         container.invalidate(imagesProvider);
         if (!mounted) return;
 
