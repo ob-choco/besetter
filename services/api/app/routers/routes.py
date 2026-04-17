@@ -28,6 +28,7 @@ from app.routers.places import PlaceView, place_to_view
 from typing import Optional, List
 from deepdiff import DeepDiff
 from app.services.route_overlay import generate_route_overlay
+from app.services.place_status import resolve_place_for_use
 
 router = APIRouter(prefix="/routes", tags=["routes"])
 
@@ -103,6 +104,16 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
 
     if not image.hold_polygon_id:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Hold polygon not found")
+
+    # Stale-place defense: rejected/foreign-pending → 409;
+    # merged → transparent redirect (also opportunistically fix the image's place_id).
+    if image.place_id:
+        place = await Place.get(image.place_id)
+        if place is not None:
+            effective = await resolve_place_for_use(place, current_user)
+            if effective.id != image.place_id:
+                image.place_id = effective.id
+                await image.save()
 
     hold_polygon = await HoldPolygon.find_one(HoldPolygon.id == image.hold_polygon_id, projection_model=IdView)
     if not hold_polygon:
