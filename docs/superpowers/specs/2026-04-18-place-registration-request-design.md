@@ -9,8 +9,8 @@
 - `PUT /places/{place_id}` 권한 확장: 본인 소유 pending gym도 허용.
 - `DELETE /places/{place_id}` 신규: 본인 소유 pending gym만 허용, 연결된 Route/Image/GCS blob을 순차 best-effort cascade로 삭제.
 - `POST /places/suggestions` 정책 업데이트: `status != "approved"`는 400. 기존 `place_suggestion_ack` 알림 body 문구 교체.
-- 이미지/루트의 place_id를 받는 등록/수정 엔드포인트에 `PLACE_NOT_USABLE` 409 방어.
-- 모바일: pending 장소 "검수중" 뱃지, pending 장소 정보 수정 버튼 + 가이드 배너, 삭제 버튼, 409 stale 장소 팝업 (작업 상태 보존).
+- 이미지/루트의 place_id를 받는 등록/수정 엔드포인트에 stale 장소 방어: `merged`는 서버가 `merged_into_place_id`로 투명 리다이렉트, `rejected`/남의 `pending`은 `PLACE_NOT_USABLE` 409.
+- 모바일: pending 장소 "검수중" 뱃지, pending 장소 정보 수정 버튼 + 가이드 배너, 삭제 버튼, rejected·남의 pending 409 stale 장소 팝업 (작업 상태 보존). merged는 팝업 없이 투명 처리.
 - `share_route.html` OG 공유 페이지에 pending place의 "검수중" 뱃지 표시.
 
 **Scope out (명시적).**
@@ -18,7 +18,6 @@
 - `pending → approved / rejected / merged` 전이 시 부작용 (rejected에서 이미지/루트 soft delete, merged에서 이미지 place_id 업데이트). 전부 검수 툴 스펙에서 다룬다.
 - 검수 결과 알림 (approved/rejected/merged 각각). 기존 notification 인프라가 이미 있으므로 메시지만 추가하면 되는 작업이라 별도 후속 스펙에서 다룬다.
 - "내 등록 요청" 전용 UI. pending 장소는 본인 검색 결과에 "검수중" 뱃지와 함께 나오므로 충분.
-- 409 응답의 `merged_into_place_id`를 이용한 "병합 타겟 바로 이동" 버튼. v1 밖.
 - 소프트 삭제 관련 기존 필터 누락 지점 (e.g. `routes.py:285`의 image 조인)의 선제적 보강. 별도 tech-debt 이슈.
 
 ---
@@ -181,35 +180,58 @@ class PlaceView(BaseModel):
 
 ## 3. 이미지/루트에서의 stale 장소 방어
 
+두 전략을 결합한다.
+
+- `merged`: 서버가 자동으로 `merged_into_place_id`를 따라 대상 place로 **투명하게 리다이렉트**. 클라이언트는 정상 응답을 받고, UX 중단 없음.
+- `rejected` / 남의 `pending`: 409 `PLACE_NOT_USABLE`로 명시적 실패. 클라이언트가 팝업 노출.
+
+"merged까지 팝업으로 알리면 UX를 크게 해친다" — 요청자는 본인이 선택한 place가 관리자에 의해 다른 place로 병합된 사실을 기술적 이유로 알 필요가 없다.
+
 ### 3-1. 공통 헬퍼
 
 ```python
-def assert_place_usable(place: Place, user: User) -> None:
-    if place.status == "approved":
-        return
-    if place.status == "pending" and place.created_by == user.id:
-        return
+async def resolve_place_for_use(place: Place, user: User) -> Place:
+    """Returns the place to actually use for this operation.
+
+    - `merged` 상태면 `merged_into_place_id`의 target으로 단일-hop 리다이렉트 (target도 검증 거침).
+    - 최종 place가 approved이거나 본인 pending이면 그대로 반환.
+    - 그 외에는 409 `PLACE_NOT_USABLE`.
+    """
+    effective = place
+    if effective.status == "merged" and effective.merged_into_place_id:
+        target = await Place.get(effective.merged_into_place_id)
+        if target is not None:
+            effective = target
+
+    if effective.status == "approved":
+        return effective
+    if effective.status == "pending" and effective.created_by == user.id:
+        return effective
+
     raise HTTPException(
         status_code=409,
         detail={
             "code": "PLACE_NOT_USABLE",
-            "place_id": str(place.id),
-            "place_name": place.name,
-            "place_status": place.status,
-            "merged_into_place_id": str(place.merged_into_place_id) if place.merged_into_place_id else None,
+            "place_id": str(effective.id),
+            "place_name": effective.name,
+            "place_status": effective.status,
         },
     )
 ```
 
+- 단일-hop만 따른다. 관리자 도구가 A→B→C 같은 다단 체인을 만들지 않도록 보장하는 건 검수 툴의 책임. 체인이 있으면 중간에서 409로 종결되고 운영에서 보정 필요.
+- 리턴된 `effective` place의 id로 이후 저장 로직을 수행한다 (이미지 저장 시 `image.place_id = effective.id`).
+
 ### 3-2. 적용 엔드포인트
 
-- 이미지 업로드: place_id가 요청에 있을 때 호출.
+- 이미지 업로드: 요청에 `place_id`가 있을 때 호출하고, 리턴된 id를 저장.
 - 이미지 수정 (place_id 변경 포함): 변경 요청된 place_id에 대해 호출.
-- 루트 생성 / 수정: 루트는 image를 통해 간접 연결이므로, 루트 생성·수정 시점에 해당 image의 `place_id`에 대해 검증. 이미 같은 이미지에 다른 루트들이 존재하는 상황이라도 "새 루트 추가"는 place 상태에 종속.
+- 루트 생성 / 수정: 루트는 image를 통해 간접 연결. 루트 생성·수정 시점에 해당 image의 `place_id`로 호출. 이미 다른 루트가 있는 이미지라도 "새 루트 추가"는 place 상태에 종속.
+- merged의 경우, image의 `place_id`를 이 기회에 target으로 **보정 저장**해둬도 좋다 (lazy migration). 선택 사항이지만 미래 쿼리 비용 절감.
 
-실제 적용 위치와 함수 시그니처는 plan 단계에서 라우터별로 식별 (`routes.py`, `images.py`, `hold_polygons.py` 등에서 place_id 경유 지점 전수 조사).
+실제 적용 위치와 함수 시그니처는 plan 단계에서 `routes.py`, `images.py`, `hold_polygons.py` 등에서 place_id 경유 지점을 전수 조사해 확정.
 
-### 3-3. 응답 페이로드
+### 3-3. 409 응답 페이로드
 
 ```json
 {
@@ -217,13 +239,13 @@ def assert_place_usable(place: Place, user: User) -> None:
     "code": "PLACE_NOT_USABLE",
     "place_id": "6620...",
     "place_name": "홍대 클라이밍",
-    "place_status": "rejected",
-    "merged_into_place_id": null
+    "place_status": "rejected"
   }
 }
 ```
 
-`place_name`이 응답에 담겨 있어 클라이언트가 보유한 stale한 이름에 의존하지 않는다.
+- `place_status`는 `"rejected"` 또는 `"pending"` (남의 pending)만 등장. `"merged"`는 서버에서 자동 리다이렉트되므로 409로 나가지 않음 (체인 중단 케이스 제외).
+- `place_name`은 응답의 것을 사용해 클라이언트 stale 이름에 의존하지 않는다.
 
 ---
 
@@ -351,9 +373,10 @@ if image and image.place_id:
   - pending/rejected/merged place → 400.
   - approved place → 201, 알림 body가 새 문구.
 - 이미지/루트 등록·수정
-  - rejected place_id 지정 → 409 `PLACE_NOT_USABLE`, detail 포함 필드 검증.
-  - merged place_id 지정 → 409, detail의 `merged_into_place_id` 채워짐.
-  - 남의 pending place_id 지정 → 409.
+  - rejected place_id 지정 → 409 `PLACE_NOT_USABLE`, detail에 `place_status="rejected"`.
+  - merged place_id 지정 → 201/200 정상 응답, 저장된 레코드의 `place_id`가 `merged_into_place_id`의 target으로 자동 치환됨.
+  - merged이지만 target이 rejected/merged 등으로 유효하지 않은 경우 → 409.
+  - 남의 pending place_id 지정 → 409, detail에 `place_status="pending"`.
 
 ### 6-2. 모바일 수동 스모크
 
@@ -362,6 +385,7 @@ if image and image.place_id:
 - 본인 pending 장소 정보 수정 → 가이드 배너 보임 → 저장 성공.
 - 본인 pending 장소 삭제 → 확인 다이얼로그 → 연결 이미지·루트 함께 사라짐.
 - (DB 수동 조작) 장소를 `rejected`로 변경한 뒤 그 장소로 이미지 업로드 시도 → 409 팝업 노출, 팝업 닫힌 뒤에도 업로드할 이미지/입력값 유지.
+- (DB 수동 조작) 장소를 `merged` + `merged_into_place_id=<valid target>`로 설정한 뒤 그 장소로 이미지 업로드 시도 → 팝업 없이 성공, 저장된 이미지의 place는 target으로 노출.
 - 공유 URL 웹 페이지 (pending place의 route): 뱃지 노출.
 
 ---
