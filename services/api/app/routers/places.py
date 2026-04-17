@@ -187,6 +187,10 @@ async def get_nearby_places(
     # $nearSphere with 2dsphere index — returns sorted by distance
     query_filter = {
         "type": "gym",
+        "$or": [
+            {"status": "approved"},
+            {"status": "pending", "createdBy": current_user.id},
+        ],
         "location": {
             "$nearSphere": {
                 "$geometry": {
