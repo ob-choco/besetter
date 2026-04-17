@@ -33,7 +33,11 @@ dependencies = [
 [tool.black]
 line-length = 120
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [dependency-groups]
 dev = [
     "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
 ]
