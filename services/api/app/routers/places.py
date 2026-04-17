@@ -270,7 +270,12 @@ async def update_place(
     if place is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Place not found")
 
-    if place.type != "private-gym" or str(place.created_by) != str(current_user.id):
+    is_owner = str(place.created_by) == str(current_user.id)
+    is_own_private = place.type == "private-gym" and is_owner
+    is_own_pending_gym = (
+        place.type == "gym" and place.status == "pending" and is_owner
+    )
+    if not (is_own_private or is_own_pending_gym):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to update this place",
