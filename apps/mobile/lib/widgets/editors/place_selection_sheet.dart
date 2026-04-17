@@ -247,6 +247,13 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
         longitude: _registerPinPosition?.longitude,
         imagePath: _registerImage?.path,
       );
+      if (!_isPrivate && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('등록 요청이 접수됐어요. 검수 후 다른 분들에게도 노출돼요.'),
+          ),
+        );
+      }
       if (mounted) Navigator.pop(context, place);
     } catch (e) {
       if (mounted) {
@@ -650,6 +657,22 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (!_isPrivate) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '등록 요청 후에도 바로 이 장소에 벽 사진과 루트를 올릴 수 있어요. '
+                      '운영진 검수를 통과하면 다른 분들에게도 노출됩니다. '
+                      '기존 장소와 중복되면 병합되고, 정책에 맞지 않으면 반려될 수 있어요.',
+                      style: TextStyle(fontSize: 12, height: 1.4),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 // 이미지 선택
                 AspectRatio(
@@ -816,7 +839,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('등록하기'),
+                    : const Text('등록 요청'),
               ),
             ),
           ),
