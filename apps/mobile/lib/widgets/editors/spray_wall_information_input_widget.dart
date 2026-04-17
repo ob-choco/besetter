@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/place_data.dart';
 import '../animations/shake_animation_widget.dart';
+import '../place_pending_badge.dart';
 import 'place_selection_sheet.dart';
 
 class SprayWallInformationInput extends StatefulWidget {
@@ -156,14 +157,28 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
             children: [
               ListTile(
                 title: Text(AppLocalizations.of(context)!.climbingGymInfo),
-                subtitle: Text(
-                  hasPlace
-                      ? '\u2713 ${widget.selectedPlace!.name}'
-                      : AppLocalizations.of(context)!.selectAndEnter,
-                  style: TextStyle(
-                    color: widget.isGymInfoInvalid && !hasPlace ? Colors.red : null,
-                  ),
-                ),
+                subtitle: hasPlace
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '\u2713 ${widget.selectedPlace!.name}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.selectedPlace!.isPending) ...[
+                            const SizedBox(width: 6),
+                            const PlacePendingBadge(),
+                          ],
+                        ],
+                      )
+                    : Text(
+                        AppLocalizations.of(context)!.selectAndEnter,
+                        style: TextStyle(
+                          color: widget.isGymInfoInvalid ? Colors.red : null,
+                        ),
+                      ),
                 trailing: Icon(Icons.chevron_right),
                 onTap: _showPlaceSelection,
               ),

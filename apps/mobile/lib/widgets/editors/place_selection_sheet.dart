@@ -12,6 +12,7 @@ import '../../models/place_data.dart';
 import '../../providers/user_provider.dart';
 import '../../services/place_service.dart';
 import '../../utils/thumbnail_url.dart';
+import '../place_pending_badge.dart';
 import 'place_edit_pane.dart';
 
 enum _SheetMode { select, register, edit }
@@ -529,6 +530,10 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                                         fontWeight: FontWeight.w600),
                                     overflow: TextOverflow.ellipsis),
                               ),
+                              if (place.isPending) ...[
+                                const SizedBox(width: 6),
+                                const PlacePendingBadge(),
+                              ],
                             ],
                           ),
                           if (place.distance != null) ...[
