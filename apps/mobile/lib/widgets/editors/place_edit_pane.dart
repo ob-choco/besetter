@@ -11,12 +11,14 @@ import '../../services/place_service.dart';
 
 class PlaceEditPane extends StatefulWidget {
   final PlaceData place;
+  final bool isDirectEdit;
   final VoidCallback onBack;
   final VoidCallback onCompleted;
 
   const PlaceEditPane({
     super.key,
     required this.place,
+    this.isDirectEdit = false,
     required this.onBack,
     required this.onCompleted,
   });

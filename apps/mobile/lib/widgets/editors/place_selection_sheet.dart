@@ -82,6 +82,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
 
   // --- Edit mode state ---
   PlaceData? _editTarget;
+  bool _editDirectEdit = false;
 
   @override
   void initState() {
@@ -196,13 +197,67 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   void _goToEdit(PlaceData place) {
     setState(() {
       _editTarget = place;
+      _editDirectEdit = false;
+      _mode = _SheetMode.edit;
+    });
+  }
+
+  void _openDirectEdit(PlaceData place) {
+    setState(() {
+      _editTarget = place;
+      _editDirectEdit = true;
       _mode = _SheetMode.edit;
     });
   }
 
   void _goBackToSelect() {
     ref.invalidate(userProfileProvider);
-    setState(() => _mode = _SheetMode.select);
+    setState(() {
+      _mode = _SheetMode.select;
+      _editDirectEdit = false;
+    });
+  }
+
+  Future<void> _confirmDelete(PlaceData place) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('등록 요청 취소'),
+        content: const Text(
+          '등록 요청을 취소하고 지금까지 이 장소에 올린 이미지와 루트를 모두 삭제할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await PlaceService.deletePlace(place.id);
+      if (!mounted) return;
+      final wasCurrent = widget.currentPlace?.id == place.id;
+      setState(() {
+        _nearbyPlaces.removeWhere((p) => p.id == place.id);
+        _privatePlaces.removeWhere((p) => p.id == place.id);
+        _searchResults.removeWhere((p) => p.id == place.id);
+      });
+      if (wasCurrent && mounted) {
+        Navigator.pop(context, null);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('삭제 실패: $e')),
+        );
+      }
+    }
   }
 
   // ==================== Register Mode ====================
@@ -283,6 +338,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
           case _SheetMode.edit:
             return PlaceEditPane(
               place: _editTarget!,
+              isDirectEdit: _editDirectEdit,
               onBack: _goBackToSelect,
               onCompleted: _goBackToSelect,
             );
@@ -470,6 +526,11 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   Widget _buildPlaceItem(PlaceData place) {
     final bool isSelected = widget.currentPlace?.id == place.id;
     final bool isPrivate = place.type == 'private-gym';
+    final String? currentUserId = ref
+        .watch(userProfileProvider)
+        .whenOrNull(data: (u) => u.id);
+    final bool isOwnPending =
+        place.isPending && currentUserId != null && place.createdBy == currentUserId;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -603,20 +664,38 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                 ),
                 if (isSelected) ...[
                   const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => _goToEdit(place),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                  if (isOwnPending)
+                    Row(
                       children: [
-                        const Text('✏️ ', style: TextStyle(fontSize: 12)),
-                        Text(isPrivate ? '정보 수정' : '정보 수정 제안',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6750A4),
-                                decoration: TextDecoration.underline)),
+                        TextButton.icon(
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('정보 수정'),
+                          onPressed: () => _openDirectEdit(place),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.redAccent),
+                          tooltip: '등록 요청 취소',
+                          onPressed: () => _confirmDelete(place),
+                        ),
                       ],
+                    )
+                  else
+                    GestureDetector(
+                      onTap: () => _goToEdit(place),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('✏️ ', style: TextStyle(fontSize: 12)),
+                          Text(isPrivate ? '정보 수정' : '정보 수정 제안',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6750A4),
+                                  decoration: TextDecoration.underline)),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ],
             ),
