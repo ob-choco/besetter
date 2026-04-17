@@ -19,7 +19,7 @@ class NotificationData {
 
   factory NotificationData.fromJson(Map<String, dynamic> json) {
     return NotificationData(
-      id: json['id'] as String,
+      id: json['_id'] as String,
       type: json['type'] as String,
       title: json['title'] as String,
       body: json['body'] as String,
