@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:http/http.dart' as http;
 import '../models/place_data.dart';
 import 'http_client.dart';
 
@@ -16,6 +17,25 @@ class PlaceNotUsableException implements Exception {
   @override
   String toString() =>
       'PlaceNotUsableException(placeId=$placeId, status=$placeStatus)';
+}
+
+void maybeThrowPlaceNotUsable(http.Response response) {
+  if (response.statusCode != 409) return;
+  try {
+    final body = jsonDecode(utf8.decode(response.bodyBytes));
+    final detail = body is Map ? body['detail'] : null;
+    if (detail is Map && detail['code'] == 'PLACE_NOT_USABLE') {
+      throw PlaceNotUsableException(
+        placeId: detail['place_id'] as String? ?? '',
+        placeName: detail['place_name'] as String? ?? '',
+        placeStatus: detail['place_status'] as String? ?? '',
+      );
+    }
+  } on PlaceNotUsableException {
+    rethrow;
+  } catch (_) {
+    // fall through; non-matching 409 body is handled by callers
+  }
 }
 
 class PlaceService {

@@ -12,6 +12,8 @@ import '../../models/polygon_data.dart';
 import '../../models/place_data.dart';
 import '../../services/exif_service.dart';
 import '../../services/http_client.dart';
+import '../../services/place_service.dart';
+import '../../widgets/place_not_usable_dialog.dart';
 import '../../widgets/editors/spray_wall_edit_menu.dart';
 import '../../widgets/editors/spray_wall_polygon_widget.dart';
 import '../../widgets/editors/spray_wall_information_input_widget.dart';
@@ -565,8 +567,13 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
           },
         );
       } else {
+        maybeThrowPlaceNotUsable(response);
         throw Exception('Failed to save: ${response.statusCode}');
       }
+    } on PlaceNotUsableException catch (e) {
+      if (mounted) setState(() => _isSaving = false);
+      if (!mounted) return;
+      await showPlaceNotUsableDialog(context, placeName: e.placeName);
     } catch (e) {
       setState(() {
         _isSaving = false;

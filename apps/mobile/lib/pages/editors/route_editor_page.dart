@@ -10,6 +10,8 @@ import 'package:http/http.dart' as http;
 
 import '../../models/polygon_data.dart';
 import '../../services/http_client.dart';
+import '../../services/place_service.dart';
+import '../../widgets/place_not_usable_dialog.dart';
 import '../../widgets/editors/endurance_route_editor.dart';
 import '../../widgets/editors/bouldering_route_editor.dart';
 import '../../widgets/editors/route_information_input_widget.dart';
@@ -501,6 +503,7 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
             SnackBar(content: Text(AppLocalizations.of(context)!.routeSaved)),
           );
         } else {
+          maybeThrowPlaceNotUsable(response);
           throw Exception('Route save failed: ${response.statusCode}');
         }
       } else if (widget.editType == EditType.edit) {
@@ -524,9 +527,13 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
             SnackBar(content: Text(AppLocalizations.of(context)!.routeUpdated)),
           );
         } else {
+          maybeThrowPlaceNotUsable(response);
           throw Exception('Route modify failed: ${response.statusCode}');
         }
       }
+    } on PlaceNotUsableException catch (e) {
+      if (!mounted) return;
+      await showPlaceNotUsableDialog(context, placeName: e.placeName);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
