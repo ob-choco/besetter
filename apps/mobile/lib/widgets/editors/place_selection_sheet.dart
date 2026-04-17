@@ -318,6 +318,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
         longitude: _registerPinPosition?.longitude,
         imagePath: _registerImage?.path,
       );
+      ref.invalidate(userProfileProvider);
       if (!_isPrivate && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
