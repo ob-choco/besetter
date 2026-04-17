@@ -6,17 +6,20 @@ from datetime import datetime, timezone
 from typing import List, Literal, Optional
 
 from beanie.odm.fields import PydanticObjectId
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from fastapi import status
 from pydantic import BaseModel, Field
 
 from app.core.geo import haversine_distance
-from app.core.gcs import bucket, get_base_url
+from app.core.gcs import bucket, extract_blob_path_from_url, get_base_url
 from app.dependencies import get_current_user
 from app.models import model_config
+from app.models.image import Image
 from app.models.notification import Notification
 from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
+from app.models.route import Route
 from app.models.user import User
+from beanie.odm.operators.find.comparison import In
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +304,63 @@ async def update_place(
 
     await place.save()
     return place_to_view(place)
+
+
+@router.delete("/{place_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_place(
+    place_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    place = await Place.get(place_id)
+    if place is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Place not found",
+        )
+
+    is_owner = str(place.created_by) == str(current_user.id)
+    if not (place.type == "gym" and place.status == "pending" and is_owner):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only your own pending gym place can be deleted",
+        )
+
+    # 이 장소에 속한 이미지 수집
+    images = await Image.find(Image.place_id == place.id).to_list()
+    image_ids = [img.id for img in images]
+
+    # 1) 이미지에 연결된 루트 하드 삭제
+    if image_ids:
+        try:
+            await Route.find(In(Route.image_id, image_ids)).delete()
+        except Exception as exc:
+            logger.warning("delete_place: route cleanup failed for place %s: %s", place.id, exc, exc_info=True)
+
+    # 2) 이미지 하드 삭제 + GCS 블롭 삭제 (best-effort per image)
+    for img in images:
+        try:
+            await img.delete()
+        except Exception as exc:
+            logger.warning("delete_place: image %s delete failed: %s", img.id, exc, exc_info=True)
+        try:
+            blob_name = extract_blob_path_from_url(str(img.url)) if img.url else None
+            if blob_name:
+                bucket.blob(blob_name).delete()
+        except Exception as exc:
+            logger.warning("delete_place: image %s GCS delete failed: %s", img.id, exc, exc_info=True)
+
+    # 3) 커버 이미지 GCS 블롭 삭제 (best-effort)
+    try:
+        cover_blob = extract_blob_path_from_url(place.cover_image_url or "")
+        if cover_blob:
+            bucket.blob(cover_blob).delete()
+    except Exception as exc:
+        logger.warning("delete_place: cover GCS delete failed for place %s: %s", place.id, exc, exc_info=True)
+
+    # 4) Place 하드 삭제
+    await place.delete()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/suggestions", status_code=status.HTTP_201_CREATED, response_model=PlaceSuggestionView)
