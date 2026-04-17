@@ -69,11 +69,22 @@
             border-radius: 8px;
             font-weight: 600;
         }
+        .pending-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            background: rgba(255,255,255,0.85);
+            border-radius: 999px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ title }}</h1>
+        <h1>{{ title }}{% if place_status == "pending" %}<span class="pending-badge">검수중</span>{% endif %}</h1>
         <p>{{ description }}</p>
         <a href="{{ deep_link_url }}" class="open-app-button">앱에서 열기</a>
         <p>앱이 설치되어 있지 않다면 아래에서 다운로드하세요.</p>
