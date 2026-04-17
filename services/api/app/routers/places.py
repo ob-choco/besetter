@@ -146,6 +146,34 @@ async def create_place(
     place.set_location_from(latitude, longitude)
 
     created = await place.save()
+
+    # Best-effort: notify the requester with a thank-you message for gym registration.
+    if place.type == "gym":
+        try:
+            notif = Notification(
+                user_id=current_user.id,
+                type="place_registration_ack",
+                title="암장 등록 요청이 접수되었습니다",
+                body=(
+                    f"{place.name} 등록을 요청해주신 소중한 제보 감사합니다 🙌 "
+                    "서비스에 반영될 수 있도록 빠르게 처리해서 알려드리겠습니다."
+                ),
+                link=f"/places/{place.id}",
+                created_at=datetime.now(tz=timezone.utc),
+            )
+            await notif.save()
+            await User.get_pymongo_collection().update_one(
+                {"_id": current_user.id},
+                {"$inc": {"unreadNotificationCount": 1}},
+            )
+        except Exception as exc:
+            logger.warning(
+                "registration_ack notification failed for place %s: %s",
+                place.id,
+                exc,
+                exc_info=True,
+            )
+
     return place_to_view(created)
 
 
