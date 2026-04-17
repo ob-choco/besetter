@@ -97,15 +97,12 @@ def test_place_construction_gym_vs_private_gym_status():
         created_by=ObjectId(),
         created_at=datetime.now(tz=timezone.utc),
     )
-    gym = Place.model_construct(
-        type="gym",
-        status="pending" if "gym" == "gym" else "approved",
-        **common,
-    )
+    def status_for(type_: str) -> str:
+        return "pending" if type_ == "gym" else "approved"
+
+    gym = Place.model_construct(type="gym", status=status_for("gym"), **common)
     private = Place.model_construct(
-        type="private-gym",
-        status="pending" if "private-gym" == "gym" else "approved",
-        **common,
+        type="private-gym", status=status_for("private-gym"), **common
     )
     assert gym.status == "pending"
     assert private.status == "approved"
