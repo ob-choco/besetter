@@ -64,3 +64,22 @@ def test_place_defaults_to_approved_status():
     )
     assert p.status == "approved"
     assert p.merged_into_place_id is None
+
+
+def test_place_view_serializes_status_camelcase():
+    from bson import ObjectId
+    from app.routers.places import PlaceView
+
+    v = PlaceView(
+        id=ObjectId(),
+        name="Foo",
+        type="gym",
+        status="pending",
+        latitude=37.5,
+        longitude=127.0,
+        cover_image_url=None,
+        created_by=ObjectId(),
+    )
+    dumped = v.model_dump(by_alias=True)
+    assert dumped["status"] == "pending"
+    assert "coverImageUrl" in dumped  # sanity: camelCase alias still in effect

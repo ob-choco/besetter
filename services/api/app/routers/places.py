@@ -3,7 +3,7 @@ import os
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from beanie.odm.fields import PydanticObjectId
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -54,6 +54,7 @@ class PlaceView(BaseModel):
     id: PydanticObjectId
     name: str
     type: str
+    status: Literal["pending", "approved", "rejected", "merged"]
     latitude: Optional[float]
     longitude: Optional[float]
     cover_image_url: Optional[str]
@@ -77,11 +78,12 @@ def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
         id=place.id,
         name=place.name,
         type=place.type,
+        status=place.status,
         latitude=place.latitude,
         longitude=place.longitude,
         cover_image_url=place.cover_image_url,
         created_by=place.created_by,
-        distance=distance,
+        distance=round(distance, 2) if distance is not None else None,
     )
 
 
@@ -177,7 +179,7 @@ async def get_nearby_places(
             else None
         )
         results.append(
-            place_to_view(place, distance=round(distance, 2) if distance else None)
+            place_to_view(place, distance=distance)
         )
 
     return results
