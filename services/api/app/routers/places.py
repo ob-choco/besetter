@@ -156,11 +156,9 @@ async def create_place(
             notif = Notification(
                 user_id=current_user.id,
                 type="place_registration_ack",
-                title="암장 등록 요청이 접수되었습니다",
-                body=(
-                    f"{place.name} 등록을 요청해주신 소중한 제보 감사합니다 🙌 "
-                    "서비스에 반영될 수 있도록 빠르게 처리해서 알려드리겠습니다."
-                ),
+                title="",
+                body="",
+                params={"place_name": place.name},
                 link=f"/places/{place.id}",
                 created_at=datetime.now(tz=timezone.utc),
             )
@@ -454,15 +452,12 @@ async def create_place_suggestion(
 
     # Best-effort: notify the requester with a thank-you message.
     try:
-        place_name_snapshot = place.name
         notif = Notification(
             user_id=current_user.id,
             type="place_suggestion_ack",
-            title="정보 수정 제안이 접수되었습니다",
-            body=(
-                f"{place_name_snapshot}에 대한 소중한 제보 감사합니다 🙌 "
-                "서비스에 반영될 수 있도록 빠르게 처리해서 알려드리겠습니다."
-            ),
+            title="",
+            body="",
+            params={"place_name": place.name},
             link=f"/places/{place.id}",
             created_at=datetime.now(tz=timezone.utc),
         )
