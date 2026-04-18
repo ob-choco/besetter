@@ -138,7 +138,7 @@ notif = Notification(
 
 ### 모바일 변경
 
-`apps/mobile/lib/services/http_client.dart`에 요청 헤더로 `Accept-Language: <current_locale>`를 추가한다. 현재 앱 locale은 `Localizations.localeOf` 또는 앱의 locale provider에서 읽어 Dio interceptor로 주입.
+`apps/mobile/lib/services/notification_service.dart`의 `list()`에서 `AuthorizedHttpClient.get(path, extraHeaders: {...})`를 통해 `Accept-Language: <device-locale>` 헤더를 전송한다. 앱 전역이 아닌 이 엔드포인트에만 적용. locale은 `PlatformDispatcher.instance.locale.languageCode`로 읽는다 (`place_service.dart`와 같은 패턴).
 
 ### 테스트
 
