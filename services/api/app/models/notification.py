@@ -19,6 +19,10 @@ class Notification(Document):
     link: Optional[str] = Field(None, description="연결 경로. 저장만 하고 동작은 없음")
     read_at: Optional[datetime] = Field(None, description="읽은 시간")
     created_at: datetime = Field(..., description="생성 시간")
+    params: dict = Field(
+        default_factory=dict,
+        description="템플릿 렌더용 변수 스냅샷 (예: {'place_name': '...'})",
+    )
 
     class Settings:
         name = "notifications"
