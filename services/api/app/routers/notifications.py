@@ -2,13 +2,14 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from beanie.odm.fields import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.notification import Notification
 from app.models.user import User
+from app.services.notification_renderer import pick_locale, render
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -57,12 +58,13 @@ class MarkReadResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def notification_to_view(notif: Notification) -> NotificationView:
+def notification_to_view(notif: Notification, locale: str) -> NotificationView:
+    title, body = render(notif, locale)
     return NotificationView(
         id=notif.id,
         type=notif.type,
-        title=notif.title,
-        body=notif.body,
+        title=title,
+        body=body,
         link=notif.link,
         read_at=notif.read_at,
         created_at=notif.created_at,
@@ -78,6 +80,7 @@ def notification_to_view(notif: Notification) -> NotificationView:
 async def list_notifications(
     before: Optional[datetime] = Query(None, description="이 시각 이전 알림만"),
     limit: int = Query(20, ge=1, le=50),
+    accept_language: Optional[str] = Header(None, alias="Accept-Language"),
     current_user: User = Depends(get_current_user),
 ):
     query_filter: dict = {"userId": current_user.id}
@@ -91,9 +94,10 @@ async def list_notifications(
         .to_list()
     )
 
+    locale = pick_locale(accept_language)
     next_cursor = items[-1].created_at if len(items) == limit else None
     return NotificationListResponse(
-        items=[notification_to_view(n) for n in items],
+        items=[notification_to_view(n, locale) for n in items],
         next_cursor=next_cursor,
     )
 
