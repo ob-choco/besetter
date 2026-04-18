@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 
 import '../models/notification_data.dart';
 import 'http_client.dart';
@@ -27,7 +28,12 @@ class NotificationService {
         .join('&');
     final path = qs.isEmpty ? '/notifications' : '/notifications?$qs';
 
-    final response = await AuthorizedHttpClient.get(path);
+    final response = await AuthorizedHttpClient.get(
+      path,
+      extraHeaders: {
+        'Accept-Language': PlatformDispatcher.instance.locale.languageCode,
+      },
+    );
     if (response.statusCode != 200) {
       throw Exception(
         'Failed to load notifications: ${response.statusCode}',
