@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from beanie import Document
 from pydantic import BaseModel
+from pymongo import ASCENDING, IndexModel
 
 from . import model_config
 
@@ -63,6 +64,7 @@ class GoogleUser(BaseModel):
 class User(Document):
     model_config = model_config
 
+    profile_id: str
     name: Optional[str] = None
     email: Optional[str] = None
     profile_image_url: Optional[str] = None
@@ -85,3 +87,6 @@ class User(Document):
     class Settings:
         name = "users"
         keep_nulls = True
+        indexes = [
+            IndexModel([("profileId", ASCENDING)], unique=True),
+        ]
