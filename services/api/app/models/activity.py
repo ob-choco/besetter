@@ -5,7 +5,7 @@ from typing import Optional
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
 from pydantic import BaseModel, Field
-from pymongo import ASCENDING, IndexModel
+from pymongo import ASCENDING, DESCENDING, IndexModel
 
 from . import model_config
 
@@ -82,6 +82,10 @@ class UserRouteStats(Document):
             IndexModel(
                 [("userId", ASCENDING), ("routeId", ASCENDING)],
                 unique=True,
+            ),
+            IndexModel(
+                [("userId", ASCENDING), ("lastActivityAt", DESCENDING)],
+                name="userId_1_lastActivityAt_-1",
             ),
         ]
         keep_nulls = True

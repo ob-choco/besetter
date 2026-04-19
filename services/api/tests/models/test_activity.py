@@ -89,3 +89,12 @@ def test_user_route_stats_defaults():
     )
     assert stats.total_count == 0
     assert stats.last_activity_at is None
+
+
+def test_user_route_stats_has_last_activity_at_index():
+    """The (userId, lastActivityAt desc) index backs the home-screen
+    "recently climbed" query; without it the endpoint falls back to a
+    collection scan."""
+    index_specs = UserRouteStats.Settings.indexes
+    names = {idx.document["name"] for idx in index_specs if hasattr(idx, "document")}
+    assert "userId_1_lastActivityAt_-1" in names
