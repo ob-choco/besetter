@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../providers/activity_refresh_provider.dart';
+import '../../providers/recent_climbed_routes_provider.dart';
 import '../../services/activity_service.dart';
 
 class WorkoutLogPanel extends StatefulWidget {
@@ -196,7 +197,9 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
         }
       });
 
-      ProviderScope.containerOf(context).read(activityDirtyProvider.notifier).state = true;
+      final container = ProviderScope.containerOf(context);
+      container.read(activityDirtyProvider.notifier).state = true;
+      container.invalidate(recentClimbedRoutesProvider);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

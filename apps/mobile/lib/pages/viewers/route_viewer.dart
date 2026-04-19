@@ -17,6 +17,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../providers/activity_refresh_provider.dart'; // activityDirtyProvider
+import '../../providers/recent_climbed_routes_provider.dart';
 import '../../widgets/viewers/activity_panel.dart';
 import '../../widgets/viewers/workout_log_panel.dart';
 import '../../widgets/place_pending_badge.dart';
@@ -320,7 +321,9 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                     routeId: widget.routeData.id,
                     onActivityCreated: (activityData) {
                       (_workoutLogKey.currentState as dynamic)?.addActivity(activityData);
-                      ProviderScope.containerOf(context).read(activityDirtyProvider.notifier).state = true;
+                      final container = ProviderScope.containerOf(context);
+                      container.read(activityDirtyProvider.notifier).state = true;
+                      container.invalidate(recentClimbedRoutesProvider);
                     },
                   ),
                   // Workout log (stats + activity list)
