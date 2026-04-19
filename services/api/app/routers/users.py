@@ -30,6 +30,7 @@ class UserProfileResponse(BaseModel):
     # Explicit alias overrides model_config's to_camel generator,
     # which would otherwise emit "_id" in the JSON response.
     id: str = Field(alias="id")
+    profile_id: str
     name: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
@@ -54,6 +55,7 @@ def _build_profile_response(user: User) -> UserProfileResponse:
 
     return UserProfileResponse(
         id=str(user.id),
+        profile_id=user.profile_id,
         name=user.name,
         email=user.email,
         bio=user.bio,

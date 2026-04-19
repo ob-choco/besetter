@@ -8,6 +8,7 @@ from app.routers.users import UserProfileResponse, _build_profile_response
 def _make_user(
     *,
     id: ObjectId,
+    profile_id: str = "testuser01",
     name: str | None = None,
     email: str | None = None,
     bio: str | None = None,
@@ -16,6 +17,7 @@ def _make_user(
 ) -> SimpleNamespace:
     return SimpleNamespace(
         id=id,
+        profile_id=profile_id,
         name=name,
         email=email,
         bio=bio,
@@ -25,9 +27,9 @@ def _make_user(
 
 
 def test_user_profile_response_serializes_id():
-    """UserProfileResponse should carry a string id field."""
     resp = UserProfileResponse(
         id="507f1f77bcf86cd799439011",
+        profile_id="climber99",
         name="alice",
         email=None,
         bio=None,
@@ -37,8 +39,24 @@ def test_user_profile_response_serializes_id():
     assert dumped["id"] == "507f1f77bcf86cd799439011"
 
 
+def test_user_profile_response_serializes_profile_id_camelcase():
+    """profile_id field should emit as profileId in JSON."""
+    resp = UserProfileResponse(
+        id="507f1f77bcf86cd799439011",
+        profile_id="climber99",
+    )
+    dumped = resp.model_dump(by_alias=True)
+    assert dumped["profileId"] == "climber99"
+
+
+def test_build_profile_response_populates_profile_id():
+    oid = ObjectId()
+    user = _make_user(id=oid, profile_id="kx9m2pq7vn3a", name="alice")
+    resp = _build_profile_response(user)
+    assert resp.profile_id == "kx9m2pq7vn3a"
+
+
 def test_build_profile_response_populates_id_as_string():
-    """_build_profile_response should stringify the user's ObjectId into `id`."""
     oid = ObjectId()
     user = _make_user(id=oid, name="alice", email="a@example.com")
 
@@ -51,7 +69,6 @@ def test_build_profile_response_populates_id_as_string():
 
 
 def test_build_profile_response_passes_through_nulls():
-    """Missing optional fields should round-trip as None."""
     oid = ObjectId()
     user = _make_user(id=oid)
 
