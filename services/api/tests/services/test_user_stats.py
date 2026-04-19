@@ -20,6 +20,7 @@ from app.services.user_stats import (
     on_activity_created,
     on_activity_deleted,
     on_route_created,
+    on_route_soft_deleted,
 )
 
 
@@ -507,3 +508,77 @@ async def test_on_route_created_endurance(mongo_db):
     assert stats.routes_created.total_count == 1
     assert stats.routes_created.bouldering_count == 0
     assert stats.routes_created.endurance_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_route_soft_deleted_decrements_routes_created(mongo_db):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.BOULDERING)
+    await route.insert()
+    await on_route_created(route)
+
+    route.is_deleted = True
+    await on_route_soft_deleted(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.routes_created.total_count == 0
+    assert stats.routes_created.bouldering_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_route_soft_deleted_decrements_own_routes_activity_per_bucket(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.BOULDERING)
+    await route.insert()
+    await on_route_created(route)
+
+    a = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(a, route)
+
+    route.is_deleted = True
+    await on_route_soft_deleted(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 0
+    assert stats.own_routes_activity.completed_count == 0
+    assert stats.own_routes_activity.verified_completed_count == 0
+    assert stats.routes_created.total_count == 0
+    assert stats.distinct_routes.total_count == 1
+    assert stats.activity.total_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_route_soft_deleted_no_own_activity_leaves_own_routes_activity_untouched(mongo_db):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.ENDURANCE)
+    await route.insert()
+    await on_route_created(route)
+
+    route.is_deleted = True
+    await on_route_soft_deleted(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 0
+    assert stats.routes_created.total_count == 0
+    assert stats.routes_created.endurance_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_route_soft_deleted_only_decrements_buckets_ge_one(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.BOULDERING)
+    await route.insert()
+    await on_route_created(route)
+
+    a = await _insert_activity(user_id, route.id, status=ActivityStatus.ATTEMPTED, location_verified=False)
+    await on_activity_created(a, route)
+
+    route.is_deleted = True
+    await on_route_soft_deleted(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 0
+    assert stats.own_routes_activity.completed_count == 0
+    assert stats.own_routes_activity.verified_completed_count == 0

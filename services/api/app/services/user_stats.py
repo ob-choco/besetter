@@ -270,3 +270,31 @@ async def on_route_created(route: Route) -> None:
         await _update_user_stats(route.user_id, inc)
     except Exception:
         logger.exception("on_route_created failed for route=%s", route.id)
+
+
+async def on_route_soft_deleted(route: Route) -> None:
+    """Apply post-soft-delete userStats updates for a route. Swallows all exceptions."""
+    try:
+        type_bucket = _type_bucket(route.type)
+        inc: dict[str, int] = {
+            _ROUTES_CREATED_DB_FIELDS["total_count"]: -1,
+            _ROUTES_CREATED_DB_FIELDS[type_bucket]: -1,
+        }
+
+        urs = await UserRouteStats.find_one(
+            UserRouteStats.user_id == route.user_id,
+            UserRouteStats.route_id == route.id,
+        )
+        if urs is not None:
+            bucket_values = {
+                "total_count": urs.total_count,
+                "completed_count": urs.completed_count,
+                "verified_completed_count": urs.verified_completed_count,
+            }
+            for bucket, value in bucket_values.items():
+                if value >= 1:
+                    inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = -1
+
+        await _update_user_stats(route.user_id, inc)
+    except Exception:
+        logger.exception("on_route_soft_deleted failed for route=%s", route.id)
