@@ -181,7 +181,12 @@ async def _update_user_stats(user_id: PydanticObjectId, inc: dict[str, int]) -> 
 
 
 async def on_activity_created(activity: Activity, route: Route) -> None:
-    """Apply post-create userStats updates. Swallows all exceptions."""
+    """Apply post-create userStats updates. Swallows all exceptions.
+
+    Call AFTER the activity has been persisted (``await activity.insert()``):
+    ``_recount_local_day`` relies on the newly-inserted row being queryable
+    to detect the 0→1 distinct-days transition.
+    """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=1)
         before, after = await _apply_user_route_stats_delta(activity.user_id, activity.route_id, deltas)
