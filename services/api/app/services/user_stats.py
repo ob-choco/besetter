@@ -7,7 +7,7 @@ activity and route mutation points. See
 
 from __future__ import annotations
 
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from beanie.odm.fields import PydanticObjectId
@@ -17,6 +17,16 @@ from app.models.activity import Activity, ActivityStatus, UserRouteStats
 
 
 BUCKET_FIELDS = ("total_count", "completed_count", "verified_completed_count")
+
+
+def _day_utc_superset(date_str: str) -> tuple[datetime, datetime]:
+    """UTC window guaranteed to contain every activity whose local date
+    (in its own stored timezone) equals ``date_str``. Padded ±14h to cover
+    every IANA offset."""
+    year, month, day = map(int, date_str.split("-"))
+    day_start = datetime(year, month, day, tzinfo=timezone.utc)
+    day_end = day_start + timedelta(days=1)
+    return (day_start - timedelta(hours=14), day_end + timedelta(hours=14))
 
 
 def _bucket_deltas(status: ActivityStatus, location_verified: bool, sign: int) -> dict[str, int]:
@@ -95,11 +105,14 @@ async def _recount_local_day(user_id: PydanticObjectId, local_date_str: str) -> 
     """Return how many of ``user_id``'s activities have ``_local_date_str`` equal to ``local_date_str``.
 
     Computes the local date server-side via Mongo's ``$dateToString`` using the
-    activity's stored ``timezone`` (UTC fallback), and counts matches.
+    activity's stored ``timezone`` (UTC fallback), and counts matches. Narrows
+    the initial ``$match`` with a ±14h UTC superset around ``local_date_str``
+    so we don't scan a user's entire activity history on every call.
     """
+    utc_lo, utc_hi = _day_utc_superset(local_date_str)
     collection = Activity.get_pymongo_collection()
     pipeline = [
-        {"$match": {"userId": user_id}},
+        {"$match": {"userId": user_id, "startedAt": {"$gte": utc_lo, "$lt": utc_hi}}},
         {
             "$addFields": {
                 "_localDate": {

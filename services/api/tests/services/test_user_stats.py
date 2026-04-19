@@ -12,6 +12,7 @@ from app.models.user_stats import UserStats
 from app.services.user_stats import (
     _apply_user_route_stats_delta,
     _bucket_deltas,
+    _day_utc_superset,
     _local_date_str,
     _recount_local_day,
 )
@@ -107,6 +108,12 @@ def test_local_date_str_naive_started_at_treated_as_utc():
     activity = _make_activity(started, "Asia/Seoul")
     # 10:00 UTC → 19:00 KST → "2026-04-19"
     assert _local_date_str(activity) == "2026-04-19"
+
+
+def test_day_utc_superset_pads_plus_minus_14_hours():
+    lo, hi = _day_utc_superset("2026-04-19")
+    assert lo == datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    assert hi == datetime(2026, 4, 20, 14, 0, tzinfo=dt_tz.utc)
 
 
 @pytest.mark.asyncio
