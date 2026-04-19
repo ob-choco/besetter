@@ -74,7 +74,10 @@ def test_generate_thumbnail_output_is_jpeg():
 from unittest.mock import MagicMock, patch
 
 
-@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch(
+    "app.core.gcs.get_public_url",
+    side_effect=lambda path: f"https://storage.example.com/bucket/{path}",
+)
 @patch("app.core.gcs.bucket")
 def test_get_or_create_thumbnail_cached(mock_bucket, mock_base_url):
     """When thumbnail already exists in GCS, return URL without generating."""
@@ -91,7 +94,10 @@ def test_get_or_create_thumbnail_cached(mock_bucket, mock_base_url):
     mock_blob.download_as_bytes.assert_not_called()
 
 
-@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch(
+    "app.core.gcs.get_public_url",
+    side_effect=lambda path: f"https://storage.example.com/bucket/{path}",
+)
 @patch("app.core.gcs.bucket")
 def test_get_or_create_thumbnail_generates(mock_bucket, mock_base_url):
     """When thumbnail doesn't exist, generate and upload it."""
@@ -114,7 +120,10 @@ def test_get_or_create_thumbnail_generates(mock_bucket, mock_base_url):
     assert thumb_blob.upload_from_string.call_args.kwargs["content_type"] == "image/jpeg"
 
 
-@patch("app.core.gcs.get_base_url", return_value="https://storage.example.com/bucket")
+@patch(
+    "app.core.gcs.get_public_url",
+    side_effect=lambda path: f"https://storage.example.com/bucket/{path}",
+)
 @patch("app.core.gcs.bucket")
 def test_get_or_create_thumbnail_original_not_found(mock_bucket, mock_base_url):
     """When original blob doesn't exist, return None."""

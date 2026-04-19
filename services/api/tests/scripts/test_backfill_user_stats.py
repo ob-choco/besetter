@@ -21,6 +21,7 @@ pytestmark = pytest.mark.asyncio
 def _make_user() -> User:
     now = datetime(2026, 4, 18, tzinfo=dt_tz.utc)
     return User(
+        profile_id=f"user_{PydanticObjectId()}",
         name="X",
         email="x@example.com",
         created_at=now,
