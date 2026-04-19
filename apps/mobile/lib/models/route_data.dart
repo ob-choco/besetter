@@ -1,6 +1,34 @@
 import 'place_data.dart';
 import 'polygon_data.dart';
 
+class OwnerInfo {
+  final String userId;
+  final String? profileId;
+  final String? profileImageUrl;
+  final bool isDeleted;
+
+  const OwnerInfo({
+    required this.userId,
+    this.profileId,
+    this.profileImageUrl,
+    this.isDeleted = false,
+  });
+
+  factory OwnerInfo.fromJson(Map<String, dynamic> json) => OwnerInfo(
+        userId: json['userId'] as String,
+        profileId: json['profileId'] as String?,
+        profileImageUrl: json['profileImageUrl'] as String?,
+        isDeleted: json['isDeleted'] as bool? ?? false,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        if (profileId != null) 'profileId': profileId,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+        'isDeleted': isDeleted,
+      };
+}
+
 enum RouteType {
   bouldering,
   endurance,
@@ -59,6 +87,9 @@ class RouteData {
   final int? myCompletedCount;
   final DateTime? myLastActivityAt;
 
+  final OwnerInfo? owner;
+  final bool isDeleted;
+
   RouteData({
     required this.id,
     required this.type,
@@ -86,6 +117,8 @@ class RouteData {
     this.myTotalCount,
     this.myCompletedCount,
     this.myLastActivityAt,
+    this.owner,
+    this.isDeleted = false,
   });
 
   factory RouteData.fromJson(Map<String, dynamic> json) {
@@ -127,6 +160,10 @@ class RouteData {
       myCompletedCount: json['myCompletedCount'] as int?,
       myLastActivityAt:
           json['myLastActivityAt'] != null ? DateTime.parse(json['myLastActivityAt']) : null,
+      owner: json['owner'] != null
+          ? OwnerInfo.fromJson(json['owner'] as Map<String, dynamic>)
+          : null,
+      isDeleted: json['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -157,6 +194,8 @@ class RouteData {
         'myTotalCount': myTotalCount,
         'myCompletedCount': myCompletedCount,
         'myLastActivityAt': myLastActivityAt?.toIso8601String(),
+        if (owner != null) 'owner': owner!.toJson(),
+        'isDeleted': isDeleted,
       };
 }
 
