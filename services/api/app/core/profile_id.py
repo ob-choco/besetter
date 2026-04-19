@@ -15,6 +15,7 @@ from enum import Enum
 from typing import Optional
 
 from app.core.profile_id_reserved import PROFANITY_SUBSTRINGS, RESERVED_EXACT
+from app.models.user import User
 
 
 class ProfileIdError(str, Enum):
@@ -62,3 +63,19 @@ def validate_profile_id(value: str) -> Optional[ProfileIdError]:
     if value in RESERVED_EXACT or _contains_profanity(value):
         return ProfileIdError.RESERVED
     return None
+
+
+async def generate_unique_profile_id(max_attempts: int = 5) -> str:
+    """Return a random profile_id that isn't taken yet.
+
+    Retries on collision (or on accidental profanity match). Raises if we
+    can't find a free value within max_attempts.
+    """
+    for _ in range(max_attempts):
+        candidate = generate_profile_id()
+        if _contains_profanity(candidate):
+            continue
+        existing = await User.find_one({"profileId": candidate})
+        if existing is None:
+            return candidate
+    raise RuntimeError("Failed to generate unique profile_id")

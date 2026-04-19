@@ -1,10 +1,13 @@
 """Tests for profile_id validation and generation."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from app.core.profile_id import (
     ProfileIdError,
     generate_profile_id,
+    generate_unique_profile_id,
     validate_profile_id,
 )
 
@@ -87,3 +90,31 @@ def test_generate_profile_id_is_random():
     seen = {generate_profile_id() for _ in range(100)}
     # With 31^12 entropy, 100 samples should never collide.
     assert len(seen) == 100
+
+
+async def test_generate_unique_profile_id_first_try():
+    """Returns the first candidate when not taken."""
+    with patch("app.core.profile_id.User") as MockUser:
+        MockUser.find_one = AsyncMock(return_value=None)
+        result = await generate_unique_profile_id()
+        assert len(result) == 12
+        MockUser.find_one.assert_awaited_once()
+
+
+async def test_generate_unique_profile_id_retries_on_collision():
+    """Retries when find_one returns an existing user."""
+    existing = object()
+    with patch("app.core.profile_id.User") as MockUser:
+        MockUser.find_one = AsyncMock(side_effect=[existing, existing, None])
+        result = await generate_unique_profile_id()
+        assert len(result) == 12
+        assert MockUser.find_one.await_count == 3
+
+
+async def test_generate_unique_profile_id_exhaustion_raises():
+    """Raises after max_attempts collisions."""
+    existing = object()
+    with patch("app.core.profile_id.User") as MockUser:
+        MockUser.find_one = AsyncMock(return_value=existing)
+        with pytest.raises(RuntimeError, match="Failed to generate unique"):
+            await generate_unique_profile_id(max_attempts=3)
