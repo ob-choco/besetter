@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone as dt_tz
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from beanie.odm.fields import PydanticObjectId
@@ -582,3 +582,41 @@ async def test_on_route_soft_deleted_only_decrements_buckets_ge_one(mongo_db, mo
     assert stats.own_routes_activity.total_count == 0
     assert stats.own_routes_activity.completed_count == 0
     assert stats.own_routes_activity.verified_completed_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_swallows_inner_errors(mongo_db, caplog):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id)
+    await route.insert()
+    activity = await _insert_activity(user_id, route.id)
+
+    with patch(
+        "app.services.user_stats._apply_user_route_stats_delta",
+        side_effect=RuntimeError("boom"),
+    ):
+        caplog.clear()
+        result = await on_activity_created(activity, route)
+
+    assert result is None
+    assert any("on_activity_created failed" in rec.message for rec in caplog.records)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    # No partial write: we bailed before any userStats write.
+    assert stats is None
+
+
+@pytest.mark.asyncio
+async def test_on_route_created_swallows_inner_errors(mongo_db, caplog):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id)
+
+    with patch(
+        "app.services.user_stats._update_user_stats",
+        side_effect=RuntimeError("boom"),
+    ):
+        caplog.clear()
+        result = await on_route_created(route)
+
+    assert result is None
+    assert any("on_route_created failed" in rec.message for rec in caplog.records)
