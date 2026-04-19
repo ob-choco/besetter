@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -18,6 +19,8 @@ from app.services import user_stats as user_stats_service
 from app.models.user import User
 
 router = APIRouter(prefix="/my", tags=["my"])
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEZONE = "Asia/Seoul"
 
@@ -365,7 +368,11 @@ async def delete_daily_route_group(
 
     route = await Route.find_one(Route.id == route_object_id)
     if route is None:
-        # Route vanished — delete activities but skip stats path.
+        logger.warning(
+            "delete_daily_route_group: route_id=%s missing; hard-deleting %d activities but skipping stats decrement",
+            route_object_id,
+            len(matched),
+        )
         await collection.delete_many({"_id": {"$in": [m["_id"] for m in matched]}})
         return
 

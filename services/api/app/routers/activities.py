@@ -1,4 +1,5 @@
 import base64
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -24,6 +25,8 @@ from app.models.user import User
 from app.services import user_stats as user_stats_service
 
 router = APIRouter(prefix="/routes", tags=["activities"])
+
+logger = logging.getLogger(__name__)
 
 LOCATION_VERIFICATION_RADIUS_M = 300
 
@@ -263,7 +266,11 @@ async def delete_activity(
 
     route = await Route.find_one(Route.id == activity.route_id)
     if route is None:
-        # Shouldn't happen under normal flow; bail out of the stats path but still delete the activity.
+        logger.warning(
+            "delete_activity: route_id=%s missing; hard-deleting activity %s but skipping stats decrement",
+            activity.route_id,
+            activity.id,
+        )
         await activity.delete()
         return
 
