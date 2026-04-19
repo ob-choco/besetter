@@ -15,7 +15,7 @@ from app.models.image import Image
 from app.models.place import Place
 from app.models import IdView
 from app.models.route import Route, BoulderingHold, EnduranceHold, Visibility, RouteType
-from app.models.activity import Activity
+from app.models.activity import Activity, UserRouteStats
 from app.core.gcs import generate_signed_url, extract_blob_path_from_url
 
 
@@ -212,6 +212,10 @@ class RouteServiceView(BaseModel):
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
 
+    my_total_count: Optional[int] = Field(None, description="내 총 시도 횟수 (projection=stats)")
+    my_completed_count: Optional[int] = Field(None, description="내 총 완등 횟수 (projection=stats)")
+    my_last_activity_at: Optional[datetime] = Field(None, description="내 마지막 활동 시각 (projection=stats)")
+
 
 class RouteListMeta(BaseModel):
     model_config = model_config
@@ -257,7 +261,13 @@ async def get_routes(
     limit: int = Query(10, ge=1, le=100),
     next: Optional[str] = None,
     type: Optional[RouteType] = Query(None, description="루트 타입 필터 (bouldering, endurance)"),
+    projection: Optional[str] = Query(
+        None,
+        description="확장 프로젝션 (쉼표 구분). 지원: stats — 사용자 루트 스탯(시도/완등/최근 활동)을 각 루트에 포함",
+    ),
 ):
+    projection_set = {p.strip() for p in projection.split(",")} if projection else set()
+    include_stats = "stats" in projection_set
     # 쿼리 빌더 초기화
     query = Route.find(Route.user_id == current_user.id, Route.is_deleted != True)
 
@@ -332,6 +342,16 @@ async def get_routes(
     else:
         place_dict = {}
 
+    # UserRouteStats 일괄 조회 (projection=stats)
+    stats_dict: dict = {}
+    if include_stats and raw_routes:
+        route_ids = [route.id for route in raw_routes]
+        stats_list = await UserRouteStats.find(
+            UserRouteStats.user_id == current_user.id,
+            In(UserRouteStats.route_id, route_ids),
+        ).to_list()
+        stats_dict = {stats.route_id: stats for stats in stats_list}
+
     # RouteServiceView 구성
     routes: list[RouteServiceView] = []
     for route in raw_routes:
@@ -350,6 +370,8 @@ async def get_routes(
         place_view = None
         if image and image.place_id and image.place_id in place_dict:
             place_view = place_to_view(place_dict[image.place_id])
+
+        stats = stats_dict.get(route.id) if include_stats else None
 
         routes.append(RouteServiceView(
             id=route.id,
@@ -372,6 +394,9 @@ async def get_routes(
             place=place_view,
             wall_name=image.wall_name if image else None,
             wall_expiration_date=image.wall_expiration_date if image else None,
+            my_total_count=stats.total_count if stats else (0 if include_stats else None),
+            my_completed_count=stats.completed_count if stats else (0 if include_stats else None),
+            my_last_activity_at=stats.last_activity_at if stats else None,
         ))
 
     return RouteListResponse(data=routes, meta=RouteListMeta(next_token=next_token))
