@@ -29,8 +29,8 @@ def test_profile_id_error_codes_are_stable_strings():
         "climber99",
         "climber_99",
         "climb.er99",
-        "abcdefgh",          # 8 chars exact
-        "abcdefghij012345",  # 16 chars exact
+        "abcdef",                             # 6 chars exact (min)
+        "abcdefghij0123456789abcdefghij",     # 30 chars exact (max)
         "a1b2c3d4",
     ],
 )
@@ -39,11 +39,11 @@ def test_validate_accepts_valid_values(value):
 
 
 def test_validate_too_short():
-    assert validate_profile_id("abc123") is ProfileIdError.TOO_SHORT
+    assert validate_profile_id("abc12") is ProfileIdError.TOO_SHORT
 
 
 def test_validate_too_long():
-    assert validate_profile_id("a" * 17) is ProfileIdError.TOO_LONG
+    assert validate_profile_id("a" * 31) is ProfileIdError.TOO_LONG
 
 
 @pytest.mark.parametrize("value", ["Climber99", "climber-99", "climber 99", "한글이름abcd", "user@namee"])
@@ -69,7 +69,7 @@ def test_validate_accepts_substring_of_reserved(value):
 
 @pytest.mark.parametrize("value", ["besetter", "helpdesk", "climbing"])
 def test_validate_reserved_exact_blocked(value):
-    """Exact matches of reserved words (length >= 8) are blocked."""
+    """Exact matches of reserved words (length >= 6) are blocked."""
     assert validate_profile_id(value) is ProfileIdError.RESERVED
 
 

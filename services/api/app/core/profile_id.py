@@ -31,8 +31,8 @@ class ProfileIdError(str, Enum):
 # 헷갈리는 문자 제외: 0, o, 1, l, i
 _ALPHABET: str = "abcdefghjkmnpqrstuvwxyz23456789"
 _AUTOGEN_LENGTH: int = 12
-_MIN_LENGTH: int = 8
-_MAX_LENGTH: int = 16
+_MIN_LENGTH: int = 6
+_MAX_LENGTH: int = 30
 
 _ALLOWED_CHARS_RE = re.compile(r"^[a-z0-9._]+$")
 _ALPHANUM_RE = re.compile(r"[a-z0-9]")

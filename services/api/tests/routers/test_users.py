@@ -93,7 +93,7 @@ def test_build_profile_response_passes_through_nulls():
     "value,expected_code",
     [
         ("abc", "PROFILE_ID_TOO_SHORT"),
-        ("a" * 17, "PROFILE_ID_TOO_LONG"),
+        ("a" * 31, "PROFILE_ID_TOO_LONG"),
         ("Climber99", "PROFILE_ID_INVALID_CHARS"),
         ("_climber9", "PROFILE_ID_INVALID_START_END"),
         ("clim__ber", "PROFILE_ID_CONSECUTIVE_SPECIAL"),

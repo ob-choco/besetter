@@ -47,8 +47,8 @@ class UpdateProfileIdRequest(BaseModel):
 
 
 _PROFILE_ID_ERROR_MESSAGES: dict[ProfileIdError, str] = {
-    ProfileIdError.TOO_SHORT: "8자 이상 입력해 주세요",
-    ProfileIdError.TOO_LONG: "16자 이하로 입력해 주세요",
+    ProfileIdError.TOO_SHORT: "6자 이상 입력해 주세요",
+    ProfileIdError.TOO_LONG: "30자 이하로 입력해 주세요",
     ProfileIdError.INVALID_CHARS: "소문자, 숫자, 점(.), 밑줄(_)만 사용할 수 있습니다",
     ProfileIdError.INVALID_START_END: "첫 글자와 끝 글자는 영문 소문자 또는 숫자여야 합니다",
     ProfileIdError.CONSECUTIVE_SPECIAL: "점(.)과 밑줄(_)을 연속해서 쓸 수 없습니다",

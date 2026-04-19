@@ -215,7 +215,7 @@ class _ProfileIdEditDialogState extends ConsumerState<ProfileIdEditDialog> {
           TextField(
             controller: _controller,
             autofocus: true,
-            maxLength: 16,
+            maxLength: 30,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9._]')),
             ],
