@@ -1,16 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../models/image_data.dart';
-import '../services/http_client.dart';
-import '../services/token_service.dart';
-import 'editors/spray_wall_editor_page.dart';
-import '../models/polygon_data.dart';
-import 'editors/route_editor_page.dart';
-import '../widgets/authorized_network_image.dart';
 import 'package:intl/intl.dart';
-import '../models/paginated_response.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../widgets/place_pending_badge.dart';
+import '../models/image_data.dart';
+import '../models/paginated_response.dart';
+import '../services/http_client.dart';
+import '../widgets/home/wall_mini_card.dart';
 
 class ImageListPage extends StatefulWidget {
   const ImageListPage({Key? key}) : super(key: key);
@@ -24,7 +19,6 @@ class _ImageListPageState extends State<ImageListPage> {
   String? _nextToken;
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
-  int? _selectedImageIndex;
 
   @override
   void initState() {
@@ -90,9 +84,9 @@ class _ImageListPageState extends State<ImageListPage> {
     }
   }
 
-  Widget _buildImageGrid() {
+  Widget _buildBody() {
     final groupedImages = <DateTime, List<ImageData>>{};
-    for (var image in _images) {
+    for (final image in _images) {
       final date = DateTime(
         image.uploadedAt.year,
         image.uploadedAt.month,
@@ -102,224 +96,74 @@ class _ImageListPageState extends State<ImageListPage> {
     }
 
     final sortedDates = groupedImages.keys.toList()..sort((a, b) => b.compareTo(a));
+    final l10n = AppLocalizations.of(context)!;
 
-    return ListView.builder(
+    return CustomScrollView(
       controller: _scrollController,
-      itemCount: sortedDates.length + (_nextToken != null ? 1 : 0),
-      itemBuilder: (context, dateIndex) {
-        if (dateIndex == sortedDates.length) {
-          return const Center(
+      slivers: [
+        for (final date in sortedDates) ...[
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        final date = sortedDates[dateIndex];
-        final dateImages = groupedImages[date]!;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
               child: Text(
-                DateFormat.yMMMEd(AppLocalizations.of(context)!.localeName).format(date),
+                DateFormat.yMMMEd(l10n.localeName).format(date),
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  color: Color(0xFF0F1A2E),
                 ),
               ),
             ),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 240 / 280,
               ),
-              itemCount: dateImages.length,
-              itemBuilder: (context, index) {
-                final image = dateImages[index];
-                final globalIndex = _images.indexOf(image);
-                return _buildImageCard(image, globalIndex);
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildImageCard(ImageData image, int index) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (_selectedImageIndex == index) {
-            _selectedImageIndex = null;
-          } else {
-            _selectedImageIndex = index;
-          }
-        });
-      },
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            FutureBuilder<String?>(
-              future: TokenService.getAccessToken(),
-              builder: (context, tokenSnapshot) {
-                if (tokenSnapshot.hasData) {
-                  return AuthorizedNetworkImage(
-                    imageUrl: image.url,
-                    fit: BoxFit.cover,
-                  );
-                }
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            ),
-            if (_selectedImageIndex == index)
-              Container(
-                color: Colors.black45,
-              ),
-            if (_selectedImageIndex == index)
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      iconSize: 48,
-                      icon: Icon(Icons.brush, color: Colors.white),
-                      onPressed: () async {
-                        try {
-                          final response = await AuthorizedHttpClient.get('/hold-polygons/${image.holdPolygonId}');
-                          if (response.statusCode == 200) {
-                            final polygonData = jsonDecode(response.body);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SprayWallEditorPage(
-                                  image: image,
-                                  polygonData: PolygonData.fromJson(polygonData),
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.failedLoadData)),
-                          );
-                        }
-                      },
-                    ),
-                    IconButton(
-                      iconSize: 48,
-                      icon: Icon(Icons.edit, color: Colors.white),
-                      onPressed: () async {
-                        try {
-                          final response = await AuthorizedHttpClient.get('/hold-polygons/${image.holdPolygonId}');
-                          if (response.statusCode == 200) {
-                            final polygonData = jsonDecode(response.body);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RouteEditorPage(
-                                  image: image,
-                                  polygonData: PolygonData.fromJson(polygonData),
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.failedLoadData)),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => WallMiniCard(
+                  image: groupedImages[date]![index],
+                  compact: true,
                 ),
-              ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                color: Colors.black54,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (image.wallName != null && image.wallName!.isNotEmpty)
-                      Text(
-                        image.wallName!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    if (image.place != null && image.place!.name.isNotEmpty)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              image.place!.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (image.place!.isPending) ...[
-                            const SizedBox(width: 4),
-                            const PlacePendingBadge(),
-                          ],
-                        ],
-                      ),
-                    Text(
-                      DateFormat.yMd(AppLocalizations.of(context)!.localeName).format(image.uploadedAt),
-                      // DateFormat('yyyy.MM.dd').format(image.uploadedAt),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                childCount: groupedImages[date]!.length,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        ],
+        if (_nextToken != null)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        else
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F7),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F6F7),
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(AppLocalizations.of(context)!.mySprayWall),
       ),
-      body: _images.isEmpty && _isLoading ? const Center(child: CircularProgressIndicator()) : _buildImageGrid(),
+      body: _images.isEmpty && _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildBody(),
     );
   }
 }

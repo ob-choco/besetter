@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../providers/images_provider.dart';
-import 'wall_card.dart';
+import 'wall_mini_card.dart';
 
 class WallImageCarousel extends ConsumerWidget {
   const WallImageCarousel({super.key});
@@ -14,36 +13,30 @@ class WallImageCarousel extends ConsumerWidget {
 
     return imagesAsync.when(
       loading: () => const SizedBox(
-        height: 400,
+        height: 296,
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (e, st) => SizedBox(
-        height: 400,
+        height: 296,
         child: Center(child: Text(AppLocalizations.of(context)!.errorLoadingImages)),
       ),
       data: (images) {
-        if (images.isEmpty) {
-          return _buildEmptyState(context);
-        }
+        if (images.isEmpty) return _buildEmptyState(context);
 
-        final hasMore = images.length >= 9;
-        final itemCount = hasMore ? images.length + 1 : images.length;
-
-        return CarouselSlider.builder(
-          itemCount: itemCount,
-          itemBuilder: (context, index, realIndex) {
-            if (index == images.length) {
-              return _buildViewMoreCard(context);
-            }
-            return WallCard(image: images[index]);
-          },
-          options: CarouselOptions(
-            height: 420,
-            enlargeCenterPage: true,
-            enlargeFactor: 0.2,
-            viewportFraction: 0.85,
-            enableInfiniteScroll: false,
-            padEnds: true,
+        return SizedBox(
+          height: 296,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+            itemCount: images.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              if (index == images.length) return _buildMoreCard(context);
+              return SizedBox(
+                width: 240,
+                child: WallMiniCard(image: images[index]),
+              );
+            },
           ),
         );
       },
@@ -52,25 +45,20 @@ class WallImageCarousel extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return SizedBox(
-      height: 400,
+      height: 296,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_camera_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            Icon(Icons.photo_camera_outlined, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!.noWallPhotosYet,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[600],
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Take a wall photo to get started!',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -78,24 +66,26 @@ class WallImageCarousel extends ConsumerWidget {
     );
   }
 
-  Widget _buildViewMoreCard(BuildContext context) {
+  Widget _buildMoreCard(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/images'),
       child: Container(
+        width: 240,
+        height: 280,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey[300]!, width: 1.5, style: BorderStyle.solid),
         ),
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_circle_outline, size: 48, color: Colors.grey[600]),
-              const SizedBox(height: 12),
+              Icon(Icons.arrow_forward, size: 28, color: Colors.grey[500]),
+              const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context)!.viewMore,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[600],
                 ),
