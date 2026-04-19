@@ -114,3 +114,65 @@ def test_validate_profile_id_or_raise_reserved_exact():
 def test_validate_profile_id_or_raise_accepts_valid():
     # Should not raise.
     _validate_profile_id_or_raise("climber99")
+
+
+from app.routers.users import (
+    ProfileIdAvailabilityResponse,
+    _compute_profile_id_availability,
+)
+
+
+def test_availability_response_schema_camelcase():
+    resp = ProfileIdAvailabilityResponse(
+        value="climber99",
+        available=True,
+        reason=None,
+    )
+    dumped = resp.model_dump(by_alias=True)
+    assert dumped == {"value": "climber99", "available": True, "reason": None}
+
+
+def test_compute_availability_reserved_short_circuits_db():
+    """Validation failure returns immediately without touching DB."""
+    current = _make_user(id=ObjectId(), profile_id="owner001x")
+    result = _compute_profile_id_availability(
+        value="_bad_start",
+        current_user=current,
+        exists=None,
+    )
+    assert result.available is False
+    assert result.reason == "PROFILE_ID_INVALID_START_END"
+
+
+def test_compute_availability_self_is_available():
+    """The caller's current profile_id is always available to them."""
+    current = _make_user(id=ObjectId(), profile_id="climber99")
+    result = _compute_profile_id_availability(
+        value="climber99",
+        current_user=current,
+        exists=True,  # not consulted because of self-match
+    )
+    assert result.available is True
+    assert result.reason is None
+
+
+def test_compute_availability_taken_by_another():
+    current = _make_user(id=ObjectId(), profile_id="ownerabc")
+    result = _compute_profile_id_availability(
+        value="someone1",
+        current_user=current,
+        exists=True,
+    )
+    assert result.available is False
+    assert result.reason == "PROFILE_ID_TAKEN"
+
+
+def test_compute_availability_free():
+    current = _make_user(id=ObjectId(), profile_id="ownerabc")
+    result = _compute_profile_id_availability(
+        value="newname01",
+        current_user=current,
+        exists=False,
+    )
+    assert result.available is True
+    assert result.reason is None

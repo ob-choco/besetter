@@ -67,6 +67,43 @@ def _validate_profile_id_or_raise(value: str) -> None:
     )
 
 
+class ProfileIdAvailabilityResponse(BaseModel):
+    model_config = model_config
+
+    value: str
+    available: bool
+    reason: Optional[str] = None
+
+
+def _compute_profile_id_availability(
+    *,
+    value: str,
+    current_user: User,
+    exists: Optional[bool],
+) -> ProfileIdAvailabilityResponse:
+    """Decide availability given validation + optional DB-existence probe.
+
+    `exists` is what a `find_one({"profileId": value})` returned (True if
+    another user owns it, False if free, None if DB probe was skipped).
+    """
+    if value == current_user.profile_id:
+        return ProfileIdAvailabilityResponse(value=value, available=True, reason=None)
+
+    err = validate_profile_id(value)
+    if err is not None:
+        return ProfileIdAvailabilityResponse(
+            value=value, available=False, reason=err.value,
+        )
+
+    if exists:
+        return ProfileIdAvailabilityResponse(
+            value=value,
+            available=False,
+            reason=ProfileIdError.TAKEN.value,
+        )
+    return ProfileIdAvailabilityResponse(value=value, available=True, reason=None)
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -147,6 +184,31 @@ async def update_my_profile(
     await current_user.save()
 
     return _build_profile_response(current_user)
+
+
+@router.get("/me/profile-id/availability", response_model=ProfileIdAvailabilityResponse)
+async def check_profile_id_availability(
+    value: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Return whether `value` can be used as the caller's new profile_id.
+
+    Always 200. No 409/422 — instead reports reason in the body.
+    """
+    if value == current_user.profile_id:
+        return _compute_profile_id_availability(
+            value=value, current_user=current_user, exists=None,
+        )
+    if validate_profile_id(value) is not None:
+        return _compute_profile_id_availability(
+            value=value, current_user=current_user, exists=None,
+        )
+
+    other = await User.find_one({"profileId": value})
+    exists = other is not None and other.id != current_user.id
+    return _compute_profile_id_availability(
+        value=value, current_user=current_user, exists=exists,
+    )
 
 
 @router.patch("/me/profile-id", response_model=UserProfileResponse)
