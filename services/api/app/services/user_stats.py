@@ -227,7 +227,8 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
 
     Order-agnostic with respect to ``activity.delete()``: callers may invoke
     this hook before OR after the activity doc is removed. The ``still_present``
-    check adjusts ``_recount_local_day`` accordingly.
+    check adjusts ``_recount_local_day`` and ``lastActivityAt`` recompute
+    accordingly.
     """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=-1)
@@ -244,14 +245,16 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
 
         # Drop an empty UserRouteStats doc. Conditional on current zero state to
         # avoid deleting a doc concurrently upserted by on_activity_created.
+        urs_doc_dropped = False
         if after["total_count"] == 0 and after["completed_count"] == 0 and after["verified_completed_count"] == 0:
-            await UserRouteStats.get_pymongo_collection().delete_one({
+            result = await UserRouteStats.get_pymongo_collection().delete_one({
                 "userId": activity.user_id,
                 "routeId": activity.route_id,
                 "totalCount": 0,
                 "completedCount": 0,
                 "verifiedCompletedCount": 0,
             })
+            urs_doc_dropped = result.deleted_count > 0
 
         local_date = _local_date_str(activity)
         remaining = await _recount_local_day(activity.user_id, local_date)
@@ -261,8 +264,67 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
             inc["distinctDays"] = -1
 
         await _update_user_stats(activity.user_id, inc)
+
+        if not urs_doc_dropped:
+            await _recompute_last_activity_at(
+                activity.user_id,
+                activity.route_id,
+                deleted_started_at=activity.started_at,
+                deleted_activity_id=activity.id if still_present else None,
+            )
     except Exception:
         logger.exception("on_activity_deleted failed for activity=%s", activity.id)
+
+
+async def _recompute_last_activity_at(
+    user_id: PydanticObjectId,
+    route_id: PydanticObjectId,
+    *,
+    deleted_started_at: datetime,
+    deleted_activity_id: PydanticObjectId | None,
+) -> None:
+    """Refresh ``UserRouteStats.lastActivityAt`` after an activity deletion.
+
+    Only recomputes when the stored ``lastActivityAt`` equals
+    ``deleted_started_at`` (i.e. the deletion may have made it stale). Scans
+    remaining activities for the new max; if ``deleted_activity_id`` is set
+    (hook fired before the Activity doc was removed), excludes that id from
+    the scan.
+    """
+    collection = UserRouteStats.get_pymongo_collection()
+    current = await collection.find_one(
+        {"userId": user_id, "routeId": route_id},
+        {"lastActivityAt": 1},
+    )
+    if current is None:
+        return
+
+    stored = current.get("lastActivityAt")
+    if stored is None:
+        return
+    # Both values may be tz-aware or tz-naive depending on client settings;
+    # normalize to naive-UTC for comparison.
+    def _naive_utc(dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+    if _naive_utc(stored) != _naive_utc(deleted_started_at):
+        return
+
+    query = Activity.find(
+        Activity.user_id == user_id,
+        Activity.route_id == route_id,
+    )
+    if deleted_activity_id is not None:
+        query = query.find(Activity.id != deleted_activity_id)
+    latest = await query.sort([("startedAt", -1)]).limit(1).to_list()
+
+    new_value = latest[0].started_at if latest else None
+    await collection.update_one(
+        {"userId": user_id, "routeId": route_id},
+        {"$set": {"lastActivityAt": new_value}},
+    )
 
 
 def _type_bucket(route_type: RouteType) -> str:

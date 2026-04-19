@@ -752,3 +752,105 @@ async def test_on_activity_created_out_of_order_does_not_regress(mongo_db, monke
         UserRouteStats.route_id == route.id,
     )
     assert urs.last_activity_at == later
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_recomputes_last_activity_at_when_matches(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2, 1]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    earlier = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    later = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    a1 = await _insert_activity(user_id, route.id, started_at=earlier)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(user_id, route.id, started_at=later)
+    await on_activity_created(a2, route)
+
+    # Hook runs BEFORE delete (the activities.py path).
+    await on_activity_deleted(a2, route)
+    await a2.delete()
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is not None
+    assert urs.last_activity_at == earlier
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_skips_recompute_when_deleted_not_latest(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    earlier = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    later = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    a1 = await _insert_activity(user_id, route.id, started_at=earlier)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(user_id, route.id, started_at=later)
+    await on_activity_created(a2, route)
+
+    # Delete the earlier activity; lastActivityAt should stay at `later`.
+    await on_activity_deleted(a1, route)
+    await a1.delete()
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is not None
+    assert urs.last_activity_at == later
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_after_delete_recomputes_correctly(mongo_db, monkeypatch):
+    # The routers/my.py path deletes activities BEFORE calling the hook (still_present=False).
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2, 1]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    earlier = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    later = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    a1 = await _insert_activity(user_id, route.id, started_at=earlier)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(user_id, route.id, started_at=later)
+    await on_activity_created(a2, route)
+
+    # Delete first, then hook.
+    await a2.delete()
+    await on_activity_deleted(a2, route)
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is not None
+    assert urs.last_activity_at == earlier
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_sole_activity_still_deletes_urs_doc(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 1]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    activity = await _insert_activity(
+        user_id, route.id,
+        status=ActivityStatus.COMPLETED, location_verified=True,
+    )
+    await on_activity_created(activity, route)
+
+    await on_activity_deleted(activity, route)
+    await activity.delete()
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is None
