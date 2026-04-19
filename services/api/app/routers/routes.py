@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi import status
 from typing import List, Optional, Dict, Any
@@ -32,6 +34,19 @@ from app.services.place_status import resolve_place_for_use
 from app.services import user_stats as user_stats_service
 
 router = APIRouter(prefix="/routes", tags=["routes"])
+
+logger = logging.getLogger(__name__)
+
+
+async def _inc_image_route_count(image_id: PydanticObjectId, delta: int) -> None:
+    """Fire-and-forget ``$inc`` on ``Image.routeCount``. Swallows exceptions."""
+    try:
+        await Image.get_pymongo_collection().update_one(
+            {"_id": image_id},
+            {"$inc": {"routeCount": delta}},
+        )
+    except Exception:
+        logger.exception("inc image.routeCount failed: image_id=%s delta=%s", image_id, delta)
 
 
 def _can_access_route(route, user) -> bool:
@@ -166,6 +181,7 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
     background_tasks.add_task(generate_route_overlay, created_route)
     enriched = await _enrich_route_with_hold_polygon_data(created_route)
     await user_stats_service.on_route_created(created_route)
+    await _inc_image_route_count(created_route.image_id, 1)
     return enriched
 
 
@@ -585,3 +601,4 @@ async def delete_route(route_id: str, current_user: User = Depends(get_current_u
     route.deleted_at = datetime.utcnow()
     await route.save()
     await user_stats_service.on_route_soft_deleted(route)
+    await _inc_image_route_count(route.image_id, -1)

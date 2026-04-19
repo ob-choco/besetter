@@ -56,6 +56,8 @@ class Image(Document):
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
     place_id: Optional[PydanticObjectId] = Field(None, description="연결된 Place ID")
 
+    route_count: int = Field(0, description="이 이미지를 사용 중인 (is_deleted != True) 루트 개수")
+
     class Settings:
         name = "images"
         indexes = [IndexModel([("filename", ASCENDING)])]
