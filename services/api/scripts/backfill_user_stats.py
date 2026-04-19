@@ -216,30 +216,31 @@ async def backfill_all() -> None:
 
 async def main(user_id: Optional[str] = None) -> None:
     client = AsyncIOMotorClient(get("mongodb.url"), tz_aware=True)
-    db = client.get_database(get("mongodb.name"))
-    await init_beanie(
-        database=db,
-        document_models=[
-            OpenIdNonce,
-            User,
-            HoldPolygon,
-            Image,
-            Route,
-            Place,
-            PlaceSuggestion,
-            Activity,
-            UserRouteStats,
-            Notification,
-            UserStats,
-        ],
-    )
+    try:
+        db = client.get_database(get("mongodb.name"))
+        await init_beanie(
+            database=db,
+            document_models=[
+                OpenIdNonce,
+                User,
+                HoldPolygon,
+                Image,
+                Route,
+                Place,
+                PlaceSuggestion,
+                Activity,
+                UserRouteStats,
+                Notification,
+                UserStats,
+            ],
+        )
 
-    if user_id is not None:
-        await backfill_user(PydanticObjectId(user_id))
-    else:
-        await backfill_all()
-
-    client.close()
+        if user_id is not None:
+            await backfill_user(PydanticObjectId(user_id))
+        else:
+            await backfill_all()
+    finally:
+        client.close()
 
 
 if __name__ == "__main__":
