@@ -16,7 +16,6 @@ import '../services/activity_service.dart';
 import '../services/http_client.dart';
 import '../utils/thumbnail_url.dart';
 import '../widgets/editors/profile_id_edit_dialog.dart';
-import 'notifications_page.dart';
 import 'setting.dart';
 
 class MyPage extends HookConsumerWidget {
@@ -26,8 +25,6 @@ class MyPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider);
-    final unreadNotifCount =
-        userAsync.whenOrNull(data: (u) => u.unreadNotificationCount) ?? 0;
     final isEditing = useState(false);
     final croppedImage = useState<File?>(null);
     final nameController = useTextEditingController();
@@ -243,22 +240,6 @@ class MyPage extends HookConsumerWidget {
         backgroundColor: const Color(0xFFF5F6F7),
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Badge.count(
-            count: unreadNotifCount,
-            isLabelVisible: unreadNotifCount > 0,
-            child: const Icon(
-              Icons.notifications_outlined,
-              color: Color(0xFF2C2F30),
-            ),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsPage()),
-            );
-          },
-        ),
         title: Text(
           l10n.profile,
           style: const TextStyle(
