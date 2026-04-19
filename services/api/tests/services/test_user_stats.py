@@ -63,7 +63,7 @@ def test_bucket_deltas_negative_sign():
 
 
 def _make_activity(started_at: datetime, tz: str | None) -> Activity:
-    return Activity(
+    return Activity.model_construct(
         route_id=PydanticObjectId(),
         user_id=PydanticObjectId(),
         status=ActivityStatus.COMPLETED,
@@ -77,20 +77,20 @@ def _make_activity(started_at: datetime, tz: str | None) -> Activity:
     )
 
 
-async def test_local_date_str_with_seoul_timezone_crosses_utc_midnight(mongo_db):
+def test_local_date_str_with_seoul_timezone_crosses_utc_midnight():
     # 2026-04-18T15:30Z == 2026-04-19 00:30 KST → "2026-04-19"
     started = datetime(2026, 4, 18, 15, 30, tzinfo=dt_tz.utc)
     activity = _make_activity(started, "Asia/Seoul")
     assert _local_date_str(activity) == "2026-04-19"
 
 
-async def test_local_date_str_with_utc_explicit(mongo_db):
+def test_local_date_str_with_utc_explicit():
     started = datetime(2026, 4, 19, 10, 0, tzinfo=dt_tz.utc)
     activity = _make_activity(started, "UTC")
     assert _local_date_str(activity) == "2026-04-19"
 
 
-async def test_local_date_str_with_none_falls_back_to_utc(mongo_db):
+def test_local_date_str_with_none_falls_back_to_utc():
     started = datetime(2026, 4, 19, 10, 0, tzinfo=dt_tz.utc)
     activity = _make_activity(started, None)
     assert _local_date_str(activity) == "2026-04-19"
