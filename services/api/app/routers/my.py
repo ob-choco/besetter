@@ -8,13 +8,13 @@ from pydantic import BaseModel
 
 from app.dependencies import get_current_user
 from app.models import model_config
-from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
-from app.models.route import Visibility
+from app.models.activity import Activity, ActivityStatus, RouteSnapshot
+from app.models.route import Route, Visibility
 from app.routers.activities import (
     _build_stats_inc,
     _update_route_stats,
-    _update_user_route_stats,
 )
+from app.services import user_stats as user_stats_service
 from app.models.user import User
 
 router = APIRouter(prefix="/my", tags=["my"])
@@ -343,9 +343,16 @@ async def delete_daily_route_group(
         {"$match": {"localDate": date}},
         {"$project": {
             "_id": 1,
+            "userId": 1,
+            "routeId": 1,
             "status": 1,
             "locationVerified": 1,
             "duration": 1,
+            "startedAt": 1,
+            "endedAt": 1,
+            "timezone": 1,
+            "routeSnapshot": 1,
+            "createdAt": 1,
         }},
     ]
 
@@ -356,34 +363,42 @@ async def delete_daily_route_group(
     if not matched:
         return
 
-    activity_ids = [m["_id"] for m in matched]
-    incs = [
-        _build_stats_inc(
-            ActivityStatus(m["status"]),
-            m.get("locationVerified", False),
-            m.get("duration", 0.0),
-            sign=-1,
-        )
-        for m in matched
-    ]
-    merged_inc = _merge_incs(incs)
+    route = await Route.find_one(Route.id == route_object_id)
+    if route is None:
+        # Route vanished — delete activities but skip stats path.
+        await collection.delete_many({"_id": {"$in": [m["_id"] for m in matched]}})
+        return
 
-    # 1. Hard delete activities first (conservative drift direction).
+    # 1. Build Activity objects in memory (we need full state for the hooks, and the docs will be gone after delete_many).
+    activities: list[Activity] = []
+    merged_inc: dict[str, int] = {}
+    for m in matched:
+        a = Activity.model_construct(
+            id=m["_id"],
+            user_id=m["userId"],
+            route_id=m["routeId"],
+            status=ActivityStatus(m["status"]),
+            location_verified=m.get("locationVerified", False),
+            started_at=m["startedAt"],
+            ended_at=m["endedAt"],
+            duration=m.get("duration", 0.0),
+            timezone=m["timezone"],
+            route_snapshot=RouteSnapshot(**m["routeSnapshot"]),
+            created_at=m["createdAt"],
+        )
+        activities.append(a)
+        inc = _build_stats_inc(a.status, a.location_verified, a.duration, sign=-1)
+        for k, v in inc.items():
+            merged_inc[k] = merged_inc.get(k, 0) + v
+
+    activity_ids = [a.id for a in activities]
+
+    # 2. Hard delete all activities first (conservative drift direction, same as before).
     await collection.delete_many({"_id": {"$in": activity_ids}})
 
-    # 2. Then apply the cumulative stats decrement.
+    # 3. Route-level stats decrement is still bulk-merged (Route.activityStats is per-route, not per-user-per-day).
     await _update_route_stats(route_object_id, merged_inc)
-    await _update_user_route_stats(current_user.id, route_object_id, merged_inc)
 
-    # 3. Clean up empty UserRouteStats doc (same rule as single DELETE).
-    user_stats = await UserRouteStats.find_one(
-        UserRouteStats.user_id == current_user.id,
-        UserRouteStats.route_id == route_object_id,
-    )
-    if (
-        user_stats
-        and user_stats.total_count <= 0
-        and user_stats.completed_count <= 0
-        and user_stats.verified_completed_count <= 0
-    ):
-        await user_stats.delete()
+    # 4. Per-activity user-level hook. The hook is order-agnostic re: activity.delete() thanks to its `still_present` check.
+    for a in activities:
+        await user_stats_service.on_activity_deleted(a, route)

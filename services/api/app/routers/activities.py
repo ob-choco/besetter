@@ -21,6 +21,7 @@ from app.models.image import Image
 from app.models.place import Place
 from app.models.route import Route
 from app.models.user import User
+from app.services import user_stats as user_stats_service
 
 router = APIRouter(prefix="/routes", tags=["activities"])
 
@@ -126,36 +127,6 @@ async def _update_route_stats(route_id: PydanticObjectId, inc: dict) -> None:
     """Increment Route.activity_stats fields."""
     prefixed = {f"activityStats.{k}": v for k, v in inc.items()}
     await Route.find_one(Route.id == route_id).update({"$inc": prefixed})
-
-
-async def _update_user_route_stats(
-    user_id: PydanticObjectId,
-    route_id: PydanticObjectId,
-    inc: dict,
-    activity_at: Optional[datetime] = None,
-) -> None:
-    """Upsert and increment UserRouteStats fields."""
-    update_ops: dict = {"$inc": inc}
-    if activity_at:
-        update_ops["$set"] = {"lastActivityAt": activity_at}
-
-    await UserRouteStats.find_one(
-        UserRouteStats.user_id == user_id,
-        UserRouteStats.route_id == route_id,
-    ).upsert(
-        update_ops,
-        on_insert=UserRouteStats(
-            user_id=user_id,
-            route_id=route_id,
-            total_count=inc.get("totalCount", 0),
-            total_duration=inc.get("totalDuration", 0),
-            completed_count=inc.get("completedCount", 0),
-            completed_duration=inc.get("completedDuration", 0),
-            verified_completed_count=inc.get("verifiedCompletedCount", 0),
-            verified_completed_duration=inc.get("verifiedCompletedDuration", 0),
-            last_activity_at=activity_at,
-        ),
-    )
 
 
 def _activity_to_response(activity: Activity) -> ActivityResponse:
@@ -270,7 +241,7 @@ async def create_activity(
     # 6. Stats 갱신
     inc = _build_stats_inc(request.status, location_verified, duration, sign=1)
     await _update_route_stats(route.id, inc)
-    await _update_user_route_stats(current_user.id, route.id, inc, activity_at=now)
+    await user_stats_service.on_activity_created(activity, route)
 
     return _activity_to_response(activity)
 
@@ -290,20 +261,18 @@ async def delete_activity(
     if not activity:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Activity not found")
 
+    route = await Route.find_one(Route.id == activity.route_id)
+    if route is None:
+        # Shouldn't happen under normal flow; bail out of the stats path but still delete the activity.
+        await activity.delete()
+        return
+
     # 2. Stats 감소
     inc = _build_stats_inc(activity.status, activity.location_verified, activity.duration, sign=-1)
     await _update_route_stats(activity.route_id, inc)
-    await _update_user_route_stats(current_user.id, activity.route_id, inc)
+    await user_stats_service.on_activity_deleted(activity, route)
 
-    # 3. UserRouteStats 문서 삭제 (모든 카운트가 0이면)
-    user_stats = await UserRouteStats.find_one(
-        UserRouteStats.user_id == current_user.id,
-        UserRouteStats.route_id == ObjectId(route_id),
-    )
-    if user_stats and user_stats.total_count <= 0 and user_stats.completed_count <= 0 and user_stats.verified_completed_count <= 0:
-        await user_stats.delete()
-
-    # 4. Hard delete
+    # 3. Hard delete
     await activity.delete()
 
 
