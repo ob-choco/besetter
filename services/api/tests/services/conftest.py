@@ -14,8 +14,7 @@ from mongomock_motor import AsyncMongoMockClient
 from app.models.activity import Activity, UserRouteStats
 from app.models.route import Route
 from app.models.user import User
-
-# TODO(T2): import UserStats from app.models.user_stats after Task 2
+from app.models.user_stats import UserStats
 
 
 @pytest_asyncio.fixture
@@ -24,6 +23,6 @@ async def mongo_db():
     db = client.get_database("besetter-test")
     await init_beanie(
         database=db,
-        document_models=[User, Route, Activity, UserRouteStats],  # TODO(T2): add UserStats
+        document_models=[User, Route, Activity, UserRouteStats, UserStats],
     )
     yield db
