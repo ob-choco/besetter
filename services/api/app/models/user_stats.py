@@ -3,7 +3,7 @@ from typing import Optional
 
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pymongo import ASCENDING, IndexModel
 
 from . import model_config
@@ -29,11 +29,11 @@ class UserStats(Document):
     model_config = model_config
 
     user_id: PydanticObjectId
-    activity: ActivityCounters = ActivityCounters()
-    distinct_routes: ActivityCounters = ActivityCounters()
+    activity: ActivityCounters = Field(default_factory=ActivityCounters)
+    distinct_routes: ActivityCounters = Field(default_factory=ActivityCounters)
     distinct_days: int = 0
-    own_routes_activity: ActivityCounters = ActivityCounters()
-    routes_created: RoutesCreatedCounters = RoutesCreatedCounters()
+    own_routes_activity: ActivityCounters = Field(default_factory=ActivityCounters)
+    routes_created: RoutesCreatedCounters = Field(default_factory=RoutesCreatedCounters)
     updated_at: Optional[datetime] = None
 
     class Settings:
