@@ -188,6 +188,77 @@ async def test_apply_urs_delta_mixed_signs(mongo_db):
 
 
 @pytest.mark.asyncio
+async def test_apply_urs_delta_sets_last_activity_at_on_insert(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    t = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+
+    await _apply_user_route_stats_delta(
+        user_id,
+        route_id,
+        {"total_count": 1, "completed_count": 0, "verified_completed_count": 0},
+        last_activity_at=t,
+    )
+
+    doc = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route_id,
+    )
+    assert doc is not None
+    assert doc.last_activity_at == t
+
+
+@pytest.mark.asyncio
+async def test_apply_urs_delta_max_does_not_regress(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    newer = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    older = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+
+    await _apply_user_route_stats_delta(
+        user_id, route_id,
+        {"total_count": 1, "completed_count": 0, "verified_completed_count": 0},
+        last_activity_at=newer,
+    )
+    await _apply_user_route_stats_delta(
+        user_id, route_id,
+        {"total_count": 1, "completed_count": 0, "verified_completed_count": 0},
+        last_activity_at=older,
+    )
+
+    doc = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route_id,
+    )
+    assert doc.last_activity_at == newer
+
+
+@pytest.mark.asyncio
+async def test_apply_urs_delta_no_last_activity_at_leaves_field_untouched(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    t = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+
+    await _apply_user_route_stats_delta(
+        user_id, route_id,
+        {"total_count": 1, "completed_count": 0, "verified_completed_count": 0},
+        last_activity_at=t,
+    )
+    await _apply_user_route_stats_delta(
+        user_id, route_id,
+        {"total_count": 1, "completed_count": 0, "verified_completed_count": 0},
+        last_activity_at=None,
+    )
+
+    doc = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route_id,
+    )
+    assert doc.last_activity_at == t
+    assert doc.total_count == 2
+
+
+@pytest.mark.asyncio
 async def test_apply_urs_delta_upsert_initializes_duration_fields(mongo_db):
     user_id = PydanticObjectId()
     route_id = PydanticObjectId()

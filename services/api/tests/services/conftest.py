@@ -19,7 +19,7 @@ from app.models.user_stats import UserStats
 
 @pytest_asyncio.fixture
 async def mongo_db():
-    client = AsyncMongoMockClient()
+    client = AsyncMongoMockClient(tz_aware=True)
     db = client.get_database("besetter-test")
     await init_beanie(
         database=db,

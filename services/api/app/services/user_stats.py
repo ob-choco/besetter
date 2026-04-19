@@ -76,28 +76,37 @@ async def _apply_user_route_stats_delta(
     user_id: PydanticObjectId,
     route_id: PydanticObjectId,
     deltas: dict[str, int],
+    *,
+    last_activity_at: datetime | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Atomically apply ``$inc`` on UserRouteStats bucket counters for (user, route).
 
     Upserts the doc if missing. Returns ``(before, after)`` bucket counts as
     snake_case-keyed dicts. ``before = after - deltas``.
+
+    When ``last_activity_at`` is provided, applies ``$max`` so the stored
+    timestamp never regresses (late-arriving activities cannot overwrite a
+    newer one).
     """
     inc = {_URS_BUCKET_DB_FIELDS[k]: v for k, v in deltas.items()}
+
+    update: dict = {
+        "$inc": inc,
+        "$setOnInsert": {
+            "userId": user_id,
+            "routeId": route_id,
+            "totalDuration": 0,
+            "completedDuration": 0,
+            "verifiedCompletedDuration": 0,
+        },
+    }
+    if last_activity_at is not None:
+        update["$max"] = {"lastActivityAt": last_activity_at}
 
     collection = UserRouteStats.get_pymongo_collection()
     updated = await collection.find_one_and_update(
         {"userId": user_id, "routeId": route_id},
-        {
-            "$inc": inc,
-            "$setOnInsert": {
-                "userId": user_id,
-                "routeId": route_id,
-                "totalDuration": 0,
-                "completedDuration": 0,
-                "verifiedCompletedDuration": 0,
-                "lastActivityAt": None,
-            },
-        },
+        update,
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
