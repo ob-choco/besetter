@@ -7,7 +7,9 @@ activity and route mutation points. See
 
 from __future__ import annotations
 
-from app.models.activity import ActivityStatus
+from zoneinfo import ZoneInfo
+
+from app.models.activity import Activity, ActivityStatus
 
 
 BUCKET_FIELDS = ("total_count", "completed_count", "verified_completed_count")
@@ -27,3 +29,13 @@ def _bucket_deltas(status: ActivityStatus, location_verified: bool, sign: int) -
         "completed_count": sign * completed,
         "verified_completed_count": sign * verified_completed,
     }
+
+
+def _local_date_str(activity: Activity) -> str:
+    """Return the activity's started_at local date in ISO ``YYYY-MM-DD`` form.
+
+    Uses the activity's stored ``timezone`` field (IANA). Falls back to UTC
+    when unset, matching the aggregation pattern used in ``routers/my.py``.
+    """
+    tz_name = activity.timezone or "UTC"
+    return activity.started_at.astimezone(ZoneInfo(tz_name)).date().isoformat()
