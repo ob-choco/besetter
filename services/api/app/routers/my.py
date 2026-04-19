@@ -156,6 +156,7 @@ class DailyRouteItem(BaseModel):
     completed_count: int
     attempted_count: int
     total_duration: float
+    owner: OwnerView
 
 
 class DailyRoutesResponse(BaseModel):
@@ -334,7 +335,7 @@ async def get_daily_routes(
             "foreignField": "_id",
             "as": "route",
             "pipeline": [
-                {"$project": {"visibility": 1, "isDeleted": 1}},
+                {"$project": {"visibility": 1, "isDeleted": 1, "userId": 1}},
             ],
         }},
         {"$set": {
@@ -344,6 +345,7 @@ async def get_daily_routes(
             "isDeleted": {
                 "$ifNull": [{"$first": "$route.isDeleted"}, False],
             },
+            "ownerUserId": {"$first": "$route.userId"},
         }},
         {"$unset": "route"},
         {"$group": {
@@ -372,6 +374,26 @@ async def get_daily_routes(
         total_duration=doc["totalDuration"],
         route_count=doc["routeCount"],
     )
+    raw_routes = doc["routes"]
+    owner_ids = list({r["ownerUserId"] for r in raw_routes if r.get("ownerUserId") is not None})
+    owner_by_id: dict[PydanticObjectId, User] = {}
+    if owner_ids:
+        owner_docs = await User.find(In(User.id, owner_ids)).to_list()
+        owner_by_id = {u.id: u for u in owner_docs}
+
+    def _owner_view(raw_owner_id) -> OwnerView:
+        if raw_owner_id is None:
+            return OwnerView(user_id=PydanticObjectId(), is_deleted=True)
+        owner_doc = owner_by_id.get(raw_owner_id)
+        if owner_doc is None or owner_doc.is_deleted:
+            return OwnerView(user_id=raw_owner_id, is_deleted=True)
+        return OwnerView(
+            user_id=owner_doc.id,
+            profile_id=owner_doc.profile_id,
+            profile_image_url=owner_doc.profile_image_url,
+            is_deleted=False,
+        )
+
     routes = [
         DailyRouteItem(
             route_id=str(r["_id"]),
@@ -382,8 +404,9 @@ async def get_daily_routes(
             completed_count=r["completedCount"],
             attempted_count=r["attemptedCount"],
             total_duration=r["totalDuration"],
+            owner=_owner_view(r.get("ownerUserId")),
         )
-        for r in doc["routes"]
+        for r in raw_routes
     ]
 
     return DailyRoutesResponse(summary=summary, routes=routes)

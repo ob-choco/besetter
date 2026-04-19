@@ -104,6 +104,9 @@ def test_daily_routes_response_schema():
         grade_color="#4CAF50",
         place_name="Urban Apex Gym",
     )
+    from beanie.odm.fields import PydanticObjectId
+    from app.models.user import OwnerView
+
     route_item = DailyRouteItem(
         route_id="507f1f77bcf86cd799439011",
         route_snapshot=snapshot,
@@ -113,6 +116,7 @@ def test_daily_routes_response_schema():
         completed_count=2,
         attempted_count=1,
         total_duration=845.50,
+        owner=OwnerView(user_id=PydanticObjectId(), is_deleted=True),
     )
     summary = DailySummary(
         total_count=3,
@@ -136,6 +140,9 @@ def test_daily_routes_response_schema():
 
 
 def test_daily_route_item_private_and_deleted_flags():
+    from beanie.odm.fields import PydanticObjectId
+    from app.models.user import OwnerView
+
     snapshot = RouteSnapshot(grade_type="v_grade", grade="V2")
     item = DailyRouteItem(
         route_id="507f1f77bcf86cd799439012",
@@ -146,6 +153,7 @@ def test_daily_route_item_private_and_deleted_flags():
         completed_count=0,
         attempted_count=1,
         total_duration=12.0,
+        owner=OwnerView(user_id=PydanticObjectId(), is_deleted=True),
     )
     dumped = item.model_dump(by_alias=True)
     assert dumped["routeVisibility"] == "private"
@@ -220,3 +228,55 @@ def test_merge_incs_negative_signs():
         {"totalCount": -1, "totalDuration": -10.0},
         {"totalCount": -1, "totalDuration": -20.0},
     ]) == {"totalCount": -2, "totalDuration": -30.0}
+
+
+def test_daily_route_item_serializes_owner():
+    """DailyRouteItem.owner should round-trip with camelCase aliases."""
+    from beanie.odm.fields import PydanticObjectId
+    from app.models.user import OwnerView
+    from app.routers.my import DailyRouteItem
+
+    snapshot = RouteSnapshot(grade_type="v_scale", grade="V4")
+    owner = OwnerView(
+        user_id=PydanticObjectId("507f1f77bcf86cd799439011"),
+        profile_id="climber42",
+        profile_image_url="https://cdn/x.jpg",
+        is_deleted=False,
+    )
+    item = DailyRouteItem(
+        route_id="507f1f77bcf86cd799439012",
+        route_snapshot=snapshot,
+        route_visibility="public",
+        is_deleted=False,
+        total_count=1,
+        completed_count=1,
+        attempted_count=0,
+        total_duration=60.0,
+        owner=owner,
+    )
+    dumped = item.model_dump(by_alias=True, mode="json")
+    assert dumped["owner"]["userId"] == "507f1f77bcf86cd799439011"
+    assert dumped["owner"]["profileId"] == "climber42"
+    assert dumped["owner"]["isDeleted"] is False
+
+
+def test_daily_route_item_supports_deleted_owner():
+    from beanie.odm.fields import PydanticObjectId
+    from app.models.user import OwnerView
+    from app.routers.my import DailyRouteItem
+
+    snapshot = RouteSnapshot(grade_type="v_scale", grade="V4")
+    item = DailyRouteItem(
+        route_id="507f1f77bcf86cd799439012",
+        route_snapshot=snapshot,
+        route_visibility="public",
+        is_deleted=False,
+        total_count=1,
+        completed_count=0,
+        attempted_count=1,
+        total_duration=30.0,
+        owner=OwnerView(user_id=PydanticObjectId(), is_deleted=True),
+    )
+    dumped = item.model_dump(by_alias=True, mode="json")
+    assert dumped["owner"]["isDeleted"] is True
+    assert dumped["owner"]["profileId"] is None
