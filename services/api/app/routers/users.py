@@ -6,8 +6,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
+from pymongo.errors import DuplicateKeyError
 
 from app.core.gcs import bucket, generate_signed_url, extract_blob_path_from_url, get_base_url
+from app.core.profile_id import ProfileIdError, validate_profile_id
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.user import User
@@ -36,6 +38,33 @@ class UserProfileResponse(BaseModel):
     bio: Optional[str] = None
     profile_image_url: Optional[str] = None
     unread_notification_count: int = 0
+
+
+class UpdateProfileIdRequest(BaseModel):
+    model_config = model_config
+
+    profile_id: str
+
+
+_PROFILE_ID_ERROR_MESSAGES: dict[ProfileIdError, str] = {
+    ProfileIdError.TOO_SHORT: "8자 이상 입력해 주세요",
+    ProfileIdError.TOO_LONG: "16자 이하로 입력해 주세요",
+    ProfileIdError.INVALID_CHARS: "소문자, 숫자, 점(.), 밑줄(_)만 사용할 수 있습니다",
+    ProfileIdError.INVALID_START_END: "첫 글자와 끝 글자는 영문 소문자 또는 숫자여야 합니다",
+    ProfileIdError.CONSECUTIVE_SPECIAL: "점(.)과 밑줄(_)을 연속해서 쓸 수 없습니다",
+    ProfileIdError.RESERVED: "사용할 수 없는 프로필 ID입니다",
+    ProfileIdError.TAKEN: "이미 사용 중인 프로필 ID입니다",
+}
+
+
+def _validate_profile_id_or_raise(value: str) -> None:
+    err = validate_profile_id(value)
+    if err is None:
+        return
+    raise HTTPException(
+        status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={"code": err.value, "message": _PROFILE_ID_ERROR_MESSAGES[err]},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +145,37 @@ async def update_my_profile(
 
     current_user.updated_at = datetime.now(tz=timezone.utc)
     await current_user.save()
+
+    return _build_profile_response(current_user)
+
+
+@router.patch("/me/profile-id", response_model=UserProfileResponse)
+async def update_my_profile_id(
+    body: UpdateProfileIdRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Change the caller's profile_id. Returns the full profile on success.
+
+    422 on validation failure, 409 on uniqueness collision.
+    """
+    new_value = body.profile_id
+    _validate_profile_id_or_raise(new_value)
+
+    if new_value == current_user.profile_id:
+        return _build_profile_response(current_user)
+
+    current_user.profile_id = new_value
+    current_user.updated_at = datetime.now(tz=timezone.utc)
+    try:
+        await current_user.save()
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=http_status.HTTP_409_CONFLICT,
+            detail={
+                "code": ProfileIdError.TAKEN.value,
+                "message": _PROFILE_ID_ERROR_MESSAGES[ProfileIdError.TAKEN],
+            },
+        )
 
     return _build_profile_response(current_user)
 

@@ -79,3 +79,38 @@ def test_build_profile_response_passes_through_nulls():
     assert resp.email is None
     assert resp.bio is None
     assert resp.profile_image_url is None
+
+
+import pytest
+from fastapi import HTTPException, status as http_status
+
+from app.routers.users import _validate_profile_id_or_raise
+
+
+@pytest.mark.parametrize(
+    "value,expected_code",
+    [
+        ("abc", "PROFILE_ID_TOO_SHORT"),
+        ("a" * 17, "PROFILE_ID_TOO_LONG"),
+        ("Climber99", "PROFILE_ID_INVALID_CHARS"),
+        ("_climber9", "PROFILE_ID_INVALID_START_END"),
+        ("clim__ber", "PROFILE_ID_CONSECUTIVE_SPECIAL"),
+        ("fuckmaster", "PROFILE_ID_RESERVED"),  # profanity substring
+    ],
+)
+def test_validate_profile_id_or_raise_maps_errors(value, expected_code):
+    with pytest.raises(HTTPException) as exc_info:
+        _validate_profile_id_or_raise(value)
+    assert exc_info.value.status_code == http_status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert exc_info.value.detail["code"] == expected_code
+
+
+def test_validate_profile_id_or_raise_reserved_exact():
+    with pytest.raises(HTTPException) as exc_info:
+        _validate_profile_id_or_raise("besetterofficial")
+    assert exc_info.value.detail["code"] == "PROFILE_ID_RESERVED"
+
+
+def test_validate_profile_id_or_raise_accepts_valid():
+    # Should not raise.
+    _validate_profile_id_or_raise("climber99")
