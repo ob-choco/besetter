@@ -211,10 +211,9 @@ async def on_activity_created(activity: Activity, route: Route) -> None:
 async def on_activity_deleted(activity: Activity, route: Route) -> None:
     """Apply post-delete userStats updates. Swallows all exceptions.
 
-    Re-count for ``distinct_days`` runs after the caller has already removed
-    the activity doc in production. To keep the service self-consistent, we
-    ignore this activity's own doc in the recount by subtracting one when
-    we see it still present.
+    Order-agnostic with respect to ``activity.delete()``: callers may invoke
+    this hook before OR after the activity doc is removed. The ``still_present``
+    check adjusts ``_recount_local_day`` accordingly.
     """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=-1)
@@ -229,14 +228,16 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
                 if route.user_id == activity.user_id and not route.is_deleted:
                     inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = -1
 
-        # Drop an empty UserRouteStats doc (mirrors previous router behavior).
+        # Drop an empty UserRouteStats doc. Conditional on current zero state to
+        # avoid deleting a doc concurrently upserted by on_activity_created.
         if after["total_count"] == 0 and after["completed_count"] == 0 and after["verified_completed_count"] == 0:
-            urs_doc = await UserRouteStats.find_one(
-                UserRouteStats.user_id == activity.user_id,
-                UserRouteStats.route_id == activity.route_id,
-            )
-            if urs_doc is not None:
-                await urs_doc.delete()
+            await UserRouteStats.get_pymongo_collection().delete_one({
+                "userId": activity.user_id,
+                "routeId": activity.route_id,
+                "totalCount": 0,
+                "completedCount": 0,
+                "verifiedCompletedCount": 0,
+            })
 
         local_date = _local_date_str(activity)
         remaining = await _recount_local_day(activity.user_id, local_date)
