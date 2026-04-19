@@ -5,18 +5,24 @@ from zoneinfo import ZoneInfo
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.activity import Activity, ActivityStatus, RouteSnapshot
 from app.models.route import Route, Visibility
+from app.models.user_stats import (
+    ActivityCounters,
+    RoutesCreatedCounters,
+    UserStats,
+)
 from app.routers.activities import (
     _build_stats_inc,
     _update_route_stats,
 )
 from app.services import user_stats as user_stats_service
 from app.models.user import User
+from beanie.odm.fields import PydanticObjectId
 
 router = APIRouter(prefix="/my", tags=["my"])
 
@@ -154,9 +160,39 @@ class DailyRoutesResponse(BaseModel):
     routes: list[DailyRouteItem]
 
 
+class UserStatsResponse(BaseModel):
+    model_config = model_config
+
+    activity: ActivityCounters = Field(default_factory=ActivityCounters)
+    distinct_routes: ActivityCounters = Field(default_factory=ActivityCounters)
+    distinct_days: int = 0
+    own_routes_activity: ActivityCounters = Field(default_factory=ActivityCounters)
+    routes_created: RoutesCreatedCounters = Field(default_factory=RoutesCreatedCounters)
+
+
+async def _build_user_stats_response(user_id: PydanticObjectId) -> UserStatsResponse:
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    if stats is None:
+        return UserStatsResponse()
+    return UserStatsResponse(
+        activity=stats.activity,
+        distinct_routes=stats.distinct_routes,
+        distinct_days=stats.distinct_days,
+        own_routes_activity=stats.own_routes_activity,
+        routes_created=stats.routes_created,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.get("/user-stats", response_model=UserStatsResponse)
+async def get_my_user_stats(
+    current_user: User = Depends(get_current_user),
+):
+    return await _build_user_stats_response(current_user.id)
 
 
 @router.get("/last-activity-date", response_model=LastActivityDateResponse)

@@ -44,6 +44,7 @@ class ImageServiceView(BaseModel):
     place: Optional[PlaceView] = Field(None, description="연결된 Place")
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
+    route_count: int = Field(0, description="이 이미지를 사용 중인 (is_deleted != True) 루트 개수")
 
 
 class ImageListMeta(BaseModel):
@@ -185,6 +186,7 @@ async def get_images(
             place=place_view,
             wall_name=image.wall_name,
             wall_expiration_date=image.wall_expiration_date,
+            route_count=image.route_count,
         ))
 
     return ImageListResponse(
@@ -318,6 +320,7 @@ async def get_image(
         place=place_view,
         wall_name=image.wall_name,
         wall_expiration_date=image.wall_expiration_date,
+        route_count=image.route_count,
     )
 
 
