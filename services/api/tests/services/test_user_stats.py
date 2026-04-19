@@ -19,6 +19,7 @@ from app.services.user_stats import (
     _recount_local_day,
     on_activity_created,
     on_activity_deleted,
+    on_route_created,
 )
 
 
@@ -478,3 +479,31 @@ async def test_on_activity_deleted_skips_own_routes_activity_when_route_soft_del
     assert stats.own_routes_activity.total_count == 0
     assert stats.own_routes_activity.completed_count == 0
     assert stats.own_routes_activity.verified_completed_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_route_created_bouldering(mongo_db):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.BOULDERING)
+    await route.insert()
+
+    await on_route_created(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.routes_created.total_count == 1
+    assert stats.routes_created.bouldering_count == 1
+    assert stats.routes_created.endurance_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_route_created_endurance(mongo_db):
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, type_=RouteType.ENDURANCE)
+    await route.insert()
+
+    await on_route_created(route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.routes_created.total_count == 1
+    assert stats.routes_created.bouldering_count == 0
+    assert stats.routes_created.endurance_count == 1

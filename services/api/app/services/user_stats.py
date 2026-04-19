@@ -249,3 +249,24 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
         await _update_user_stats(activity.user_id, inc)
     except Exception:
         logger.exception("on_activity_deleted failed for activity=%s", activity.id)
+
+
+def _type_bucket(route_type: RouteType) -> str:
+    if route_type == RouteType.BOULDERING:
+        return "bouldering_count"
+    if route_type == RouteType.ENDURANCE:
+        return "endurance_count"
+    raise ValueError(f"Unknown RouteType: {route_type!r}")
+
+
+async def on_route_created(route: Route) -> None:
+    """Apply post-create userStats updates for a route. Swallows all exceptions."""
+    try:
+        type_bucket = _type_bucket(route.type)
+        inc = {
+            _ROUTES_CREATED_DB_FIELDS["total_count"]: 1,
+            _ROUTES_CREATED_DB_FIELDS[type_bucket]: 1,
+        }
+        await _update_user_stats(route.user_id, inc)
+    except Exception:
+        logger.exception("on_route_created failed for route=%s", route.id)
