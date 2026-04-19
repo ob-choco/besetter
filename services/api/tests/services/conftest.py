@@ -12,6 +12,8 @@ from beanie import init_beanie
 from mongomock_motor import AsyncMongoMockClient
 
 from app.models.activity import Activity, UserRouteStats
+from app.models.image import Image
+from app.models.place import Place
 from app.models.route import Route
 from app.models.user import User
 from app.models.user_stats import UserStats
@@ -23,6 +25,6 @@ async def mongo_db():
     db = client.get_database("besetter-test")
     await init_beanie(
         database=db,
-        document_models=[User, Route, Activity, UserRouteStats, UserStats],
+        document_models=[User, Route, Activity, UserRouteStats, UserStats, Image, Place],
     )
     yield db
