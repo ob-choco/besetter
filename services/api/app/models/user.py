@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from beanie import Document
+from beanie.odm.fields import PydanticObjectId
 from pydantic import BaseModel
 from pymongo import ASCENDING, IndexModel
 
@@ -90,3 +91,19 @@ class User(Document):
         indexes = [
             IndexModel([("profileId", ASCENDING)], unique=True),
         ]
+
+
+class OwnerView(BaseModel):
+    """Public profile summary shown alongside a route or activity.
+
+    ``profile_id`` and ``profile_image_url`` are null when ``is_deleted`` is
+    True (user withdrew) — the mobile `OwnerBadge` falls back to a
+    "탈퇴한 회원" label.
+    """
+
+    model_config = model_config
+
+    user_id: PydanticObjectId
+    profile_id: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    is_deleted: bool = False
