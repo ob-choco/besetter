@@ -7,6 +7,7 @@ activity and route mutation points. See
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -14,6 +15,11 @@ from beanie.odm.fields import PydanticObjectId
 from pymongo import ReturnDocument
 
 from app.models.activity import Activity, ActivityStatus, UserRouteStats
+from app.models.route import Route, RouteType
+from app.models.user_stats import UserStats
+
+
+logger = logging.getLogger(__name__)
 
 
 BUCKET_FIELDS = ("total_count", "completed_count", "verified_completed_count")
@@ -131,3 +137,67 @@ async def _recount_local_day(user_id: PydanticObjectId, local_date_str: str) -> 
     async for doc in cursor:
         return int(doc["count"])
     return 0
+
+
+_ACTIVITY_BUCKET_DB_FIELDS = {
+    "total_count": "activity.totalCount",
+    "completed_count": "activity.completedCount",
+    "verified_completed_count": "activity.verifiedCompletedCount",
+}
+_DISTINCT_ROUTES_DB_FIELDS = {
+    "total_count": "distinctRoutes.totalCount",
+    "completed_count": "distinctRoutes.completedCount",
+    "verified_completed_count": "distinctRoutes.verifiedCompletedCount",
+}
+_OWN_ROUTES_ACTIVITY_DB_FIELDS = {
+    "total_count": "ownRoutesActivity.totalCount",
+    "completed_count": "ownRoutesActivity.completedCount",
+    "verified_completed_count": "ownRoutesActivity.verifiedCompletedCount",
+}
+_ROUTES_CREATED_DB_FIELDS = {
+    "total_count": "routesCreated.totalCount",
+    "bouldering_count": "routesCreated.boulderingCount",
+    "endurance_count": "routesCreated.enduranceCount",
+}
+
+
+async def _update_user_stats(user_id: PydanticObjectId, inc: dict[str, int]) -> None:
+    """Run ``$inc`` against ``userStats`` for ``user_id``, upserting if missing.
+
+    ``inc`` keys are dotted DB paths like ``activity.totalCount``.
+    """
+    if not inc:
+        return
+    collection = UserStats.get_pymongo_collection()
+    await collection.update_one(
+        {"userId": user_id},
+        {
+            "$inc": inc,
+            "$set": {"updatedAt": datetime.now(tz=timezone.utc)},
+            "$setOnInsert": {"userId": user_id},
+        },
+        upsert=True,
+    )
+
+
+async def on_activity_created(activity: Activity, route: Route) -> None:
+    """Apply post-create userStats updates. Swallows all exceptions."""
+    try:
+        deltas = _bucket_deltas(activity.status, activity.location_verified, sign=1)
+        before, after = await _apply_user_route_stats_delta(activity.user_id, activity.route_id, deltas)
+
+        inc: dict[str, int] = {}
+        for bucket, delta in deltas.items():
+            if delta:
+                inc[_ACTIVITY_BUCKET_DB_FIELDS[bucket]] = delta
+            if before[bucket] == 0 and after[bucket] >= 1:
+                inc[_DISTINCT_ROUTES_DB_FIELDS[bucket]] = 1
+                if route.user_id == activity.user_id and not route.is_deleted:
+                    inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = 1
+
+        if await _recount_local_day(activity.user_id, _local_date_str(activity)) == 1:
+            inc["distinctDays"] = 1
+
+        await _update_user_stats(activity.user_id, inc)
+    except Exception:
+        logger.exception("on_activity_created failed for activity=%s", activity.id)

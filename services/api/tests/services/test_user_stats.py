@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone as dt_tz
+from unittest.mock import AsyncMock
 
 import pytest
 from beanie.odm.fields import PydanticObjectId
 
 from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
+from app.models.route import Route, RouteType, Visibility
 from app.models.user_stats import UserStats
 from app.services.user_stats import (
     _apply_user_route_stats_delta,
@@ -15,6 +17,7 @@ from app.services.user_stats import (
     _day_utc_superset,
     _local_date_str,
     _recount_local_day,
+    on_activity_created,
 )
 
 
@@ -279,3 +282,120 @@ async def test_recount_local_day_falls_back_to_utc_when_timezone_null(mongo_db):
     ).insert()
 
     assert await _recount_local_day(user_id, "2026-04-19") == 1
+
+
+def _make_route(owner_id: PydanticObjectId, type_: RouteType = RouteType.BOULDERING, is_deleted: bool = False) -> Route:
+    return Route(
+        type=type_,
+        grade_type="v_scale",
+        grade="V1",
+        visibility=Visibility.PUBLIC,
+        image_id=PydanticObjectId(),
+        hold_polygon_id=PydanticObjectId(),
+        user_id=owner_id,
+        image_url="https://example.com/a.jpg",
+        is_deleted=is_deleted,
+    )
+
+
+async def _insert_activity(
+    user_id: PydanticObjectId,
+    route_id: PydanticObjectId,
+    *,
+    status: ActivityStatus = ActivityStatus.COMPLETED,
+    location_verified: bool = True,
+    started_at: datetime | None = None,
+    tz: str = "Asia/Seoul",
+) -> Activity:
+    started = started_at or datetime(2026, 4, 18, 15, 30, tzinfo=dt_tz.utc)
+    activity = Activity(
+        route_id=route_id,
+        user_id=user_id,
+        status=status,
+        location_verified=location_verified,
+        started_at=started,
+        ended_at=started,
+        duration=0.0,
+        timezone=tz,
+        route_snapshot=RouteSnapshot(grade_type="v_scale", grade="V1"),
+        created_at=started,
+    )
+    await activity.insert()
+    return activity
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_first_activity(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())  # someone else's route
+    await route.insert()
+
+    activity = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(activity, route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats is not None
+    assert stats.activity.total_count == 1
+    assert stats.activity.completed_count == 1
+    assert stats.activity.verified_completed_count == 1
+    assert stats.distinct_routes.total_count == 1
+    assert stats.distinct_routes.completed_count == 1
+    assert stats.distinct_routes.verified_completed_count == 1
+    assert stats.distinct_days == 1
+    assert stats.own_routes_activity.total_count == 0  # not user's own route
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_second_activity_same_route_same_day(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    a1 = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(
+        user_id, route.id, status=ActivityStatus.ATTEMPTED, location_verified=False,
+        started_at=datetime(2026, 4, 18, 16, 0, tzinfo=dt_tz.utc),
+    )
+    await on_activity_created(a2, route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.activity.total_count == 2
+    assert stats.activity.completed_count == 1
+    assert stats.activity.verified_completed_count == 1
+    assert stats.distinct_routes.total_count == 1  # still same route
+    assert stats.distinct_days == 1  # still same day
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_on_own_alive_route_increments_own_routes_activity(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id)
+    await route.insert()
+
+    activity = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(activity, route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 1
+    assert stats.own_routes_activity.completed_count == 1
+    assert stats.own_routes_activity.verified_completed_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_on_own_soft_deleted_route_skips_own_routes_activity(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id, is_deleted=True)
+    await route.insert()
+
+    activity = await _insert_activity(user_id, route.id)
+    await on_activity_created(activity, route)
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 0
+    assert stats.activity.total_count == 1
+    assert stats.distinct_routes.total_count == 1
