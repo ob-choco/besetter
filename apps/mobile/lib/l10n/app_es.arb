@@ -321,5 +321,17 @@
   "routeDeletedSnack": "🗑 Esta ruta ha sido eliminada",
   "routeUnavailableSnack": "No se pudo cargar la ruta.",
   "routePrivateLabel": "Esta ruta es privada.",
-  "routeDeletedLabel": "Esta ruta ha sido eliminada."
+  "routeDeletedLabel": "Esta ruta ha sido eliminada.",
+  "profileIdLabel": "ID de perfil",
+  "editProfileIdTitle": "Editar ID de perfil",
+  "profileIdHintChecking": "Comprobando...",
+  "profileIdHintAvailable": "Disponible",
+  "profileIdErrorTooShort": "Debe tener al menos 8 caracteres",
+  "profileIdErrorTooLong": "Debe tener 16 caracteres o menos",
+  "profileIdErrorInvalidChars": "Solo se permiten minúsculas, dígitos, puntos (.) y guiones bajos (_)",
+  "profileIdErrorInvalidStartEnd": "Debe empezar y terminar con una letra minúscula o un dígito",
+  "profileIdErrorConsecutiveSpecial": "Los puntos (.) y guiones bajos (_) no pueden usarse consecutivamente",
+  "profileIdErrorReserved": "Este ID de perfil no está permitido",
+  "profileIdErrorTaken": "Este ID de perfil ya está en uso",
+  "profileIdUpdated": "ID de perfil actualizado"
 }

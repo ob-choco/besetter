@@ -320,5 +320,17 @@
   "routeDeletedSnack": "🗑 This route has been deleted",
   "routeUnavailableSnack": "Could not load the route.",
   "routePrivateLabel": "This route is private.",
-  "routeDeletedLabel": "This route has been deleted."
+  "routeDeletedLabel": "This route has been deleted.",
+  "profileIdLabel": "Profile ID",
+  "editProfileIdTitle": "Edit profile ID",
+  "profileIdHintChecking": "Checking...",
+  "profileIdHintAvailable": "Available",
+  "profileIdErrorTooShort": "Must be at least 8 characters",
+  "profileIdErrorTooLong": "Must be 16 characters or fewer",
+  "profileIdErrorInvalidChars": "Only lowercase letters, digits, dots (.) and underscores (_) are allowed",
+  "profileIdErrorInvalidStartEnd": "Must start and end with a lowercase letter or digit",
+  "profileIdErrorConsecutiveSpecial": "Dots (.) and underscores (_) cannot be used consecutively",
+  "profileIdErrorReserved": "This profile ID is not allowed",
+  "profileIdErrorTaken": "This profile ID is already taken",
+  "profileIdUpdated": "Profile ID updated"
 }

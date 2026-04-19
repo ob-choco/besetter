@@ -320,5 +320,17 @@
   "routeDeletedSnack": "🗑 削除されたルートです",
   "routeUnavailableSnack": "ルートを読み込めません。",
   "routePrivateLabel": "非公開のルートです。",
-  "routeDeletedLabel": "削除されたルートです。"
+  "routeDeletedLabel": "削除されたルートです。",
+  "profileIdLabel": "プロフィールID",
+  "editProfileIdTitle": "プロフィールIDを編集",
+  "profileIdHintChecking": "確認中...",
+  "profileIdHintAvailable": "使用可能です",
+  "profileIdErrorTooShort": "8文字以上入力してください",
+  "profileIdErrorTooLong": "16文字以下で入力してください",
+  "profileIdErrorInvalidChars": "小文字、数字、ドット(.)、アンダースコア(_)のみ使用できます",
+  "profileIdErrorInvalidStartEnd": "最初と最後の文字は英小文字または数字である必要があります",
+  "profileIdErrorConsecutiveSpecial": "ドット(.)とアンダースコア(_)は連続して使用できません",
+  "profileIdErrorReserved": "使用できないプロフィールIDです",
+  "profileIdErrorTaken": "すでに使用されているプロフィールIDです",
+  "profileIdUpdated": "プロフィールIDが変更されました"
 }
