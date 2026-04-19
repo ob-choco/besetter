@@ -198,7 +198,12 @@ async def on_activity_created(activity: Activity, route: Route) -> None:
     """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=1)
-        before, after = await _apply_user_route_stats_delta(activity.user_id, activity.route_id, deltas)
+        before, after = await _apply_user_route_stats_delta(
+            activity.user_id,
+            activity.route_id,
+            deltas,
+            last_activity_at=activity.started_at,
+        )
 
         inc: dict[str, int] = {}
         for bucket, delta in deltas.items():

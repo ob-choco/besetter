@@ -691,3 +691,64 @@ async def test_on_route_created_swallows_inner_errors(mongo_db, caplog):
 
     assert result is None
     assert any("on_route_created failed" in rec.message for rec in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_sets_last_activity_at(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    started = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    activity = await _insert_activity(user_id, route.id, started_at=started)
+    await on_activity_created(activity, route)
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is not None
+    assert urs.last_activity_at == started
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_later_activity_advances_last_activity_at(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    earlier = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    later = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    a1 = await _insert_activity(user_id, route.id, started_at=earlier)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(user_id, route.id, started_at=later)
+    await on_activity_created(a2, route)
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs.last_activity_at == later
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_out_of_order_does_not_regress(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    earlier = datetime(2026, 4, 18, 10, 0, tzinfo=dt_tz.utc)
+    later = datetime(2026, 4, 18, 12, 0, tzinfo=dt_tz.utc)
+    a_late = await _insert_activity(user_id, route.id, started_at=later)
+    await on_activity_created(a_late, route)
+    a_early = await _insert_activity(user_id, route.id, started_at=earlier)
+    await on_activity_created(a_early, route)
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs.last_activity_at == later
