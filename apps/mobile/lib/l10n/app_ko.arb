@@ -179,6 +179,7 @@
   "viewMore": "더 보기",
   "failedToLoadData": "데이터를 불러오지 못했습니다",
   "recentWallPhotos": "최근 벽 사진",
+  "viewAll": "전체 보기",
   "editWall": "벽 편집",
   "createRoute": "루트 만들기",
   "enterGymInfoGuide": "암장 정보를 입력해주세요",
@@ -356,5 +357,24 @@
   },
   "myStatsRoutesAttempted": "시도한 루트",
   "myStatsRoutesCompleted": "완등",
-  "myStatsActiveDays": "운동일수"
+  "myStatsActiveDays": "운동일수",
+  "routeCardAttempts": "{count}회 시도",
+  "@routeCardAttempts": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routeCardCompleted": "{count}회 완등",
+  "@routeCardCompleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "homeGreeting": "안녕, {name}!",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "homeGreetingSub": "오늘도 올라가볼까요?"
 }

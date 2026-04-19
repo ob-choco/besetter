@@ -178,6 +178,7 @@
   "viewMore": "もっと見る",
   "failedToLoadData": "データの読み込みに失敗しました",
   "recentWallPhotos": "最近の壁の写真",
+  "viewAll": "すべて表示",
   "editWall": "壁を編集",
   "createRoute": "ルートを作成",
   "enterGymInfoGuide": "ジム情報を入力してください",
@@ -355,5 +356,24 @@
   },
   "myStatsRoutesAttempted": "挑戦したルート",
   "myStatsRoutesCompleted": "完登",
-  "myStatsActiveDays": "活動日数"
+  "myStatsActiveDays": "活動日数",
+  "routeCardAttempts": "{count}回トライ",
+  "@routeCardAttempts": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routeCardCompleted": "{count}回完登",
+  "@routeCardCompleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "homeGreeting": "こんにちは、{name}さん！",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "homeGreetingSub": "今日も登りに行こう？"
 }

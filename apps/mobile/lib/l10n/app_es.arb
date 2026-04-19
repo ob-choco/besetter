@@ -179,6 +179,7 @@
   "viewMore": "Ver más",
   "failedToLoadData": "No se pudieron cargar los datos",
   "recentWallPhotos": "Fotos recientes del muro",
+  "viewAll": "Ver todos",
   "editWall": "Editar muro",
   "createRoute": "Crear ruta",
   "enterGymInfoGuide": "Ingrese la información del gimnasio",
@@ -356,5 +357,24 @@
   },
   "myStatsRoutesAttempted": "Rutas intentadas",
   "myStatsRoutesCompleted": "Completadas",
-  "myStatsActiveDays": "Días activos"
+  "myStatsActiveDays": "Días activos",
+  "routeCardAttempts": "{count, plural, =1{1 intento} other{{count} intentos}}",
+  "@routeCardAttempts": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routeCardCompleted": "{count, plural, =0{Sin flash} =1{1 flash} other{{count} flashes}}",
+  "@routeCardCompleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "homeGreeting": "¡Hola, {name}!",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "homeGreetingSub": "¿Listo para escalar hoy?"
 }

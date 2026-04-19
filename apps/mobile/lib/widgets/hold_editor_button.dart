@@ -223,27 +223,46 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: const Color(0xFF007AFF),
-          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFF1E4BD8),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x401E4BD8),
+              blurRadius: 20,
+              offset: Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (widget.buttonIcon != null) ...[
-              Icon(widget.buttonIcon, color: Colors.white, size: 24),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              widget.buttonLabel ?? AppLocalizations.of(context)!.setRoute,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                widget.buttonIcon ?? Icons.camera_alt,
                 color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
+                size: 18,
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                widget.buttonLabel ?? AppLocalizations.of(context)!.setRoute,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white, size: 20),
           ],
         ),
       ),

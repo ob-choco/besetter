@@ -18,10 +18,11 @@ class HomePage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final editorButtonKey = useMemoized(() => GlobalKey());
-    final unreadNotifCount = ref.watch(userProfileProvider).whenOrNull(
-              data: (u) => u.unreadNotificationCount,
-            ) ??
-        0;
+    final userAsync = ref.watch(userProfileProvider);
+    final user = userAsync.valueOrNull;
+    final unreadNotifCount = user?.unreadNotificationCount ?? 0;
+    final greetingName = (user?.name?.isNotEmpty ?? false) ? user!.name! : (user?.profileId ?? '');
+    final l10n = AppLocalizations.of(context)!;
 
     // Confetti 체크
     useEffect(() {
@@ -30,6 +31,7 @@ class HomePage extends HookConsumerWidget {
     }, []);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F7),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,17 +42,31 @@ class HomePage extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 36, color: Colors.black),
-                        children: [
-                          const TextSpan(text: 'Your\n'),
-                          TextSpan(
-                            text: AppLocalizations.of(context)!.wallsTitle,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.homeGreeting(greetingName),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.6,
+                            height: 1.1,
+                            color: Color(0xFF0F1A2E),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.homeGreetingSub,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.4,
+                            height: 1.15,
+                            color: Color(0xFF5C6779),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -72,17 +88,50 @@ class HomePage extends HookConsumerWidget {
                 ],
               ),
             ),
-            const Expanded(
-              child: WallImageCarousel(),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              padding: const EdgeInsets.fromLTRB(22, 8, 22, 24),
               child: HoldEditorButton(
                 buttonKey: editorButtonKey,
-                buttonLabel: AppLocalizations.of(context)!.takeWallPhoto,
+                buttonLabel: l10n.takeWallPhoto,
                 buttonIcon: Icons.camera_alt,
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 16, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.recentWallPhotos,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        color: Color(0xFF0F1A2E),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/images'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF1E4BD8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      l10n.viewAll,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const WallImageCarousel(),
           ],
         ),
       ),

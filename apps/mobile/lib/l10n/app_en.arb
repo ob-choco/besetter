@@ -178,6 +178,7 @@
   "viewMore": "View More",
   "failedToLoadData": "Failed to load data",
   "recentWallPhotos": "Recent Wall Photos",
+  "viewAll": "View all",
   "editWall": "Edit Wall",
   "createRoute": "Create Route",
   "enterGymInfoGuide": "Please enter climbing gym info",
@@ -355,5 +356,24 @@
   },
   "myStatsRoutesAttempted": "Routes attempted",
   "myStatsRoutesCompleted": "Sent",
-  "myStatsActiveDays": "Active days"
+  "myStatsActiveDays": "Active days",
+  "routeCardAttempts": "{count, plural, =1{1 attempt} other{{count} attempts}}",
+  "@routeCardAttempts": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routeCardCompleted": "{count, plural, =0{No sends} =1{1 send} other{{count} sends}}",
+  "@routeCardCompleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "homeGreeting": "Hey {name}!",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "homeGreetingSub": "Ready to send it today?"
 }

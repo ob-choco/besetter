@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/routes_provider.dart';
 import '../providers/user_stats_provider.dart';
-import '../widgets/home/route_card.dart';
+import '../widgets/home/route_list_item.dart';
 
 class RoutesPage extends HookConsumerWidget {
   const RoutesPage({super.key});
@@ -20,6 +20,7 @@ class RoutesPage extends HookConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F7),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => ref.read(routesProvider(type: selectedFilter.value).notifier).refresh(),
@@ -152,17 +153,8 @@ class RoutesPage extends HookConsumerWidget {
 
                           final route = routesState.routes[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Column(
-                              children: [
-                                RouteCard(route: route),
-                                if (index < routesState.routes.length - 1)
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 16),
-                                    child: Divider(height: 1),
-                                  ),
-                              ],
-                            ),
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: RouteListItem(route: route),
                           );
                         },
                         childCount: routesState.routes.length + 1,

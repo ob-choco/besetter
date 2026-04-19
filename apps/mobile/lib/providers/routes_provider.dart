@@ -42,6 +42,7 @@ class Routes extends _$Routes {
     final queryParams = <String, String>{
       'sort': 'createdAt:desc',
       'limit': '10',
+      'projection': 'stats',
     };
     if (type != null) {
       queryParams['type'] = type!;
@@ -75,6 +76,7 @@ class Routes extends _$Routes {
       final queryParams = <String, String>{
         'sort': 'createdAt:desc',
         'limit': '10',
+        'projection': 'stats',
         'next': current.nextToken!,
       };
       if (type != null) {

@@ -55,6 +55,10 @@ class RouteData {
   final String visibility;
   final bool? hasOtherUserActivities;
 
+  final int? myTotalCount;
+  final int? myCompletedCount;
+  final DateTime? myLastActivityAt;
+
   RouteData({
     required this.id,
     required this.type,
@@ -79,6 +83,9 @@ class RouteData {
     this.polygons,
     this.visibility = 'public',
     this.hasOtherUserActivities,
+    this.myTotalCount,
+    this.myCompletedCount,
+    this.myLastActivityAt,
   });
 
   factory RouteData.fromJson(Map<String, dynamic> json) {
@@ -116,6 +123,10 @@ class RouteData {
           : null,
       visibility: json['visibility'] as String? ?? 'public',
       hasOtherUserActivities: json['hasOtherUserActivities'] as bool?,
+      myTotalCount: json['myTotalCount'] as int?,
+      myCompletedCount: json['myCompletedCount'] as int?,
+      myLastActivityAt:
+          json['myLastActivityAt'] != null ? DateTime.parse(json['myLastActivityAt']) : null,
     );
   }
 
@@ -143,6 +154,9 @@ class RouteData {
         'polygons': polygons?.map((polygon) => polygon.toJson()).toList(),
         'visibility': visibility,
         'hasOtherUserActivities': hasOtherUserActivities,
+        'myTotalCount': myTotalCount,
+        'myCompletedCount': myCompletedCount,
+        'myLastActivityAt': myLastActivityAt?.toIso8601String(),
       };
 }
 
