@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../models/notification_data.dart';
@@ -210,6 +211,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
     if (_initialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -218,18 +220,18 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('알림을 불러오지 못했어요.'),
+            Text(l10n.notificationsLoadFailed),
             const SizedBox(height: 8),
             TextButton(
               onPressed: _loadInitial,
-              child: const Text('다시 시도'),
+              child: Text(l10n.retry),
             ),
           ],
         ),
       );
     }
     if (_items.isEmpty) {
-      return const Center(child: Text('아직 받은 알림이 없어요'));
+      return Center(child: Text(l10n.notificationsEmpty));
     }
     return ListView.separated(
       controller: _scrollController,
@@ -248,7 +250,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             child: Center(
               child: TextButton(
                 onPressed: _loadMore,
-                child: const Text('다시 시도'),
+                child: Text(l10n.retry),
               ),
             ),
           );
@@ -263,8 +265,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('알림')),
+      appBar: AppBar(title: Text(l10n.notificationsTitle)),
       body: _buildBody(),
     );
   }

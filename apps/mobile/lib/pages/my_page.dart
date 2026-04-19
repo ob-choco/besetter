@@ -167,7 +167,7 @@ class MyPage extends HookConsumerWidget {
       } catch (_) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')),
+          SnackBar(content: Text(l10n.activityDeleteFailed)),
         );
         return;
       }
@@ -872,21 +872,22 @@ class _DailyRouteCard extends StatelessWidget {
   });
 
   Future<void> _confirmAndDelete(BuildContext context, String routeId) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('액티비티 삭제'),
-        content: const Text('해당 루트의 액티비티가 모두 삭제 됩니다. 삭제하시겠습니까?'),
+        title: Text(l10n.activityDeleteTitle),
+        content: Text(l10n.activityDeleteGroupConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('취소'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              '삭제',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -912,7 +913,7 @@ class _DailyRouteCard extends StatelessWidget {
     final isDeleted = route['isDeleted'] as bool? ?? false;
     final isBlocked = isDeleted || routeVisibility == 'private';
     final blockedIcon = isDeleted ? '🗑' : '🔒';
-    final blockedText = isDeleted ? '삭제된 루트입니다.' : '비공개된 루트입니다.';
+    final blockedText = isDeleted ? l10n.routeDeletedLabel : l10n.routePrivateLabel;
 
     final completedCount = route['completedCount'] as int;
     final attemptedCount = route['attemptedCount'] as int;
@@ -1009,10 +1010,10 @@ class _DailyRouteCard extends StatelessWidget {
                                   _confirmAndDelete(context, routeId);
                                 }
                               },
-                              itemBuilder: (_) => const [
+                              itemBuilder: (_) => [
                                 PopupMenuItem<String>(
                                   value: 'delete',
-                                  child: Text('삭제하기', style: TextStyle(color: Colors.red)),
+                                  child: Text(l10n.doDelete, style: const TextStyle(color: Colors.red)),
                                 ),
                               ],
                             ),
@@ -1055,22 +1056,23 @@ class _DailyRouteCard extends StatelessWidget {
         return;
       }
 
+      final l10n = AppLocalizations.of(context)!;
       if (response.statusCode == 403) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🔒 비공개된 루트입니다')),
+          SnackBar(content: Text(l10n.routePrivateSnack)),
         );
         return;
       }
 
       if (response.statusCode == 404) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🗑 삭제된 루트입니다')),
+          SnackBar(content: Text(l10n.routeDeletedSnack)),
         );
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
+        SnackBar(content: Text(l10n.routeUnavailableSnack)),
       );
     } catch (_) {
       // silently fail (network etc.)

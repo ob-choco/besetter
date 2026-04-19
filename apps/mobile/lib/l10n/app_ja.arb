@@ -254,5 +254,71 @@
     "placeholders": {
       "duration": {"type": "String"}
     }
-  }
+  },
+  "cancelRegistrationRequest": "登録申請をキャンセル",
+  "cancelRegistrationConfirm": "登録申請をキャンセルし、これまでこの場所にアップロードした画像とルートをすべて削除しますか？",
+  "deleteFailedWithError": "削除に失敗しました: {error}",
+  "@deleteFailedWithError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "gymRegistrationSubmitted": "登録申請を受け付けました。確認後、他の方にも表示されます。",
+  "gymRegistrationFailed": "登録に失敗しました。もう一度お試しください。",
+  "selectGym": "ジムを選択",
+  "searchGymByName": "ジム名で検索",
+  "registerNewGymCta": "新しいジムを登録",
+  "noSearchResults": "検索結果がありません",
+  "noNearbyGyms": "近くに登録されたジムはありません",
+  "noPrivateGyms": "登録されたプライベートジムはありません",
+  "privateGymVisibility": "自分のみ",
+  "selectedBadge": "選択中",
+  "editInfoBtn": "情報を編集",
+  "registerGymSheetTitle": "新しいジムを登録",
+  "registerGymSheetSubtitle": "新しいクライミングジムを登録します",
+  "registerGymInfoNotice": "登録申請後もすぐにこの場所に壁写真やルートをアップロードできます。運営の確認を通過すると他の方にも表示されます。既存の場所と重複する場合は統合され、ポリシーに合わない場合は却下されることがあります。",
+  "selectCoverPhotoOptional": "カバー写真を選択 (任意)",
+  "selectLocation": "位置を選択",
+  "tapMapToSetLocation": "地図をタップして位置を指定してください",
+  "submitRegistration": "登録申請",
+  "placeUpdatedSuccess": "更新しました",
+  "requestFailedRetry": "リクエストに失敗しました。もう一度お試しください。",
+  "suggestionSubmitted": "提案を受け付けました",
+  "suggestionSubmittedSubtitle": "運営の確認後に反映されます。",
+  "placeEditSuggestTitle": "情報の修正を提案",
+  "placeEditGymTitle": "ジム情報の修正",
+  "placeEditReviewNotice": "確認後に反映されます",
+  "placeEditImmediate": "すぐに反映されます",
+  "placeEditImmediatePrivate": "🔒 個人ジム · すぐに反映されます",
+  "placeEditPendingNotice": "承認されるまでは自由に編集できます。承認後は他の方も使うため、その後は「情報の修正を提案」からリクエストしてください。",
+  "placeCoverImage": "カバー画像",
+  "labelLocation": "位置",
+  "labelCurrent": "現在",
+  "tapMapCorrectLocation": "地図をタップして正しい位置を指定してください",
+  "tapMapChangeLocation": "地図をタップして位置を変更できます",
+  "placeNewNameHint": "新しい名前を入力",
+  "submitSuggestionBtn": "修正を提案する",
+  "submitEditBtn": "修正する",
+  "changeCoverPhoto": "写真を変更",
+  "noPlacePhotoYet": "このジムにはまだ写真がありません",
+  "registerFirstCoverPhoto": "最初のカバー写真を登録してください",
+  "imageLoadFailed": "画像の読み込みに失敗しました",
+  "placeNotUsableAny": "この場所は現在利用できません。\n別の場所を選択してください。",
+  "placeNotUsableNamed": "{placeName}は現在利用できません。\n別の場所を選択してください。",
+  "@placeNotUsableNamed": {
+    "placeholders": {
+      "placeName": {"type": "String"}
+    }
+  },
+  "activityDeleteTitle": "アクティビティを削除",
+  "activityDeleteGroupConfirm": "このルートのアクティビティがすべて削除されます。削除しますか？",
+  "activityDeleteFailed": "削除に失敗しました。しばらくしてからもう一度お試しください。",
+  "notificationsTitle": "通知",
+  "notificationsLoadFailed": "通知を読み込めませんでした。",
+  "notificationsEmpty": "まだ通知はありません",
+  "routePrivateSnack": "🔒 非公開のルートです",
+  "routeDeletedSnack": "🗑 削除されたルートです",
+  "routeUnavailableSnack": "ルートを読み込めません。",
+  "routePrivateLabel": "非公開のルートです。",
+  "routeDeletedLabel": "削除されたルートです。"
 }

@@ -254,5 +254,71 @@
     "placeholders": {
       "duration": {"type": "String"}
     }
-  }
+  },
+  "cancelRegistrationRequest": "Cancel registration request",
+  "cancelRegistrationConfirm": "Cancel the registration request and delete all images and routes uploaded to this place so far?",
+  "deleteFailedWithError": "Delete failed: {error}",
+  "@deleteFailedWithError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "gymRegistrationSubmitted": "Registration request received. It'll be visible to others after review.",
+  "gymRegistrationFailed": "Registration failed. Please try again.",
+  "selectGym": "Select a gym",
+  "searchGymByName": "Search by gym name",
+  "registerNewGymCta": "Register a new gym",
+  "noSearchResults": "No search results",
+  "noNearbyGyms": "No registered gyms nearby",
+  "noPrivateGyms": "No private gyms registered",
+  "privateGymVisibility": "Only you",
+  "selectedBadge": "Selected",
+  "editInfoBtn": "Edit info",
+  "registerGymSheetTitle": "Register new gym",
+  "registerGymSheetSubtitle": "Register a new climbing gym",
+  "registerGymInfoNotice": "Even after submitting a registration request, you can immediately upload wall photos and routes to this place. Once it passes moderator review, it becomes visible to others. Duplicates will be merged, and submissions that don't match our policy may be rejected.",
+  "selectCoverPhotoOptional": "Select cover photo (optional)",
+  "selectLocation": "Select location",
+  "tapMapToSetLocation": "Tap the map to set the location",
+  "submitRegistration": "Submit request",
+  "placeUpdatedSuccess": "Updated",
+  "requestFailedRetry": "Request failed. Please try again.",
+  "suggestionSubmitted": "Suggestion submitted",
+  "suggestionSubmittedSubtitle": "It will be applied after moderator review.",
+  "placeEditSuggestTitle": "Suggest edit",
+  "placeEditGymTitle": "Edit gym info",
+  "placeEditReviewNotice": "Applied after review",
+  "placeEditImmediate": "Applied immediately",
+  "placeEditImmediatePrivate": "🔒 Personal gym · Applied immediately",
+  "placeEditPendingNotice": "You can freely edit until it's approved. Once approved, others will use this info too, so please request changes via \"Suggest edit\".",
+  "placeCoverImage": "Cover image",
+  "labelLocation": "Location",
+  "labelCurrent": "Current",
+  "tapMapCorrectLocation": "Tap the map to specify the correct location",
+  "tapMapChangeLocation": "Tap the map to change the location",
+  "placeNewNameHint": "Enter a new name",
+  "submitSuggestionBtn": "Suggest edit",
+  "submitEditBtn": "Save changes",
+  "changeCoverPhoto": "Change photo",
+  "noPlacePhotoYet": "This gym doesn't have a photo yet",
+  "registerFirstCoverPhoto": "Please add the first cover photo",
+  "imageLoadFailed": "Failed to load the image",
+  "placeNotUsableAny": "This place is not available.\nPlease choose another place.",
+  "placeNotUsableNamed": "{placeName} is not available.\nPlease choose another place.",
+  "@placeNotUsableNamed": {
+    "placeholders": {
+      "placeName": {"type": "String"}
+    }
+  },
+  "activityDeleteTitle": "Delete activities",
+  "activityDeleteGroupConfirm": "All activities for this route will be deleted. Delete them?",
+  "activityDeleteFailed": "Delete failed. Please try again in a moment.",
+  "notificationsTitle": "Notifications",
+  "notificationsLoadFailed": "Couldn't load notifications.",
+  "notificationsEmpty": "You don't have any notifications yet",
+  "routePrivateSnack": "🔒 This route is private",
+  "routeDeletedSnack": "🗑 This route has been deleted",
+  "routeUnavailableSnack": "Could not load the route.",
+  "routePrivateLabel": "This route is private.",
+  "routeDeletedLabel": "This route has been deleted."
 }

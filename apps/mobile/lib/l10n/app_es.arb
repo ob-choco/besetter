@@ -255,5 +255,71 @@
     "placeholders": {
       "duration": {"type": "String"}
     }
-  }
+  },
+  "cancelRegistrationRequest": "Cancelar solicitud de registro",
+  "cancelRegistrationConfirm": "¿Cancelar la solicitud de registro y eliminar todas las imágenes y rutas subidas a este lugar hasta ahora?",
+  "deleteFailedWithError": "Error al eliminar: {error}",
+  "@deleteFailedWithError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "gymRegistrationSubmitted": "Solicitud de registro recibida. Aparecerá para otros tras la revisión.",
+  "gymRegistrationFailed": "El registro falló. Inténtalo de nuevo.",
+  "selectGym": "Seleccionar gimnasio",
+  "searchGymByName": "Buscar por nombre de gimnasio",
+  "registerNewGymCta": "Registrar un nuevo gimnasio",
+  "noSearchResults": "Sin resultados",
+  "noNearbyGyms": "No hay gimnasios registrados cerca",
+  "noPrivateGyms": "No hay gimnasios privados registrados",
+  "privateGymVisibility": "Solo tú",
+  "selectedBadge": "Seleccionado",
+  "editInfoBtn": "Editar información",
+  "registerGymSheetTitle": "Registrar nuevo gimnasio",
+  "registerGymSheetSubtitle": "Registra un nuevo gimnasio de escalada",
+  "registerGymInfoNotice": "Incluso tras enviar la solicitud, puedes subir fotos de muros y rutas a este lugar. Una vez aprobado por el moderador, será visible para otros. Los duplicados se fusionarán y las solicitudes que no cumplan la política pueden ser rechazadas.",
+  "selectCoverPhotoOptional": "Seleccionar foto principal (opcional)",
+  "selectLocation": "Seleccionar ubicación",
+  "tapMapToSetLocation": "Toca el mapa para establecer la ubicación",
+  "submitRegistration": "Enviar solicitud",
+  "placeUpdatedSuccess": "Actualizado",
+  "requestFailedRetry": "La solicitud falló. Inténtalo de nuevo.",
+  "suggestionSubmitted": "Sugerencia enviada",
+  "suggestionSubmittedSubtitle": "Se aplicará tras la revisión del moderador.",
+  "placeEditSuggestTitle": "Sugerir edición",
+  "placeEditGymTitle": "Editar información del gimnasio",
+  "placeEditReviewNotice": "Se aplica tras la revisión",
+  "placeEditImmediate": "Se aplica inmediatamente",
+  "placeEditImmediatePrivate": "🔒 Gimnasio personal · Se aplica inmediatamente",
+  "placeEditPendingNotice": "Puedes editar libremente hasta que sea aprobado. Una vez aprobado, otros también lo usarán, así que solicita cambios mediante \"Sugerir edición\".",
+  "placeCoverImage": "Imagen principal",
+  "labelLocation": "Ubicación",
+  "labelCurrent": "Actual",
+  "tapMapCorrectLocation": "Toca el mapa para indicar la ubicación correcta",
+  "tapMapChangeLocation": "Toca el mapa para cambiar la ubicación",
+  "placeNewNameHint": "Ingresa un nuevo nombre",
+  "submitSuggestionBtn": "Sugerir edición",
+  "submitEditBtn": "Guardar cambios",
+  "changeCoverPhoto": "Cambiar foto",
+  "noPlacePhotoYet": "Este gimnasio aún no tiene foto",
+  "registerFirstCoverPhoto": "Por favor añade la primera foto principal",
+  "imageLoadFailed": "No se pudo cargar la imagen",
+  "placeNotUsableAny": "Este lugar no está disponible.\nElige otro lugar.",
+  "placeNotUsableNamed": "{placeName} no está disponible.\nElige otro lugar.",
+  "@placeNotUsableNamed": {
+    "placeholders": {
+      "placeName": {"type": "String"}
+    }
+  },
+  "activityDeleteTitle": "Eliminar actividades",
+  "activityDeleteGroupConfirm": "Se eliminarán todas las actividades de esta ruta. ¿Eliminarlas?",
+  "activityDeleteFailed": "No se pudo eliminar. Inténtalo de nuevo en un momento.",
+  "notificationsTitle": "Notificaciones",
+  "notificationsLoadFailed": "No se pudieron cargar las notificaciones.",
+  "notificationsEmpty": "Aún no tienes notificaciones",
+  "routePrivateSnack": "🔒 Esta ruta es privada",
+  "routeDeletedSnack": "🗑 Esta ruta ha sido eliminada",
+  "routeUnavailableSnack": "No se pudo cargar la ruta.",
+  "routePrivateLabel": "Esta ruta es privada.",
+  "routeDeletedLabel": "Esta ruta ha sido eliminada."
 }

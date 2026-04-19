@@ -145,8 +145,9 @@ class _RouteEditorPageState extends State<RouteEditorPage> {
           }
         } catch (e) {
           if (!mounted) return;
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('이미지를 불러오는데 실패했습니다: $e')),
+            SnackBar(content: Text(l10n.imageLoadFailed)),
           );
         }
       }

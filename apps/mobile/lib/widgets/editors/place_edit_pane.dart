@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -108,8 +109,9 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
         );
         if (!mounted) return;
         setState(() => _isSubmitting = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('수정되었습니다')),
+          SnackBar(content: Text(l10n.placeUpdatedSuccess)),
         );
         widget.onCompleted();
       }
@@ -121,13 +123,15 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('요청에 실패했습니다. 다시 시도해주세요.')),
+        SnackBar(content: Text(l10n.requestFailedRetry)),
       );
     }
   }
 
   void _showSuccessDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -147,10 +151,10 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                   color: Color(0xFF6750A4), size: 32),
             ),
             const SizedBox(height: 16),
-            const Text('제안이 접수되었습니다',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.suggestionSubmitted,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('운영자 검수 후 반영됩니다.',
+            Text(l10n.suggestionSubmittedSubtitle,
                 style: TextStyle(fontSize: 13, color: Colors.grey[600])),
             const SizedBox(height: 16),
           ],
@@ -162,7 +166,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
               onPressed: () => Navigator.pop(context),
               style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF6750A4)),
-              child: const Text('확인'),
+              child: Text(l10n.confirm),
             ),
           ),
         ],
@@ -172,6 +176,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasCoords = _originalPosition != null;
     return Column(
       children: [
@@ -191,7 +196,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
             children: [
               IconButton(
                   icon: const Icon(Icons.arrow_back), onPressed: widget.onBack),
-              Text(_isSuggest ? '정보 수정 제안' : '암장 정보 수정',
+              Text(_isSuggest ? l10n.placeEditSuggestTitle : l10n.placeEditGymTitle,
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold)),
             ],
@@ -201,8 +206,8 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             _isSuggest
-                ? '검수 후 반영됩니다'
-                : (_isGym ? '즉시 반영됩니다' : '🔒 개인 암장 · 즉시 반영됩니다'),
+                ? l10n.placeEditReviewNotice
+                : (_isGym ? l10n.placeEditImmediate : l10n.placeEditImmediatePrivate),
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
         ),
@@ -216,10 +221,9 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.amber.shade200),
             ),
-            child: const Text(
-              '승인되기 전까지는 자유롭게 수정할 수 있어요. 승인된 이후에는 다른 분들도 쓰게 되므로, '
-              '그때부터는 "정보 수정 제안"으로 요청해주시면 반영해드립니다.',
-              style: TextStyle(fontSize: 13, color: Colors.black87, height: 1.45),
+            child: Text(
+              l10n.placeEditPendingNotice,
+              style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.45),
             ),
           ),
         Expanded(
@@ -229,14 +233,14 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const Text('대표 이미지',
-                    style: TextStyle(
+                Text(l10n.placeCoverImage,
+                    style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 _buildImageSection(),
                 const SizedBox(height: 16),
-                const Text('이름',
-                    style: TextStyle(
+                Text(l10n.labelName,
+                    style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 if (_isSuggest) ...[
@@ -261,9 +265,8 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                           decoration: BoxDecoration(
                               color: Colors.grey[300],
                               borderRadius: BorderRadius.circular(4)),
-                          child: const Text('현재',
-                              style:
-                                  TextStyle(fontSize: 10, color: Colors.grey)),
+                          child: Text(l10n.labelCurrent,
+                              style: const TextStyle(fontSize: 10, color: Colors.grey)),
                         ),
                       ],
                     ),
@@ -277,7 +280,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    hintText: _isSuggest ? '변경할 이름 입력' : '암장 이름',
+                    hintText: _isSuggest ? l10n.placeNewNameHint : l10n.gymName,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -285,16 +288,16 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                 ),
                 const SizedBox(height: 16),
                 if (hasCoords) ...[
-                  const Text('위치',
-                      style: TextStyle(
+                  Text(l10n.labelLocation,
+                      style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   if (_isSuggest)
-                    Text('지도를 탭하여 올바른 위치를 지정하세요',
+                    Text(l10n.tapMapCorrectLocation,
                         style:
                             TextStyle(fontSize: 12, color: Colors.grey[600]))
                   else
-                    Text('지도를 탭하여 위치를 변경할 수 있어요',
+                    Text(l10n.tapMapChangeLocation,
                         style:
                             TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(height: 8),
@@ -380,7 +383,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text(_isSuggest ? '수정 제안하기' : '수정하기'),
+                    : Text(_isSuggest ? l10n.submitSuggestionBtn : l10n.submitEditBtn),
               ),
             ),
           ),
@@ -397,6 +400,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
   }
 
   Widget _buildImageBody(String? currentUrl, File? pickedFile) {
+    final l10n = AppLocalizations.of(context)!;
     if (pickedFile != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -445,14 +449,14 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(9999),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                      SizedBox(width: 4),
+                      const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                      const SizedBox(width: 4),
                       Text(
-                        '사진 변경',
-                        style: TextStyle(
+                        l10n.changeCoverPhoto,
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w500),
@@ -484,13 +488,13 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
             children: [
               Icon(Icons.camera_alt_outlined, size: 32, color: _accent),
               const SizedBox(height: 8),
-              const Text(
-                '이 암장에 아직 사진이 없어요',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              Text(
+                l10n.noPlacePhotoYet,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               Text(
-                '첫 대표 사진을 등록해 주세요',
+                l10n.registerFirstCoverPhoto,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               const SizedBox(height: 12),
@@ -501,13 +505,13 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                   color: _accent,
                   borderRadius: BorderRadius.circular(9999),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                    SizedBox(width: 6),
-                    Text('사진 선택',
-                        style: TextStyle(
+                    const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                    const SizedBox(width: 6),
+                    Text(l10n.selectPhoto,
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w600)),

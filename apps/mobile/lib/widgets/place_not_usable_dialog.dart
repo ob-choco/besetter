@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 Future<void> showPlaceNotUsableDialog(
   BuildContext context, {
   required String placeName,
 }) {
+  final l10n = AppLocalizations.of(context)!;
   final message = placeName.isEmpty
-      ? '이 장소는 쓸 수 없는 상태입니다.\n다른 장소를 선택해주세요.'
-      : '해당 $placeName는 쓸 수 없는 상태입니다.\n다른 장소를 선택해주세요.';
+      ? l10n.placeNotUsableAny
+      : l10n.placeNotUsableNamed(placeName);
   return showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -14,7 +16,7 @@ Future<void> showPlaceNotUsableDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('확인'),
+          child: Text(l10n.confirm),
         ),
       ],
     ),

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -235,21 +236,20 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   }
 
   Future<void> _confirmDelete(PlaceData place) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('등록 요청 취소'),
-        content: const Text(
-          '등록 요청을 취소하고 지금까지 이 장소에 올린 이미지와 루트를 모두 삭제할까요?',
-        ),
+        title: Text(l10n.cancelRegistrationRequest),
+        content: Text(l10n.cancelRegistrationConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -270,7 +270,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('삭제 실패: $e')),
+          SnackBar(content: Text(l10n.deleteFailedWithError(e.toString()))),
         );
       }
     }
@@ -320,9 +320,10 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
       );
       ref.invalidate(userProfileProvider);
       if (!_isPrivate && mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('등록 요청이 접수됐어요. 검수 후 다른 분들에게도 노출돼요.'),
+          SnackBar(
+            content: Text(l10n.gymRegistrationSubmitted),
           ),
         );
       }
@@ -330,8 +331,9 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('등록에 실패했습니다. 다시 시도해주세요.')),
+          SnackBar(content: Text(l10n.gymRegistrationFailed)),
         );
       }
     }
@@ -367,13 +369,14 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   // ==================== Select Mode UI ====================
 
   Widget _buildSelectMode(ScrollController scrollController) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildDragHandle(),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text('암장 선택',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(l10n.selectGym,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -382,7 +385,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
-              hintText: '암장 이름으로 검색',
+              hintText: l10n.searchGymByName,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding:
@@ -414,7 +417,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                   children: [
                     Icon(Icons.add, size: 18, color: Colors.grey[700]),
                     const SizedBox(width: 8),
-                    Text('새 암장 등록하기',
+                    Text(l10n.registerNewGymCta,
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -486,13 +489,14 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   }
 
   Widget _buildListArea(ScrollController scrollController) {
+    final l10n = AppLocalizations.of(context)!;
     if (_isSearchMode) {
       if (_loadingSearch) {
         return const Center(child: CircularProgressIndicator());
       }
       if (_searchResults.isEmpty) {
         return Center(
-          child: Text('검색 결과가 없습니다',
+          child: Text(l10n.noSearchResults,
               style: TextStyle(color: Colors.grey[500])),
         );
       }
@@ -510,7 +514,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
       }
       if (_nearbyPlaces.isEmpty) {
         return Center(
-          child: Text('근처에 등록된 암장이 없습니다',
+          child: Text(l10n.noNearbyGyms,
               style: TextStyle(color: Colors.grey[500])),
         );
       }
@@ -528,7 +532,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
     }
     if (_privatePlaces.isEmpty) {
       return Center(
-        child: Text('등록된 프라이빗 암장이 없습니다',
+        child: Text(l10n.noPrivateGyms,
             style: TextStyle(color: Colors.grey[500])),
       );
     }
@@ -541,6 +545,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   }
 
   Widget _buildPlaceItem(PlaceData place) {
+    final l10n = AppLocalizations.of(context)!;
     final bool isSelected = widget.currentPlace?.id == place.id;
     final bool isPrivate = place.type == 'private-gym';
     final String? currentUserId = ref
@@ -629,7 +634,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                           ],
                           if (isPrivate) ...[
                             const SizedBox(height: 2),
-                            Text('나만 보임',
+                            Text(l10n.privateGymVisibility,
                                 style: TextStyle(
                                     fontSize: 11, color: Colors.orange[700])),
                           ],
@@ -668,8 +673,8 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                                   .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('선택됨',
-                                style: TextStyle(
+                            child: Text(l10n.selectedBadge,
+                                style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF6750A4))),
@@ -686,14 +691,14 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                       children: [
                         TextButton.icon(
                           icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('정보 수정'),
+                          label: Text(l10n.editInfoBtn),
                           onPressed: () => _openDirectEdit(place),
                         ),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.delete_outline,
                               color: Colors.redAccent),
-                          tooltip: '등록 요청 취소',
+                          tooltip: l10n.cancelRegistrationRequest,
                           onPressed: () => _confirmDelete(place),
                         ),
                       ],
@@ -705,7 +710,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text('✏️ ', style: TextStyle(fontSize: 12)),
-                          Text(isPrivate ? '정보 수정' : '정보 수정 제안',
+                          Text(isPrivate ? l10n.editInfoBtn : l10n.placeEditSuggestTitle,
                               style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF6750A4),
@@ -725,6 +730,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
   // ==================== Register Mode UI ====================
 
   Widget _buildRegisterMode() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildDragHandle(),
@@ -736,14 +742,14 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
               IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: _goBackToSelect),
-              const Text('새 암장 등록',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(l10n.registerGymSheetTitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('새로운 클라이밍 암장을 등록합니다',
+          child: Text(l10n.registerGymSheetSubtitle,
               style: TextStyle(fontSize: 13, color: Colors.grey[600])),
         ),
         const SizedBox(height: 8),
@@ -761,11 +767,9 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
-                      '등록 요청 후에도 바로 이 장소에 벽 사진과 루트를 올릴 수 있어요. '
-                      '운영진 검수를 통과하면 다른 분들에게도 노출됩니다. '
-                      '기존 장소와 중복되면 병합되고, 정책에 맞지 않으면 반려될 수 있어요.',
-                      style: TextStyle(fontSize: 12, height: 1.4),
+                    child: Text(
+                      l10n.registerGymInfoNotice,
+                      style: const TextStyle(fontSize: 12, height: 1.4),
                     ),
                   ),
                 ],
@@ -819,7 +823,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                                   Icon(Icons.camera_alt,
                                       size: 28, color: Colors.grey[400]),
                                   const SizedBox(height: 4),
-                                  Text('대표 사진 선택 (선택)',
+                                  Text(l10n.selectCoverPhotoOptional,
                                       style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey[500])),
@@ -834,8 +838,8 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                   controller: _registerNameController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: '암장 이름',
-                    hintText: '암장 이름을 입력하세요',
+                    labelText: l10n.gymName,
+                    hintText: l10n.enterGymName,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -843,11 +847,11 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                 ),
                 const SizedBox(height: 16),
                 if (_showRegisterMap) ...[
-                  const Text('위치 선택',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(l10n.selectLocation,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('지도를 탭하여 위치를 지정하세요',
+                  Text(l10n.tapMapToSetLocation,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(height: 8),
                   ClipRRect(
@@ -935,7 +939,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('등록 요청'),
+                    : Text(l10n.submitRegistration),
               ),
             ),
           ),

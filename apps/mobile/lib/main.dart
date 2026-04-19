@@ -176,22 +176,23 @@ class _MainMenuPageState extends ConsumerState<MainMenuPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     if (response.statusCode == 403) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🔒 비공개된 루트입니다')),
+        SnackBar(content: Text(l10n.routePrivateSnack)),
       );
       return;
     }
 
     if (response.statusCode == 404) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🗑 삭제된 루트입니다')),
+        SnackBar(content: Text(l10n.routeDeletedSnack)),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('루트를 불러올 수 없습니다.')),
+      SnackBar(content: Text(l10n.routeUnavailableSnack)),
     );
   }
 
