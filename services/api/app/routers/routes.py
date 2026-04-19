@@ -29,6 +29,7 @@ from typing import Optional, List
 from deepdiff import DeepDiff
 from app.services.route_overlay import generate_route_overlay
 from app.services.place_status import resolve_place_for_use
+from app.services import user_stats as user_stats_service
 
 router = APIRouter(prefix="/routes", tags=["routes"])
 
@@ -153,6 +154,8 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
     )
 
     created_route = await route.save()
+
+    await user_stats_service.on_route_created(created_route)
 
     blob_path = extract_blob_path_from_url(created_route.image_url)
     if blob_path:
@@ -581,3 +584,4 @@ async def delete_route(route_id: str, current_user: User = Depends(get_current_u
     route.is_deleted = True
     route.deleted_at = datetime.utcnow()
     await route.save()
+    await user_stats_service.on_route_soft_deleted(route)
