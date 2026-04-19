@@ -14,6 +14,7 @@ import '../providers/user_provider.dart';
 import '../services/activity_service.dart';
 import '../services/http_client.dart';
 import '../utils/thumbnail_url.dart';
+import '../widgets/editors/profile_id_edit_dialog.dart';
 import 'notifications_page.dart';
 import 'setting.dart';
 
@@ -563,6 +564,36 @@ class _ProfileHeader extends StatelessWidget {
               color: Color(0xFF2C2F30),
             ),
           ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '@${user.profileId}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (isEditing) ...[
+              const SizedBox(width: 6),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () async {
+                  await ProfileIdEditDialog.show(
+                    context,
+                    currentProfileId: user.profileId,
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: 16),
         // 자기소개
         if (isEditing)
