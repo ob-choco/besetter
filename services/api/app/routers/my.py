@@ -1,16 +1,20 @@
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 
+from beanie.odm.operators.find.comparison import In
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
 
+from app.core.gcs import to_public_url
 from app.dependencies import get_current_user
 from app.models import model_config
-from app.models.activity import Activity, ActivityStatus, RouteSnapshot
-from app.models.route import Route, Visibility
+from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
+from app.models.image import Image
+from app.models.place import Place
+from app.models.route import Route, RouteType, Visibility
 from app.models.user_stats import (
     ActivityCounters,
     RoutesCreatedCounters,
@@ -20,8 +24,9 @@ from app.routers.activities import (
     _build_stats_inc,
     _update_route_stats,
 )
+from app.routers.places import PlaceView, place_to_view
 from app.services import user_stats as user_stats_service
-from app.models.user import User
+from app.models.user import OwnerView, User
 from beanie.odm.fields import PydanticObjectId
 
 router = APIRouter(prefix="/my", tags=["my"])
@@ -158,6 +163,42 @@ class DailyRoutesResponse(BaseModel):
 
     summary: DailySummary
     routes: list[DailyRouteItem]
+
+
+class RecentRouteView(BaseModel):
+    model_config = model_config
+
+    id: PydanticObjectId
+    type: RouteType
+    title: Optional[str] = None
+    visibility: Visibility
+    is_deleted: bool = False
+
+    grade_type: str
+    grade: str
+    grade_color: Optional[str] = None
+
+    image_url: str
+    overlay_image_url: Optional[str] = None
+
+    place: Optional[PlaceView] = None
+    wall_name: Optional[str] = None
+    wall_expiration_date: Optional[datetime] = None
+
+    owner: OwnerView
+
+    my_total_count: int
+    my_completed_count: int
+    my_last_activity_at: datetime
+
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+class RecentRoutesResponse(BaseModel):
+    model_config = model_config
+
+    data: List[RecentRouteView]
 
 
 class UserStatsResponse(BaseModel):
@@ -445,3 +486,106 @@ async def delete_daily_route_group(
     # 4. Per-activity user-level hook. The hook is order-agnostic re: activity.delete() thanks to its `still_present` check.
     for a in activities:
         await user_stats_service.on_activity_deleted(a, route)
+
+
+# ---------------------------------------------------------------------------
+# Recently climbed routes
+# ---------------------------------------------------------------------------
+
+
+async def _build_recently_climbed_routes(
+    user_id: PydanticObjectId,
+    limit: int,
+) -> RecentRoutesResponse:
+    """Return up to ``limit`` routes the user has logged activities against,
+    ordered by their per-(user, route) ``lastActivityAt`` descending.
+
+    The endpoint intentionally does NOT filter by route visibility or
+    ``isDeleted`` — tombstones are part of the user's history. Mobile
+    renders them with a locked / trashed badge.
+    """
+    urs_cursor = (
+        UserRouteStats.find(
+            UserRouteStats.user_id == user_id,
+        )
+        .find({"lastActivityAt": {"$ne": None}})
+        .sort([("lastActivityAt", -1), ("_id", -1)])
+        .limit(limit)
+    )
+    urs_list = await urs_cursor.to_list()
+    if not urs_list:
+        return RecentRoutesResponse(data=[])
+
+    route_ids = [urs.route_id for urs in urs_list]
+    routes = await Route.find(In(Route.id, route_ids)).to_list()
+    route_by_id = {r.id: r for r in routes}
+
+    image_ids = [r.image_id for r in routes]
+    images = await Image.find(In(Image.id, image_ids)).to_list()
+    image_by_id = {img.id: img for img in images}
+
+    place_ids = list({img.place_id for img in images if img.place_id})
+    place_by_id: dict[PydanticObjectId, Place] = {}
+    if place_ids:
+        places = await Place.find(In(Place.id, place_ids)).to_list()
+        place_by_id = {p.id: p for p in places}
+
+    owner_ids = list({r.user_id for r in routes})
+    owners = await User.find(In(User.id, owner_ids)).to_list()
+    owner_by_id = {u.id: u for u in owners}
+
+    data: list[RecentRouteView] = []
+    for urs in urs_list:
+        route = route_by_id.get(urs.route_id)
+        if route is None:
+            continue
+        image = image_by_id.get(route.image_id)
+        if image is None:
+            continue
+
+        place_view: Optional[PlaceView] = None
+        if image.place_id and image.place_id in place_by_id:
+            place_view = place_to_view(place_by_id[image.place_id])
+
+        owner_doc = owner_by_id.get(route.user_id)
+        if owner_doc is None or owner_doc.is_deleted:
+            owner_view = OwnerView(user_id=route.user_id, is_deleted=True)
+        else:
+            owner_view = OwnerView(
+                user_id=owner_doc.id,
+                profile_id=owner_doc.profile_id,
+                profile_image_url=owner_doc.profile_image_url,
+                is_deleted=False,
+            )
+
+        data.append(RecentRouteView(
+            id=route.id,
+            type=route.type,
+            title=route.title,
+            visibility=route.visibility,
+            is_deleted=route.is_deleted,
+            grade_type=route.grade_type,
+            grade=route.grade,
+            grade_color=route.grade_color,
+            image_url=to_public_url(str(route.image_url)),
+            overlay_image_url=to_public_url(str(route.overlay_image_url)) if route.overlay_image_url else None,
+            place=place_view,
+            wall_name=image.wall_name,
+            wall_expiration_date=image.wall_expiration_date,
+            owner=owner_view,
+            my_total_count=urs.total_count,
+            my_completed_count=urs.completed_count,
+            my_last_activity_at=urs.last_activity_at,
+            created_at=route.created_at,
+            updated_at=route.updated_at,
+        ))
+
+    return RecentRoutesResponse(data=data)
+
+
+@router.get("/recently-climbed-routes", response_model=RecentRoutesResponse)
+async def get_recently_climbed_routes(
+    limit: int = Query(default=9, ge=1, le=20),
+    current_user: User = Depends(get_current_user),
+):
+    return await _build_recently_climbed_routes(current_user.id, limit)
