@@ -18,6 +18,7 @@ from app.services.user_stats import (
     _local_date_str,
     _recount_local_day,
     on_activity_created,
+    on_activity_deleted,
 )
 
 
@@ -399,3 +400,81 @@ async def test_on_activity_created_on_own_soft_deleted_route_skips_own_routes_ac
     assert stats.own_routes_activity.total_count == 0
     assert stats.activity.total_count == 1
     assert stats.distinct_routes.total_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_sole_activity_clears_stats(mongo_db, monkeypatch):
+    # on_activity_created calls _recount (returns 1 → distinctDays += 1)
+    # on_activity_deleted calls _recount (returns 1 because activity still in DB; effective=0 → distinctDays -= 1)
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 1]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    activity = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(activity, route)
+
+    await on_activity_deleted(activity, route)
+    await activity.delete()
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.activity.total_count == 0
+    assert stats.distinct_routes.total_count == 0
+    assert stats.distinct_days == 0
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is None
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_leaves_distinct_days_when_sibling_remains(mongo_db, monkeypatch):
+    # Call sequence:
+    # 1. on_activity_created(a1) → _recount → 1 (distinctDays += 1)
+    # 2. on_activity_created(a2) → _recount → 2 (no change)
+    # 3. on_activity_deleted(a2) → _recount → 2 (a2 still in DB); effective=1 → NO change
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    a1 = await _insert_activity(user_id, route.id)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(
+        user_id, route.id, started_at=datetime(2026, 4, 18, 16, 0, tzinfo=dt_tz.utc),
+    )
+    await on_activity_created(a2, route)
+
+    await on_activity_deleted(a2, route)
+    await a2.delete()
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.distinct_days == 1
+    assert stats.distinct_routes.total_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_deleted_skips_own_routes_activity_when_route_soft_deleted(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 1]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=user_id)
+    await route.insert()
+
+    activity = await _insert_activity(user_id, route.id)
+    await on_activity_created(activity, route)
+
+    # Simulate a soft-delete that already decremented own_routes_activity.
+    await UserStats.find_one(UserStats.user_id == user_id).update(
+        {"$inc": {"ownRoutesActivity.totalCount": -1, "ownRoutesActivity.completedCount": -1, "ownRoutesActivity.verifiedCompletedCount": -1}}
+    )
+    route.is_deleted = True
+
+    await on_activity_deleted(activity, route)
+    await activity.delete()
+
+    stats = await UserStats.find_one(UserStats.user_id == user_id)
+    assert stats.own_routes_activity.total_count == 0
+    assert stats.own_routes_activity.completed_count == 0
+    assert stats.own_routes_activity.verified_completed_count == 0

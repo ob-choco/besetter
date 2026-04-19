@@ -206,3 +206,45 @@ async def on_activity_created(activity: Activity, route: Route) -> None:
         await _update_user_stats(activity.user_id, inc)
     except Exception:
         logger.exception("on_activity_created failed for activity=%s", activity.id)
+
+
+async def on_activity_deleted(activity: Activity, route: Route) -> None:
+    """Apply post-delete userStats updates. Swallows all exceptions.
+
+    Re-count for ``distinct_days`` runs after the caller has already removed
+    the activity doc in production. To keep the service self-consistent, we
+    ignore this activity's own doc in the recount by subtracting one when
+    we see it still present.
+    """
+    try:
+        deltas = _bucket_deltas(activity.status, activity.location_verified, sign=-1)
+        before, after = await _apply_user_route_stats_delta(activity.user_id, activity.route_id, deltas)
+
+        inc: dict[str, int] = {}
+        for bucket, delta in deltas.items():
+            if delta:
+                inc[_ACTIVITY_BUCKET_DB_FIELDS[bucket]] = delta
+            if before[bucket] >= 1 and after[bucket] == 0:
+                inc[_DISTINCT_ROUTES_DB_FIELDS[bucket]] = -1
+                if route.user_id == activity.user_id and not route.is_deleted:
+                    inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = -1
+
+        # Drop an empty UserRouteStats doc (mirrors previous router behavior).
+        if after["total_count"] == 0 and after["completed_count"] == 0 and after["verified_completed_count"] == 0:
+            urs_doc = await UserRouteStats.find_one(
+                UserRouteStats.user_id == activity.user_id,
+                UserRouteStats.route_id == activity.route_id,
+            )
+            if urs_doc is not None:
+                await urs_doc.delete()
+
+        local_date = _local_date_str(activity)
+        remaining = await _recount_local_day(activity.user_id, local_date)
+        still_present = await Activity.find_one(Activity.id == activity.id) is not None
+        effective = remaining - 1 if still_present else remaining
+        if effective == 0:
+            inc["distinctDays"] = -1
+
+        await _update_user_stats(activity.user_id, inc)
+    except Exception:
+        logger.exception("on_activity_deleted failed for activity=%s", activity.id)
