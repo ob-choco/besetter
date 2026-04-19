@@ -7,6 +7,7 @@ activity and route mutation points. See
 
 from __future__ import annotations
 
+from datetime import timezone
 from zoneinfo import ZoneInfo
 
 from app.models.activity import Activity, ActivityStatus
@@ -36,6 +37,10 @@ def _local_date_str(activity: Activity) -> str:
 
     Uses the activity's stored ``timezone`` field (IANA). Falls back to UTC
     when unset, matching the aggregation pattern used in ``routers/my.py``.
+    Naive ``started_at`` values are treated as UTC.
     """
+    started = activity.started_at
+    if started.tzinfo is None:
+        started = started.replace(tzinfo=timezone.utc)
     tz_name = activity.timezone or "UTC"
-    return activity.started_at.astimezone(ZoneInfo(tz_name)).date().isoformat()
+    return started.astimezone(ZoneInfo(tz_name)).date().isoformat()

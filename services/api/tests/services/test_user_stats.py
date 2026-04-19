@@ -94,3 +94,11 @@ def test_local_date_str_with_none_falls_back_to_utc():
     started = datetime(2026, 4, 19, 10, 0, tzinfo=dt_tz.utc)
     activity = _make_activity(started, None)
     assert _local_date_str(activity) == "2026-04-19"
+
+
+def test_local_date_str_naive_started_at_treated_as_utc():
+    # Naive datetime should be treated as UTC, not system-local time.
+    started = datetime(2026, 4, 19, 10, 0)  # no tzinfo
+    activity = _make_activity(started, "Asia/Seoul")
+    # 10:00 UTC → 19:00 KST → "2026-04-19"
+    assert _local_date_str(activity) == "2026-04-19"
