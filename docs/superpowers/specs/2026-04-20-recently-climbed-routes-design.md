@@ -2,16 +2,16 @@
 
 ## 개요
 
-홈 화면에 "최근 운동한 루트" 섹션을 신설하여, 사용자가 최근 활동을 기록한 루트 상위 3개를 노출한다. 다른 사용자가 만든 루트도 운동할 수 있으므로, 카드에 루트 작성자(오너)의 프로필을 함께 표시한다. 동일한 오너 표시 원칙을 MY 페이지의 일일 활동 카드에도 적용한다.
+홈 화면에 "최근 운동한 루트" 섹션을 신설하여, 사용자가 최근 활동을 기록한 루트 상위 9개를 노출한다. 다른 사용자가 만든 루트도 운동할 수 있으므로, 카드에 루트 작성자(오너)의 프로필을 함께 표시한다. 동일한 오너 표시 원칙을 MY 페이지의 일일 활동 카드에도 적용한다.
 
 ## 목표 및 범위
 
 **목표**
-- 홈 화면에서 사용자가 최근 운동한 루트 3개를 바로 확인하고 이어서 운동을 재개할 수 있도록 한다.
+- 홈 화면에서 사용자가 최근 운동한 루트 9개를 바로 확인하고 이어서 운동을 재개할 수 있도록 한다.
 - 타 사용자 루트의 작성자 정보를 투명하게 드러낸다.
 
 **범위 안**
-1. API 신설: `GET /my/recently-climbed-routes?limit=3`
+1. API 신설: `GET /my/recently-climbed-routes?limit=9`
 2. API 확장: `GET /my/daily-routes` 응답에 오너 정보 추가
 3. 선결: `UserRouteStats.lastActivityAt` 갱신 로직 구현 (현재 미구현 상태)
 4. MongoDB 컴파운드 인덱스 추가: `(userId: 1, lastActivityAt: -1)`
@@ -27,7 +27,7 @@
 ## 아키텍처 개요
 
 ```
-모바일 홈                 →  GET /my/recently-climbed-routes?limit=3
+모바일 홈                 →  GET /my/recently-climbed-routes?limit=9
                              └→ UserRouteStats (정렬/필터)
                                   ↓ routeId
                                 Route + Image + Place + User(오너)
@@ -51,7 +51,7 @@
 **쿼리 파라미터**
 | 이름 | 타입 | 기본 | 범위 | 설명 |
 |---|---|---|---|---|
-| `limit` | int | 3 | 1–10 | 반환할 루트 수 |
+| `limit` | int | 9 | 1–20 | 반환할 루트 수 |
 
 **응답 모델** (신규 `RecentRouteView`)
 
@@ -214,7 +214,7 @@ IndexModel(
 - **로딩:** `SizedBox(height: ..., child: Center(CircularProgressIndicator))`
 - **에러:** "최근 운동한 루트를 불러오지 못했어요" + 재시도 버튼
 - **빈 데이터:** 빈 상태 카드 (아래 참조)
-- **데이터:** `Column`에 `RecentClimbedRouteCard` 3개 (간격 10px, 수평 패딩 24px, routes_page.dart의 SliverPadding과 동일)
+- **데이터:** `Column`에 `RecentClimbedRouteCard` 최대 9개 (간격 10px, 수평 패딩 24px, routes_page.dart의 SliverPadding과 동일)
 
 ### 3. `RecentClimbedRouteCard` 위젯 (신규)
 
@@ -359,7 +359,7 @@ class OwnerInfo {
 ```dart
 @riverpod
 Future<List<RouteData>> recentClimbedRoutes(RecentClimbedRoutesRef ref) async {
-  final response = await AuthorizedHttpClient.get('/my/recently-climbed-routes?limit=3');
+  final response = await AuthorizedHttpClient.get('/my/recently-climbed-routes?limit=9');
   if (response.statusCode == 200) {
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     return (decoded['data'] as List)
@@ -410,8 +410,8 @@ Future<List<RouteData>> recentClimbedRoutes(RecentClimbedRoutesRef ref) async {
 - `tests/models/test_activity.py:88`의 `assert stats.last_activity_at is None` 제거 또는 "아직 activity 없는 초기 상태" 문맥으로 좁힘
 
 **신규 `tests/routers/test_my_recently_climbed_routes.py`**
-- 기본 조회: 3개 정렬 순서 검증
-- `limit` 파라미터 경계(1, 10, 초과) 검증
+- 기본 조회: 9개 정렬 순서 검증
+- `limit` 파라미터 경계(1, 20, 초과) 검증
 - 타 사용자 루트 포함 시 `owner` 필드 채워짐 검증
 - 삭제된 루트 → `is_deleted=true` 응답 검증
 - 비공개 루트 (타인) → `visibility=private` 응답 검증
@@ -432,7 +432,7 @@ Future<List<RouteData>> recentClimbedRoutes(RecentClimbedRoutesRef ref) async {
 - `dart run build_runner build --delete-conflicting-outputs` — 신규 `recentClimbedRoutesProvider`, `mainTabIndexProvider`의 `.g.dart` 생성
 
 **수동 검증 포인트** (시뮬레이터)
-- 홈 섹션 3개 카드 렌더링
+- 홈 섹션 최대 9개 카드 렌더링
 - 오너 배지: 본인 숨김, 타인 표시, 탈퇴 회원 대체 라벨
 - 삭제된 루트 툼스톤
 - 비공개 루트 툼스톤 (탭 시 snackbar)
