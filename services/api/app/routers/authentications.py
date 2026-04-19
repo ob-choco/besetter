@@ -30,6 +30,7 @@ from google.oauth2 import id_token
 from google.auth.transport.requests import Request
 
 from app.core.config import get
+from app.core.profile_id import generate_unique_profile_id
 
 
 security = HTTPBearer()
@@ -169,9 +170,11 @@ async def signup(
         )
 
     now = datetime.now(tz=pytz.UTC)
+    profile_id = await generate_unique_profile_id()
 
     user = User(
         id=ObjectId(),
+        profile_id=profile_id,
         line=LineUser(
             unique_id=result["sub"],
             name=result["name"],
@@ -264,9 +267,11 @@ async def signup(
         )
 
     now = datetime.now(tz=pytz.UTC)
+    profile_id = await generate_unique_profile_id()
 
     user = User(
         id=ObjectId(),
+        profile_id=profile_id,
         kakao=KakaoUser(
             unique_id=result["sub"],
             name=result.get("nickname"),
@@ -389,9 +394,11 @@ async def signup_apple(
         )
 
     now = datetime.now(tz=pytz.UTC)
+    profile_id = await generate_unique_profile_id()
 
     user = User(
         id=ObjectId(),
+        profile_id=profile_id,
         apple=AppleUser(
             unique_id=unique_id,
             email=payload.get("email"),
@@ -457,9 +464,11 @@ async def signup_google(
         )
 
     now = datetime.now(tz=pytz.UTC)
+    profile_id = await generate_unique_profile_id()
 
     user = User(
         id=ObjectId(),
+        profile_id=profile_id,
         google=GoogleUser(
             unique_id=unique_id,
             email=id_info.get("email"),
