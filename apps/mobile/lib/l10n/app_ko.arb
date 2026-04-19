@@ -333,5 +333,28 @@
   "profileIdErrorConsecutiveSpecial": "점(.)과 밑줄(_)을 연속해서 쓸 수 없습니다",
   "profileIdErrorReserved": "사용할 수 없는 프로필 ID입니다",
   "profileIdErrorTaken": "이미 사용 중인 프로필 ID입니다",
-  "profileIdUpdated": "프로필 ID가 변경됐어요"
+  "profileIdUpdated": "프로필 ID가 변경됐어요",
+  "routeCountLabel": "루트 {count}개",
+  "@routeCountLabel": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routesTabSubtitle": "전체 {total}개 · 완등 {completed}개",
+  "@routesTabSubtitle": {
+    "placeholders": {
+      "total": {"type": "int"},
+      "completed": {"type": "int"}
+    }
+  },
+  "filterLabelWithCount": "{label} {count}",
+  "@filterLabelWithCount": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "myStatsRoutesAttempted": "시도한 루트",
+  "myStatsRoutesCompleted": "완등",
+  "myStatsActiveDays": "운동일수"
 }

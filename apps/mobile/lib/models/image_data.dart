@@ -11,6 +11,7 @@ class ImageData {
   final PlaceData? place;
   final String? wallName;
   final DateTime? wallExpirationDate;
+  final int routeCount;
 
   ImageData({
     required this.id,
@@ -22,6 +23,7 @@ class ImageData {
     this.place,
     this.wallName,
     this.wallExpirationDate,
+    this.routeCount = 0,
   });
 
   factory ImageData.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class ImageData {
       place: json['place'] != null ? PlaceData.fromJson(json['place']) : null,
       wallName: json['wallName'],
       wallExpirationDate: json['wallExpirationDate'] != null ? DateTime.parse(json['wallExpirationDate']) : null,
+      routeCount: (json['routeCount'] as int?) ?? 0,
     );
   }
 
@@ -48,5 +51,6 @@ class ImageData {
         'place': place,
         'wallName': wallName,
         'wallExpirationDate': wallExpirationDate?.toIso8601String(),
+        'routeCount': routeCount,
       };
 }

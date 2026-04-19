@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/routes_provider.dart';
+import '../providers/user_stats_provider.dart';
 import '../widgets/home/route_card.dart';
 
 class RoutesPage extends HookConsumerWidget {
@@ -12,6 +13,11 @@ class RoutesPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedFilter = useState<String?>(null);
     final routesAsync = ref.watch(routesProvider(type: selectedFilter.value));
+    final statsAsync = ref.watch(userStatsNotifierProvider);
+    final stats = statsAsync.valueOrNull;
+    final ownActivity = stats?.ownRoutesActivity;
+    final routesCreated = stats?.routesCreated;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -23,17 +29,35 @@ class RoutesPage extends HookConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 48, 24, 0),
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 36, color: Colors.black),
-                      children: [
-                        TextSpan(text: 'Your\n'),
-                        TextSpan(
-                          text: AppLocalizations.of(context)!.routesTitle,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(fontSize: 36, color: Colors.black),
+                          children: [
+                            TextSpan(text: 'Your\n'),
+                            TextSpan(
+                              text: l10n.routesTitle,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (ownActivity != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.routesTabSubtitle(
+                            ownActivity.totalCount,
+                            ownActivity.completedCount,
+                          ),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -44,19 +68,25 @@ class RoutesPage extends HookConsumerWidget {
                   child: Row(
                     children: [
                       _FilterChip(
-                        label: 'All',
+                        label: routesCreated == null
+                            ? 'All'
+                            : l10n.filterLabelWithCount('All', routesCreated.totalCount),
                         selected: selectedFilter.value == null,
                         onTap: () => selectedFilter.value = null,
                       ),
                       const SizedBox(width: 12),
                       _FilterChip(
-                        label: 'Bouldering',
+                        label: routesCreated == null
+                            ? 'Bouldering'
+                            : l10n.filterLabelWithCount('Bouldering', routesCreated.boulderingCount),
                         selected: selectedFilter.value == 'bouldering',
                         onTap: () => selectedFilter.value = 'bouldering',
                       ),
                       const SizedBox(width: 12),
                       _FilterChip(
-                        label: 'Endurance',
+                        label: routesCreated == null
+                            ? 'Endurance'
+                            : l10n.filterLabelWithCount('Endurance', routesCreated.enduranceCount),
                         selected: selectedFilter.value == 'endurance',
                         onTap: () => selectedFilter.value = 'endurance',
                       ),

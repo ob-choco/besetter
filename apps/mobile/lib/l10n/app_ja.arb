@@ -332,5 +332,28 @@
   "profileIdErrorConsecutiveSpecial": "ドット(.)とアンダースコア(_)は連続して使用できません",
   "profileIdErrorReserved": "使用できないプロフィールIDです",
   "profileIdErrorTaken": "すでに使用されているプロフィールIDです",
-  "profileIdUpdated": "プロフィールIDが変更されました"
+  "profileIdUpdated": "プロフィールIDが変更されました",
+  "routeCountLabel": "ルート {count}本",
+  "@routeCountLabel": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routesTabSubtitle": "全{total}本 · 完登 {completed}本",
+  "@routesTabSubtitle": {
+    "placeholders": {
+      "total": {"type": "int"},
+      "completed": {"type": "int"}
+    }
+  },
+  "filterLabelWithCount": "{label} {count}",
+  "@filterLabelWithCount": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "myStatsRoutesAttempted": "挑戦したルート",
+  "myStatsRoutesCompleted": "完登",
+  "myStatsActiveDays": "活動日数"
 }

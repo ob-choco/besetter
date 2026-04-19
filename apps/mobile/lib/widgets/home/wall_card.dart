@@ -114,6 +114,27 @@ class _WallCardState extends ConsumerState<WallCard> {
               ),
             ),
           ),
+          // 루트 개수 배지 (상단 우측)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                AppLocalizations.of(context)!.routeCountLabel(widget.image.routeCount),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
           // 하단 정보 + 버튼
           Positioned(
             left: 16,

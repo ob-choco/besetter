@@ -332,5 +332,28 @@
   "profileIdErrorConsecutiveSpecial": "Dots (.) and underscores (_) cannot be used consecutively",
   "profileIdErrorReserved": "This profile ID is not allowed",
   "profileIdErrorTaken": "This profile ID is already taken",
-  "profileIdUpdated": "Profile ID updated"
+  "profileIdUpdated": "Profile ID updated",
+  "routeCountLabel": "{count, plural, =0{No routes} =1{1 route} other{{count} routes}}",
+  "@routeCountLabel": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "routesTabSubtitle": "{total} total · {completed} sent",
+  "@routesTabSubtitle": {
+    "placeholders": {
+      "total": {"type": "int"},
+      "completed": {"type": "int"}
+    }
+  },
+  "filterLabelWithCount": "{label} {count}",
+  "@filterLabelWithCount": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "myStatsRoutesAttempted": "Routes attempted",
+  "myStatsRoutesCompleted": "Sent",
+  "myStatsActiveDays": "Active days"
 }

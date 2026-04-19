@@ -11,6 +11,7 @@ import '../models/route_data.dart';
 import '../pages/viewers/route_viewer.dart';
 import '../providers/activity_refresh_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/user_stats_provider.dart';
 import '../services/activity_service.dart';
 import '../services/http_client.dart';
 import '../utils/thumbnail_url.dart';
@@ -361,6 +362,8 @@ class MyPage extends HookConsumerWidget {
                 nameController: nameController,
                 bioController: bioController,
               ),
+              const SizedBox(height: 24),
+              const _ProfileStats(),
               const SizedBox(height: 32),
               if (calendarLoading.value)
                 const Center(child: CircularProgressIndicator(strokeWidth: 2))
@@ -1131,6 +1134,62 @@ class _StatBox extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileStats extends ConsumerWidget {
+  const _ProfileStats();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final stats = ref.watch(userStatsNotifierProvider).valueOrNull;
+    final attempted = stats?.distinctRoutes.totalCount ?? 0;
+    final completed = stats?.distinctRoutes.completedCount ?? 0;
+    final activeDays = stats?.distinctDays ?? 0;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _ProfileStatItem(value: attempted, label: l10n.myStatsRoutesAttempted),
+        _ProfileStatItem(value: completed, label: l10n.myStatsRoutesCompleted),
+        _ProfileStatItem(value: activeDays, label: l10n.myStatsActiveDays),
+      ],
+    );
+  }
+}
+
+class _ProfileStatItem extends StatelessWidget {
+  final int value;
+  final String label;
+
+  const _ProfileStatItem({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$value',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2C2F30),
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF595C5D),
+          ),
         ),
       ],
     );
