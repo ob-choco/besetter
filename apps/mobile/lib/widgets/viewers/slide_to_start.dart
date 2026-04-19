@@ -46,15 +46,22 @@ class _SlideToStartState extends State<SlideToStart> {
               child: Stack(
                 alignment: Alignment.centerLeft,
                 children: [
-                  // Center label
-                  Center(
-                    child: Text(
-                      AppLocalizations.of(context)!.slideToStart,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.4,
+                  // Label centered in the space to the right of the handle
+                  Positioned.fill(
+                    left: _handleSize + _padding * 2,
+                    right: _padding * 2,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        AppLocalizations.of(context)!.slideToStart,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.4,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
