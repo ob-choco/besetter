@@ -79,6 +79,9 @@ def test_activity_completed():
 
 
 def test_user_route_stats_defaults():
+    """A freshly-constructed UserRouteStats has no activity yet, so
+    lastActivityAt defaults to None. The hook layer sets it once an
+    Activity lands."""
     from bson import ObjectId
     stats = UserRouteStats(
         user_id=ObjectId(),
