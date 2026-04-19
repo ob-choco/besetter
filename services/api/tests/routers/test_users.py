@@ -1,8 +1,16 @@
 from types import SimpleNamespace
 
+import pytest
 from bson import ObjectId
+from fastapi import HTTPException, status as http_status
 
-from app.routers.users import UserProfileResponse, _build_profile_response
+from app.routers.users import (
+    ProfileIdAvailabilityResponse,
+    UserProfileResponse,
+    _build_profile_response,
+    _compute_profile_id_availability,
+    _validate_profile_id_or_raise,
+)
 
 
 def _make_user(
@@ -81,12 +89,6 @@ def test_build_profile_response_passes_through_nulls():
     assert resp.profile_image_url is None
 
 
-import pytest
-from fastapi import HTTPException, status as http_status
-
-from app.routers.users import _validate_profile_id_or_raise
-
-
 @pytest.mark.parametrize(
     "value,expected_code",
     [
@@ -114,12 +116,6 @@ def test_validate_profile_id_or_raise_reserved_exact():
 def test_validate_profile_id_or_raise_accepts_valid():
     # Should not raise.
     _validate_profile_id_or_raise("climber99")
-
-
-from app.routers.users import (
-    ProfileIdAvailabilityResponse,
-    _compute_profile_id_availability,
-)
 
 
 def test_availability_response_schema_camelcase():
