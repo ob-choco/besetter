@@ -15,6 +15,7 @@ import '../providers/user_stats_provider.dart';
 import '../services/activity_service.dart';
 import '../services/http_client.dart';
 import '../utils/thumbnail_url.dart';
+import '../widgets/common/owner_badge.dart';
 import '../widgets/editors/profile_id_edit_dialog.dart';
 import 'setting.dart';
 
@@ -873,7 +874,7 @@ class _DailyRoutes extends StatelessWidget {
   }
 }
 
-class _DailyRouteCard extends StatelessWidget {
+class _DailyRouteCard extends ConsumerWidget {
   final Map<String, dynamic> route;
   final String Function(double) formatDuration;
   final VoidCallback? onReturn;
@@ -914,7 +915,7 @@ class _DailyRouteCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final routeId = route['routeId'] as String;
     final snapshot = route['routeSnapshot'] as Map<String, dynamic>;
@@ -923,6 +924,10 @@ class _DailyRouteCard extends StatelessWidget {
     final gradeColorHex = snapshot['gradeColor'] as String?;
     final placeName = snapshot['placeName'] as String? ?? '';
     final imageUrl = snapshot['overlayImageUrl'] as String? ?? snapshot['imageUrl'] as String?;
+    final ownerJson = route['owner'] as Map<String, dynamic>?;
+    final owner = ownerJson != null ? OwnerInfo.fromJson(ownerJson) : null;
+    final myId = ref.watch(userProfileProvider).valueOrNull?.id;
+    final showOwner = owner != null && owner.userId != myId;
 
     final routeVisibility = route['routeVisibility'] as String? ?? 'public';
     final isDeleted = route['isDeleted'] as bool? ?? false;
@@ -993,6 +998,10 @@ class _DailyRouteCard extends StatelessWidget {
                                 Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
                                 const SizedBox(height: 2),
                                 Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
+                                if (showOwner) ...[
+                                  const SizedBox(height: 4),
+                                  OwnerBadge(owner: owner),
+                                ],
                                 if (isBlocked) ...[
                                   const SizedBox(height: 4),
                                   Row(
