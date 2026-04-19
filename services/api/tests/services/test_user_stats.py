@@ -9,7 +9,12 @@ from beanie.odm.fields import PydanticObjectId
 
 from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
 from app.models.user_stats import UserStats
-from app.services.user_stats import _apply_user_route_stats_delta, _bucket_deltas, _local_date_str
+from app.services.user_stats import (
+    _apply_user_route_stats_delta,
+    _bucket_deltas,
+    _local_date_str,
+    _recount_local_day,
+)
 
 
 @pytest.mark.asyncio
@@ -186,3 +191,84 @@ async def test_apply_urs_delta_upsert_initializes_duration_fields(mongo_db):
     assert doc.completed_duration == 0
     assert doc.verified_completed_duration == 0
     assert doc.last_activity_at is None
+
+
+@pytest.mark.skip(reason="mongomock does not implement $dateToString timezone — covered by real-Mongo integration")
+@pytest.mark.asyncio
+async def test_recount_local_day_counts_same_user_same_date(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    snap = RouteSnapshot(grade_type="v_scale", grade="V1")
+
+    # Two activities on 2026-04-19 KST
+    await Activity(
+        route_id=route_id,
+        user_id=user_id,
+        status=ActivityStatus.COMPLETED,
+        location_verified=True,
+        started_at=datetime(2026, 4, 18, 15, 30, tzinfo=dt_tz.utc),
+        ended_at=datetime(2026, 4, 18, 16, 0, tzinfo=dt_tz.utc),
+        duration=1800.0,
+        timezone="Asia/Seoul",
+        route_snapshot=snap,
+        created_at=datetime(2026, 4, 18, 16, 0, tzinfo=dt_tz.utc),
+    ).insert()
+    await Activity(
+        route_id=route_id,
+        user_id=user_id,
+        status=ActivityStatus.ATTEMPTED,
+        location_verified=False,
+        started_at=datetime(2026, 4, 18, 20, 0, tzinfo=dt_tz.utc),  # 2026-04-19 05:00 KST
+        ended_at=datetime(2026, 4, 18, 20, 30, tzinfo=dt_tz.utc),
+        duration=1800.0,
+        timezone="Asia/Seoul",
+        route_snapshot=snap,
+        created_at=datetime(2026, 4, 18, 20, 30, tzinfo=dt_tz.utc),
+    ).insert()
+
+    assert await _recount_local_day(user_id, "2026-04-19") == 2
+    assert await _recount_local_day(user_id, "2026-04-18") == 0
+
+
+@pytest.mark.asyncio
+async def test_recount_local_day_ignores_other_users(mongo_db):
+    user_id = PydanticObjectId()
+    other_id = PydanticObjectId()
+    snap = RouteSnapshot(grade_type="v_scale", grade="V1")
+    started = datetime(2026, 4, 19, 1, 0, tzinfo=dt_tz.utc)
+    await Activity(
+        route_id=PydanticObjectId(),
+        user_id=other_id,
+        status=ActivityStatus.COMPLETED,
+        location_verified=True,
+        started_at=started,
+        ended_at=started,
+        duration=0.0,
+        timezone="UTC",
+        route_snapshot=snap,
+        created_at=started,
+    ).insert()
+
+    assert await _recount_local_day(user_id, "2026-04-19") == 0
+
+
+@pytest.mark.skip(reason="mongomock does not implement $dateToString timezone — covered by real-Mongo integration")
+@pytest.mark.asyncio
+async def test_recount_local_day_falls_back_to_utc_when_timezone_null(mongo_db):
+    user_id = PydanticObjectId()
+    snap = RouteSnapshot(grade_type="v_scale", grade="V1")
+    started = datetime(2026, 4, 19, 23, 0, tzinfo=dt_tz.utc)  # still 2026-04-19 in UTC
+    await Activity(
+        route_id=PydanticObjectId(),
+        user_id=user_id,
+        status=ActivityStatus.COMPLETED,
+        location_verified=True,
+        started_at=started,
+        ended_at=started,
+        duration=0.0,
+        timezone=None,
+        route_snapshot=snap,
+        created_at=started,
+    ).insert()
+
+    assert await _recount_local_day(user_id, "2026-04-19") == 1

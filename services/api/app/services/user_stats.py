@@ -89,3 +89,32 @@ async def _apply_user_route_stats_delta(
     after = {k: updated.get(_URS_BUCKET_DB_FIELDS[k], 0) for k in BUCKET_FIELDS}
     before = {k: after[k] - deltas[k] for k in BUCKET_FIELDS}
     return before, after
+
+
+async def _recount_local_day(user_id: PydanticObjectId, local_date_str: str) -> int:
+    """Return how many of ``user_id``'s activities have ``_local_date_str`` equal to ``local_date_str``.
+
+    Computes the local date server-side via Mongo's ``$dateToString`` using the
+    activity's stored ``timezone`` (UTC fallback), and counts matches.
+    """
+    collection = Activity.get_pymongo_collection()
+    pipeline = [
+        {"$match": {"userId": user_id}},
+        {
+            "$addFields": {
+                "_localDate": {
+                    "$dateToString": {
+                        "format": "%Y-%m-%d",
+                        "date": "$startedAt",
+                        "timezone": {"$ifNull": ["$timezone", "UTC"]},
+                    }
+                }
+            }
+        },
+        {"$match": {"_localDate": local_date_str}},
+        {"$count": "count"},
+    ]
+    cursor = collection.aggregate(pipeline)
+    async for doc in cursor:
+        return int(doc["count"])
+    return 0
