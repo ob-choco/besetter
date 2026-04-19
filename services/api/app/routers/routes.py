@@ -155,8 +155,6 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
 
     created_route = await route.save()
 
-    await user_stats_service.on_route_created(created_route)
-
     blob_path = extract_blob_path_from_url(created_route.image_url)
     if blob_path:
         created_route.image_url = HttpUrl(generate_signed_url(blob_path))
@@ -166,7 +164,9 @@ async def create_route(request: CreateRouteRequest, background_tasks: Background
             created_route.overlay_image_url = HttpUrl(generate_signed_url(overlay_blob_path))
 
     background_tasks.add_task(generate_route_overlay, created_route)
-    return await _enrich_route_with_hold_polygon_data(created_route)
+    enriched = await _enrich_route_with_hold_polygon_data(created_route)
+    await user_stats_service.on_route_created(created_route)
+    return enriched
 
 
 class RouteServiceView(BaseModel):
