@@ -5,7 +5,9 @@ from __future__ import annotations
 import pytest
 from beanie.odm.fields import PydanticObjectId
 
+from app.models.activity import ActivityStatus
 from app.models.user_stats import UserStats
+from app.services.user_stats import _bucket_deltas
 
 
 @pytest.mark.asyncio
@@ -24,10 +26,6 @@ async def test_user_stats_roundtrip(mongo_db):
     assert fetched.routes_created.total_count == 0
     assert fetched.routes_created.bouldering_count == 0
     assert fetched.routes_created.endurance_count == 0
-
-
-from app.models.activity import ActivityStatus
-from app.services.user_stats import _bucket_deltas
 
 
 def test_bucket_deltas_attempted():
