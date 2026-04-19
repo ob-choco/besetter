@@ -71,7 +71,17 @@ async def _apply_user_route_stats_delta(
     collection = UserRouteStats.get_pymongo_collection()
     updated = await collection.find_one_and_update(
         {"userId": user_id, "routeId": route_id},
-        {"$inc": inc, "$setOnInsert": {"userId": user_id, "routeId": route_id}},
+        {
+            "$inc": inc,
+            "$setOnInsert": {
+                "userId": user_id,
+                "routeId": route_id,
+                "totalDuration": 0,
+                "completedDuration": 0,
+                "verifiedCompletedDuration": 0,
+                "lastActivityAt": None,
+            },
+        },
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )

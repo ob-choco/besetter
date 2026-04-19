@@ -151,3 +151,38 @@ async def test_apply_urs_delta_decrements_to_zero(mongo_db):
 
     assert before == {"total_count": 1, "completed_count": 1, "verified_completed_count": 1}
     assert after == {"total_count": 0, "completed_count": 0, "verified_completed_count": 0}
+
+
+@pytest.mark.asyncio
+async def test_apply_urs_delta_mixed_signs(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    await _apply_user_route_stats_delta(
+        user_id, route_id, {"total_count": 1, "completed_count": 1, "verified_completed_count": 1}
+    )
+
+    before, after = await _apply_user_route_stats_delta(
+        user_id, route_id, {"total_count": 0, "completed_count": -1, "verified_completed_count": -1}
+    )
+
+    assert before == {"total_count": 1, "completed_count": 1, "verified_completed_count": 1}
+    assert after == {"total_count": 1, "completed_count": 0, "verified_completed_count": 0}
+
+
+@pytest.mark.asyncio
+async def test_apply_urs_delta_upsert_initializes_duration_fields(mongo_db):
+    user_id = PydanticObjectId()
+    route_id = PydanticObjectId()
+    await _apply_user_route_stats_delta(
+        user_id, route_id, {"total_count": 1, "completed_count": 0, "verified_completed_count": 0}
+    )
+
+    doc = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route_id,
+    )
+    assert doc is not None
+    assert doc.total_duration == 0
+    assert doc.completed_duration == 0
+    assert doc.verified_completed_duration == 0
+    assert doc.last_activity_at is None
