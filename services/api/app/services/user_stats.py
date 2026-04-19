@@ -10,7 +10,10 @@ from __future__ import annotations
 from datetime import timezone
 from zoneinfo import ZoneInfo
 
-from app.models.activity import Activity, ActivityStatus
+from beanie.odm.fields import PydanticObjectId
+from pymongo import ReturnDocument
+
+from app.models.activity import Activity, ActivityStatus, UserRouteStats
 
 
 BUCKET_FIELDS = ("total_count", "completed_count", "verified_completed_count")
@@ -44,3 +47,35 @@ def _local_date_str(activity: Activity) -> str:
         started = started.replace(tzinfo=timezone.utc)
     tz_name = activity.timezone or "UTC"
     return started.astimezone(ZoneInfo(tz_name)).date().isoformat()
+
+
+_URS_BUCKET_DB_FIELDS = {
+    "total_count": "totalCount",
+    "completed_count": "completedCount",
+    "verified_completed_count": "verifiedCompletedCount",
+}
+
+
+async def _apply_user_route_stats_delta(
+    user_id: PydanticObjectId,
+    route_id: PydanticObjectId,
+    deltas: dict[str, int],
+) -> tuple[dict[str, int], dict[str, int]]:
+    """Atomically apply ``$inc`` on UserRouteStats bucket counters for (user, route).
+
+    Upserts the doc if missing. Returns ``(before, after)`` bucket counts as
+    snake_case-keyed dicts. ``before = after - deltas``.
+    """
+    inc = {_URS_BUCKET_DB_FIELDS[k]: v for k, v in deltas.items()}
+
+    collection = UserRouteStats.get_pymongo_collection()
+    updated = await collection.find_one_and_update(
+        {"userId": user_id, "routeId": route_id},
+        {"$inc": inc, "$setOnInsert": {"userId": user_id, "routeId": route_id}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+
+    after = {k: updated.get(_URS_BUCKET_DB_FIELDS[k], 0) for k in BUCKET_FIELDS}
+    before = {k: after[k] - deltas[k] for k in BUCKET_FIELDS}
+    return before, after
