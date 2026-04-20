@@ -216,3 +216,46 @@ async def test_delete_image_endpoint_raises_409_with_route_count(mongo_db):
         "code": "IMAGE_HAS_ROUTES",
         "route_count": 5,
     }
+
+
+async def test_soft_deleted_image_excluded_from_owner_listing_query(mongo_db):
+    """After soft-delete, the exact query used by GET /images (`is_deleted != True`) must not include the image.
+
+    If this ever breaks, the owner will see 'zombie' deleted images in their gallery.
+    """
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id)
+    await image.insert()
+    await _soft_delete_image(
+        image.id, user_id, confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    results = await Image.find(
+        Image.user_id == user_id,
+        Image.is_deleted != True,
+    ).to_list()
+
+    assert results == []
+
+
+async def test_soft_deleted_image_excluded_from_route_creation_query(mongo_db):
+    """Route creation uses `Image.find_one(..., is_deleted != True)` at routes.py:113-119.
+
+    Lock that a soft-deleted image cannot be the source of a new route.
+    """
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id)
+    await image.insert()
+    await _soft_delete_image(
+        image.id, user_id, confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    found = await Image.find_one(
+        Image.id == image.id,
+        Image.user_id == user_id,
+        Image.is_deleted != True,
+    )
+
+    assert found is None
