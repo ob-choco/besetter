@@ -140,6 +140,7 @@ class DailySummary(BaseModel):
 
     total_count: int = 0
     completed_count: int = 0
+    verified_completed_count: int = 0
     attempted_count: int = 0
     total_duration: float = 0
     route_count: int = 0
@@ -154,6 +155,7 @@ class DailyRouteItem(BaseModel):
     is_deleted: bool = False
     total_count: int
     completed_count: int
+    verified_completed_count: int
     attempted_count: int
     total_duration: float
     owner: OwnerView
@@ -192,6 +194,7 @@ class RecentRouteView(BaseModel):
 
     total_count: int
     completed_count: int
+    verified_completed_count: int
     attempted_count: int
     last_activity_at: datetime
 
@@ -329,6 +332,14 @@ async def get_daily_routes(
             "routeSnapshot": {"$first": "$routeSnapshot"},
             "totalCount": {"$sum": 1},
             "completedCount": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
+            "verifiedCompletedCount": {"$sum": {"$cond": [
+                {"$and": [
+                    {"$eq": ["$status", "completed"]},
+                    {"$eq": ["$locationVerified", True]},
+                ]},
+                1,
+                0,
+            ]}},
             "attemptedCount": {"$sum": {"$cond": [{"$eq": ["$status", "attempted"]}, 1, 0]}},
             "totalDuration": {"$sum": "$duration"},
         }},
@@ -356,6 +367,7 @@ async def get_daily_routes(
             "routes": {"$push": "$$ROOT"},
             "totalCount": {"$sum": "$totalCount"},
             "completedCount": {"$sum": "$completedCount"},
+            "verifiedCompletedCount": {"$sum": "$verifiedCompletedCount"},
             "attemptedCount": {"$sum": "$attemptedCount"},
             "totalDuration": {"$sum": "$totalDuration"},
             "routeCount": {"$sum": 1},
@@ -373,6 +385,7 @@ async def get_daily_routes(
     summary = DailySummary(
         total_count=doc["totalCount"],
         completed_count=doc["completedCount"],
+        verified_completed_count=doc["verifiedCompletedCount"],
         attempted_count=doc["attemptedCount"],
         total_duration=doc["totalDuration"],
         route_count=doc["routeCount"],
@@ -405,6 +418,7 @@ async def get_daily_routes(
             is_deleted=r.get("isDeleted", False),
             total_count=r["totalCount"],
             completed_count=r["completedCount"],
+            verified_completed_count=r["verifiedCompletedCount"],
             attempted_count=r["attemptedCount"],
             total_duration=r["totalDuration"],
             owner=_owner_view(r.get("ownerUserId")),
@@ -603,6 +617,7 @@ async def _build_recently_climbed_routes(
             owner=owner_view,
             total_count=urs.total_count,
             completed_count=urs.completed_count,
+            verified_completed_count=urs.verified_completed_count,
             attempted_count=urs.total_count - urs.completed_count,
             last_activity_at=urs.last_activity_at,
             created_at=route.created_at,

@@ -214,6 +214,7 @@ class RouteServiceView(BaseModel):
 
     total_count: Optional[int] = Field(None, description="내 총 활동 횟수 (시도+완등, projection=stats)")
     completed_count: Optional[int] = Field(None, description="내 총 완등 횟수 (projection=stats)")
+    verified_completed_count: Optional[int] = Field(None, description="내 위치인증 완등 횟수 (projection=stats)")
     attempted_count: Optional[int] = Field(None, description="내 순수 시도 횟수 = total - completed (projection=stats)")
     last_activity_at: Optional[datetime] = Field(None, description="내 마지막 활동 시각 (projection=stats)")
 
@@ -397,6 +398,7 @@ async def get_routes(
             wall_expiration_date=image.wall_expiration_date if image else None,
             total_count=stats.total_count if stats else (0 if include_stats else None),
             completed_count=stats.completed_count if stats else (0 if include_stats else None),
+            verified_completed_count=stats.verified_completed_count if stats else (0 if include_stats else None),
             attempted_count=(stats.total_count - stats.completed_count) if stats else (0 if include_stats else None),
             last_activity_at=stats.last_activity_at if stats else None,
         ))

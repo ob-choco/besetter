@@ -85,6 +85,7 @@ class RouteData {
 
   final int? totalCount;
   final int? completedCount;
+  final int? verifiedCompletedCount;
   final int? attemptedCount;
   final DateTime? lastActivityAt;
 
@@ -117,6 +118,7 @@ class RouteData {
     this.hasOtherUserActivities,
     this.totalCount,
     this.completedCount,
+    this.verifiedCompletedCount,
     this.attemptedCount,
     this.lastActivityAt,
     this.owner,
@@ -160,6 +162,7 @@ class RouteData {
       hasOtherUserActivities: json['hasOtherUserActivities'] as bool?,
       totalCount: json['totalCount'] as int?,
       completedCount: json['completedCount'] as int?,
+      verifiedCompletedCount: json['verifiedCompletedCount'] as int?,
       attemptedCount: json['attemptedCount'] as int?,
       lastActivityAt:
           json['lastActivityAt'] != null ? DateTime.parse(json['lastActivityAt']) : null,
@@ -196,6 +199,7 @@ class RouteData {
         'hasOtherUserActivities': hasOtherUserActivities,
         'totalCount': totalCount,
         'completedCount': completedCount,
+        'verifiedCompletedCount': verifiedCompletedCount,
         'attemptedCount': attemptedCount,
         'lastActivityAt': lastActivityAt?.toIso8601String(),
         if (owner != null) 'owner': owner!.toJson(),
