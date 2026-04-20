@@ -44,15 +44,9 @@ timezone: Optional[str] = Field(None, description="디바이스 IANA 타임존 (
 - 빈 값이면 송신 시 `Asia/Seoul` 폴백.
 - `locale` 필드는 **이미 존재**하며 발송기가 이를 사용해 다국어 렌더를 하고 있다. 모바일이 등록 시 실제로 전송하도록 연결만 한다(아래 "모바일" 참조).
 
-### `Notification` (`services/api/app/models/notification.py`)
+### `Notification` — 변경 없음
 
-1개 필드 추가:
-
-```python
-is_promotional: bool = False
-```
-
-현재 모든 `Notification.type`은 운영성이므로 기본 `False` 그대로.
+**광고성 알림은 `Notification` 문서를 생성하지 않는다.** 광고는 인앱 알림 리스트/배지에 노출되지 않고 푸시 1회성으로만 발송된다. 따라서 `Notification` 모델에는 필드 변경이 없으며, `is_promotional` 같은 플래그도 추가하지 않는다.
 
 ## API
 
@@ -127,52 +121,80 @@ onTap:   NotificationSettingsPage로 push
 
 `pubspec.yaml`에 `flutter_timezone` 의존성 추가.
 
-## 발송 게이트 (`push_sender.py`)
+## 발송 경로 (`push_sender.py`)
 
-`send_to_user`를 아래 흐름으로 수정:
+운영성과 광고성은 **서로 다른 진입점**으로 분리한다.
+
+### 운영성: `send_to_user(user_id, notif: Notification)` — 기존 유지
+
+기존 동작 그대로. `Notification` 문서는 호출자(예: 라우터)가 이미 저장한 뒤 이 함수에 넘긴다. 동의/TTL/야간 검사 없음.
+
+### 광고성: 신규 `send_promotional(user_id, title_by_locale, body_by_locale, link=None, data=None)`
 
 ```python
 CONSENT_TTL = timedelta(days=730)
 
-async def send_to_user(user_id, notif: Notification):
-    if notif.is_promotional:
-        user = await User.find_one(User.id == user_id)
-        if (not user
-            or not user.marketing_push_consent
-            or not user.marketing_push_consent_at
-            or datetime.now(timezone.utc) - user.marketing_push_consent_at > CONSENT_TTL):
-            return  # 동의 없음 / 2년 경과 / 사용자 없음
+async def send_promotional(
+    user_id: PydanticObjectId,
+    title_by_locale: dict[str, str],  # {"ko": "...", "en": "...", ...}
+    body_by_locale: dict[str, str],
+    link: Optional[str] = None,
+    data: Optional[dict[str, str]] = None,
+) -> None:
+    user = await User.find_one(User.id == user_id)
+    if (not user
+        or not user.marketing_push_consent
+        or not user.marketing_push_consent_at
+        or datetime.now(timezone.utc) - user.marketing_push_consent_at > CONSENT_TTL):
+        return  # 동의 없음 / 2년 경과 / 사용자 없음
 
     devices = await DeviceToken.find(DeviceToken.user_id == user_id).to_list()
     if not devices:
         return
 
-    # ... 기존 FCM 토큰 및 세션 준비 ...
+    # ... FCM 토큰 및 세션 준비 (send_to_user와 동일 헬퍼 재사용) ...
 
     async def _maybe_send(d: DeviceToken):
-        if notif.is_promotional:
-            tz_name = d.timezone or "Asia/Seoul"
-            local_hour = datetime.now(ZoneInfo(tz_name)).hour
-            if local_hour >= 21 or local_hour < 8:
-                return
-        await _send_one(session, project_id, access_token, d, notif)
+        tz_name = d.timezone or "Asia/Seoul"
+        local_hour = datetime.now(ZoneInfo(tz_name)).hour
+        if local_hour >= 21 or local_hour < 8:
+            return
+        primary = _primary_locale(d.locale)  # 기존 헬퍼
+        title = title_by_locale.get(primary) or title_by_locale.get(DEFAULT_LOCALE)
+        body = body_by_locale.get(primary) or body_by_locale.get(DEFAULT_LOCALE)
+        if not title or not body:
+            return
+        await _send_one_raw(session, project_id, access_token, d, title, body, link, data)
 
     await asyncio.gather(*[_maybe_send(d) for d in devices], return_exceptions=True)
 ```
 
-- 운영성(`is_promotional=False`)은 **동의/TTL/야간 검사 모두 건너뛰고** 기존 동작과 동일하게 발송.
-- 동의 체크는 사용자 단위로 1회, 야간 체크는 디바이스 단위.
+- **`Notification` 문서는 생성하지 않는다.**
+- title/body를 호출자가 로케일별 dict로 직접 전달(템플릿 없음). 향후 캠페인 수가 늘면 `notification_templates.py`에 타입을 추가해 템플릿 기반으로 전환 가능 — 이번 범위에서는 미구현.
+- 기존 `_send_one`은 `Notification`을 받는 구조이므로, `title`/`body`/`link`/`data`만 받는 경량 버전 `_send_one_raw`(또는 파라미터 분해)를 추출해 두 경로가 공용으로 사용한다. 토큰 무효 처리는 동일 로직.
+
+## 딥링크 (탭 핸들러)
+
+푸시 탭 시 기본 동작: **홈 탭으로 이동**. `data['link']`를 읽어 경로별로 분기하는 라우팅은 이번 범위에서 구현하지 않고, 향후 확장 여지로 핸들러만 깔아둔다.
+
+`apps/mobile/lib/services/push_service.dart`:
+
+- `FirebaseMessaging.onMessageOpenedApp` 콜백 — 탭해서 앱이 백그라운드에서 올라온 경우 → `Navigator.pushNamedAndRemoveUntil('/home', (r) => false)`.
+- `FirebaseMessaging.getInitialMessage()` — 앱이 terminated 상태에서 푸시로 기동된 경우 → 마찬가지로 홈으로.
+- `FirebaseMessaging.onMessage` — foreground 수신 시 라우팅 없음(기존 디버그 로그 유지, 필요 시 스낵바).
+- 서버가 보내는 `data['link']`는 **현재 무시**. 필드는 계속 실려 보내지되 클라이언트 해석은 후속 작업으로 미룬다.
 
 ## 테스트 범위
 
 `services/api/tests/services/test_push_sender.py`에 케이스 추가:
 
-1. 광고성 + 미동의 → 어떤 디바이스로도 발송되지 않음.
-2. 광고성 + 동의(`consent_at=now`) + 디바이스 로컬 22시 → 스킵.
-3. 광고성 + 동의 + 디바이스 로컬 10시 → 발송.
-4. 광고성 + 동의(`consent_at`이 731일 전) → TTL 초과로 미발송.
-5. 운영성(`is_promotional=False`) + 미동의 + 디바이스 로컬 23시 → 발송(기존 동작 유지).
-6. `DeviceToken.timezone` 누락 시 `Asia/Seoul` 폴백.
+1. `send_promotional` + 미동의 → 어떤 디바이스로도 발송되지 않음.
+2. `send_promotional` + 동의(`consent_at=now`) + 디바이스 로컬 22시 → 스킵.
+3. `send_promotional` + 동의 + 디바이스 로컬 10시 → 발송. 디바이스 `locale`에 맞는 title/body 선택 확인.
+4. `send_promotional` + 동의(`consent_at`이 731일 전) → TTL 초과로 미발송.
+5. `send_promotional`은 **`Notification` 문서를 생성하지 않는다** — 호출 전후로 컬렉션 카운트가 동일한지 검증.
+6. `send_to_user`(운영성) + 미동의 + 디바이스 로컬 23시 → 발송(기존 동작 유지).
+7. `DeviceToken.timezone` 누락 시 `Asia/Seoul` 폴백.
 
 라우터 테스트:
 
