@@ -104,3 +104,80 @@ export async function getPlaceDetail(id: ObjectId): Promise<PlaceDetail | null> 
     nearbyApproved,
   };
 }
+
+export async function getMergeCandidates(args: {
+  lat: number;
+  lng: number;
+  q?: string;
+}): Promise<Array<PlaceDoc & { distanceMeters?: number; imageCount: number; routeCount: number }>> {
+  const db = await getDb();
+  let docs: PlaceDoc[];
+  if (args.q && args.q.trim()) {
+    const escaped = args.q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    docs = await db
+      .collection<PlaceDoc>("places")
+      .find({
+        type: "gym",
+        status: "approved",
+        normalizedName: { $regex: escaped, $options: "i" },
+      })
+      .limit(20)
+      .toArray();
+  } else {
+    docs = await db
+      .collection<PlaceDoc>("places")
+      .find({
+        type: "gym",
+        status: "approved",
+        location: {
+          $nearSphere: {
+            $geometry: { type: "Point", coordinates: [args.lng, args.lat] },
+            $maxDistance: 1000,
+          },
+        },
+      })
+      .limit(20)
+      .toArray();
+  }
+
+  const ids = docs.map((d) => d._id);
+  const imageAgg = await db
+    .collection<ImageDoc>("images")
+    .aggregate<{ _id: ObjectId; count: number }>([
+      { $match: { placeId: { $in: ids } } },
+      { $group: { _id: "$placeId", count: { $sum: 1 } } },
+    ])
+    .toArray();
+  const imageCountByPlace = new Map(imageAgg.map((a) => [a._id.toString(), a.count]));
+  const allImageIds = await db
+    .collection<ImageDoc>("images")
+    .find({ placeId: { $in: ids } }, { projection: { _id: 1, placeId: 1 } })
+    .toArray();
+  const imageIdToPlace = new Map(allImageIds.map((i) => [i._id.toString(), i.placeId!.toString()]));
+  const routeAgg = await db
+    .collection("routes")
+    .aggregate<{ _id: ObjectId; count: number }>([
+      { $match: { imageId: { $in: allImageIds.map((i) => i._id) } } },
+      { $group: { _id: "$imageId", count: { $sum: 1 } } },
+    ])
+    .toArray();
+  const routeCountByPlace = new Map<string, number>();
+  for (const r of routeAgg) {
+    const placeIdStr = imageIdToPlace.get(r._id.toString());
+    if (!placeIdStr) continue;
+    routeCountByPlace.set(placeIdStr, (routeCountByPlace.get(placeIdStr) ?? 0) + r.count);
+  }
+
+  return docs.map((d) => {
+    const key = d._id.toString();
+    const distanceMeters = d.location
+      ? Math.round(haversineMeters([args.lng, args.lat], d.location.coordinates))
+      : undefined;
+    return {
+      ...d,
+      distanceMeters,
+      imageCount: imageCountByPlace.get(key) ?? 0,
+      routeCount: routeCountByPlace.get(key) ?? 0,
+    };
+  });
+}

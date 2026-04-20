@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { getPendingPlaces, getPlaceDetail } from "@/lib/place-ops";
+import { getMergeCandidates, getPendingPlaces, getPlaceDetail } from "@/lib/place-ops";
+import type { PlaceDoc } from "@/lib/db-types";
 
 const DB = "besetter_test";
 let client: MongoClient;
@@ -129,5 +130,68 @@ describe("getPlaceDetail", () => {
   test("returns null for unknown id", async () => {
     const detail = await getPlaceDetail(new ObjectId());
     expect(detail).toBeNull();
+  });
+});
+
+describe("getMergeCandidates", () => {
+  test("nearby 1km returns approved gyms sorted by distance, excludes pending/merged/rejected/private", async () => {
+    const db = client.db(DB);
+    await db.collection("places").createIndex({ location: "2dsphere" });
+    const mkPlace = (
+      name: string,
+      coords: [number, number],
+      over: Partial<PlaceDoc> = {},
+    ): PlaceDoc =>
+      ({
+        _id: new ObjectId(),
+        name,
+        normalizedName: name.toLowerCase(),
+        type: "gym",
+        status: "approved",
+        location: { type: "Point", coordinates: coords },
+        createdBy: new ObjectId(),
+        createdAt: new Date(),
+        ...over,
+      }) as PlaceDoc;
+    const approved = mkPlace("A", [127.0275, 37.4983]);
+    const farAway = mkPlace("Far", [128.0, 37.0]);
+    const pending = mkPlace("P", [127.028, 37.498], { status: "pending" });
+    const privateGym = mkPlace("PG", [127.028, 37.498], { type: "private-gym" });
+    await db.collection("places").insertMany([approved, farAway, pending, privateGym] as any);
+
+    const results = await getMergeCandidates({ lat: 37.4981, lng: 127.0276 });
+    const names = results.map((r) => r.name);
+    expect(names).toContain("A");
+    expect(names).not.toContain("Far");
+    expect(names).not.toContain("P");
+    expect(names).not.toContain("PG");
+    expect(results[0]!.distanceMeters).toBeDefined();
+  });
+
+  test("name search returns approved gyms by normalizedName regex", async () => {
+    const db = client.db(DB);
+    await db.collection("places").insertMany([
+      {
+        _id: new ObjectId(),
+        name: "강남 클라이밍 파크",
+        normalizedName: "강남클라이밍파크",
+        type: "gym",
+        status: "approved",
+        createdBy: new ObjectId(),
+        createdAt: new Date(),
+      },
+      {
+        _id: new ObjectId(),
+        name: "Seoul Bouldering",
+        normalizedName: "seoulbouldering",
+        type: "gym",
+        status: "approved",
+        createdBy: new ObjectId(),
+        createdAt: new Date(),
+      },
+    ] as any);
+
+    const results = await getMergeCandidates({ lat: 0, lng: 0, q: "클라이밍" });
+    expect(results.map((r) => r.name)).toEqual(["강남 클라이밍 파크"]);
   });
 });
