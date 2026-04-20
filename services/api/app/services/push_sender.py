@@ -188,3 +188,53 @@ async def send_to_user(user_id: PydanticObjectId, notif: Notification) -> None:
             "push_sender.send_to_user failed user=%s notif=%s",
             user_id, getattr(notif, "id", None),
         )
+
+
+async def send_promotional(
+    user_id: PydanticObjectId,
+    title_by_locale: dict[str, str],
+    body_by_locale: dict[str, str],
+    link: Optional[str] = None,
+    data: Optional[dict[str, str]] = None,
+) -> None:
+    """Send a promotional push to every eligible device of ``user_id``.
+
+    Gate order:
+      1. User exists AND has active consent within CONSENT_TTL.
+      2. Per device: local hour is NOT in 21:00-07:59.
+    Does not persist any message record.
+    """
+    from app.models.user import User as _User  # local import; name aliased
+
+    try:
+        user = await _User.find_one(_User.id == user_id)
+        if not _is_consent_active(user):
+            return
+        devices = await DeviceToken.find(DeviceToken.user_id == user_id).to_list()
+        if not devices:
+            return
+        _ensure_credentials()
+        if not _project_id:
+            logger.error("send_promotional: FCM project_id unavailable")
+            return
+        loop = asyncio.get_running_loop()
+        access_token = await loop.run_in_executor(None, _refresh_access_token)
+        async with aiohttp.ClientSession(timeout=_FCM_TIMEOUT) as session:
+            async def _maybe_send(d: DeviceToken):
+                if _is_night_hour_for_device(d):
+                    return
+                locale = _primary_locale(d.locale)
+                title = title_by_locale.get(locale) or title_by_locale.get(DEFAULT_LOCALE)
+                body = body_by_locale.get(locale) or body_by_locale.get(DEFAULT_LOCALE)
+                if not title or not body:
+                    return
+                await _send_one_raw(
+                    session, _project_id, access_token, d, title, body, link, data,
+                )
+
+            await asyncio.gather(
+                *(_maybe_send(d) for d in devices),
+                return_exceptions=True,
+            )
+    except Exception:
+        logger.exception("send_promotional failed user=%s", user_id)

@@ -163,3 +163,25 @@ def test_is_night_hour_boundary_8h_false():
     now = datetime(2026, 4, 20, 23, 0, 0, tzinfo=timezone.utc)
     d = _FakeDevice("Asia/Seoul")
     assert _is_night_hour_for_device(d, now=now) is False
+
+
+# ---------------------------------------------------------------------------
+# send_promotional — contract: does not persist Notification
+# ---------------------------------------------------------------------------
+
+
+def test_send_promotional_body_does_not_reference_notification():
+    """Contract: send_promotional's source code does not mention Notification.
+
+    Promo pushes are ephemeral; this read-your-source guard keeps the
+    invariant from drifting.
+    """
+    import inspect
+
+    from app.services import push_sender
+
+    src = inspect.getsource(push_sender.send_promotional)
+    assert "Notification" not in src, (
+        "send_promotional body must not reference Notification; "
+        "promo pushes are not persisted."
+    )
