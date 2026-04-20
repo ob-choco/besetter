@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'http_client.dart';
 
@@ -56,12 +57,23 @@ class PushService {
   static Future<void> registerWithServer() async {
     final token = _fcmToken;
     if (token == null) return;
+
+    final locale = PlatformDispatcher.instance.locale.toLanguageTag();
+    String? timezone;
+    try {
+      timezone = await FlutterTimezone.getLocalTimezone();
+    } catch (e) {
+      timezone = null; // server falls back to Asia/Seoul
+    }
+
     try {
       final response = await AuthorizedHttpClient.post(
         '/my/devices',
         body: {
           'token': token,
           'platform': Platform.isIOS ? 'ios' : 'android',
+          'locale': locale,
+          if (timezone != null) 'timezone': timezone,
         },
       );
       debugPrint('[Push] POST /my/devices: ${response.statusCode}');
