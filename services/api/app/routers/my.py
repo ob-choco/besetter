@@ -648,6 +648,7 @@ class RegisterDeviceRequest(BaseModel):
     platform: str = Field(..., description="'ios' | 'android'")
     app_version: Optional[str] = None
     locale: Optional[str] = None
+    timezone: Optional[str] = None
 
 
 @router.post("/devices", status_code=status.HTTP_204_NO_CONTENT)
@@ -668,6 +669,7 @@ async def register_device(
         existing.platform = payload.platform
         existing.app_version = payload.app_version
         existing.locale = payload.locale
+        existing.timezone = payload.timezone
         existing.last_seen_at = now
         await existing.save()
         return
@@ -678,6 +680,7 @@ async def register_device(
         platform=payload.platform,
         app_version=payload.app_version,
         locale=payload.locale,
+        timezone=payload.timezone,
         created_at=now,
         last_seen_at=now,
     ).insert()
