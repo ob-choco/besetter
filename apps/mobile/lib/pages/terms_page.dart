@@ -39,10 +39,18 @@ class _TermsPageState extends ConsumerState<TermsPage> {
     'es': 'https://truth-crafter-0c7.notion.site/Pol-tica-de-Privacidad-1f2ad66660f181fd9d87cb068b896248',
     'ja': 'https://truth-crafter-0c7.notion.site/1f2ad66660f18161815ec804daaf4992',
   };
+  final Map<String, String> _locationTerms = {
+    'ko': 'https://truth-crafter-0c7.notion.site/348ad66660f1812a8c56dd8b3bbb5da8',
+    'en': 'https://truth-crafter-0c7.notion.site/Location-Based-Services-Terms-of-Use-English-348ad66660f1818baab2e0c5bd7ad8dc',
+    'es': 'https://truth-crafter-0c7.notion.site/T-rminos-de-uso-del-Servicio-Basado-en-Ubicaci-n-Espa-ol-348ad66660f181dab567e03c8978e2d4',
+    'ja': 'https://truth-crafter-0c7.notion.site/348ad66660f18164b92ff73578a93362',
+  };
   bool _isServiceTermsAgreed = false;
   bool _isPrivacyPolicyAgreed = false;
+  bool _isLocationTermsAgreed = false;
 
-  bool get _canProceed => _isServiceTermsAgreed && _isPrivacyPolicyAgreed;
+  bool get _canProceed =>
+      _isServiceTermsAgreed && _isPrivacyPolicyAgreed && _isLocationTermsAgreed;
 
   static const String _host = 'https://besetter-api-371038003203.asia-northeast3.run.app';
 
@@ -172,6 +180,7 @@ class _TermsPageState extends ConsumerState<TermsPage> {
     final locale = Localizations.localeOf(context).languageCode;
     final termsUrl = _terms[locale] ?? _terms['en']!;
     final privacyPolicyUrl = _privacyPolicy[locale] ?? _privacyPolicy['en']!;
+    final locationTermsUrl = _locationTerms[locale] ?? _locationTerms['en']!;
 
     return Scaffold(
       appBar: AppBar(
@@ -241,6 +250,33 @@ class _TermsPageState extends ConsumerState<TermsPage> {
               onChanged: (value) {
                 setState(() {
                   _isPrivacyPolicyAgreed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WebViewPage(url: locationTermsUrl, title: AppLocalizations.of(context)!.agreeToLocationTermsRequired),
+                    ),
+                  );
+                  setState(() {
+                    _isLocationTermsAgreed = true;
+                  });
+                },
+                child: Text(
+                  AppLocalizations.of(context)!.agreeToLocationTermsRequired,
+                  style: TextStyle(
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              value: _isLocationTermsAgreed,
+              onChanged: (value) {
+                setState(() {
+                  _isLocationTermsAgreed = value ?? false;
                 });
               },
             ),

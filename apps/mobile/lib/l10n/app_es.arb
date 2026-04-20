@@ -93,6 +93,7 @@
   "agreeToTermsForService": "Para usar el servicio, por favor acepta los términos y condiciones",
   "agreeToServiceTermsRequired": "Aceptar los términos del servicio (obligatorio)",
   "agreeToPrivacyPolicyRequired": "Aceptar la política de privacidad (obligatorio)",
+  "agreeToLocationTermsRequired": "Aceptar los términos del Servicio Basado en Ubicación (obligatorio)",
   "agreeAndStart": "Aceptar y comenzar",
   "sessionExpiredLogout": "La sesión ha expirado y se ha cerrado la sesión. Por favor, inicie sesión de nuevo",
   "selectHoldsToReplaceOnImage": "Por favor, selecciona los agarres que deseas reemplazar en la imagen",

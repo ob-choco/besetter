@@ -93,6 +93,7 @@
   "agreeToTermsForService": "サービスを利用するために、利用規約に同意してください",
   "agreeToServiceTermsRequired": "サービス利用規約に同意する（必須）",
   "agreeToPrivacyPolicyRequired": "プライバシーポリシーに同意する（必須）",
+  "agreeToLocationTermsRequired": "位置情報サービス利用規約に同意する（必須）",
   "agreeAndStart": "同意して始める",
   "sessionExpiredLogout": "セッションの有効期限が切れたため、ログアウトされました。再度ログインしてください。",
   "selectHoldsToReplaceOnImage": "写真上で交換するホールドを選択してください",

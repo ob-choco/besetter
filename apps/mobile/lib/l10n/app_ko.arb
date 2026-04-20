@@ -93,6 +93,7 @@
   "agreeToTermsForService": "서비스 이용을 위해 약관에 동의해주세요",
   "agreeToServiceTermsRequired": "서비스 이용약관 동의 (필수)",
   "agreeToPrivacyPolicyRequired": "개인정보 처리방침 동의 (필수)",
+  "agreeToLocationTermsRequired": "위치기반서비스 이용약관 동의 (필수)",
   "agreeAndStart": "동의하고 시작하기",
   "sessionExpiredLogout": "세션이 만료되어 로그아웃되었습니다. 다시 로그인해주세요.",
   "selectHoldsToReplaceOnImage": "사진 위에 교체할 홀드를 선택해주세요",

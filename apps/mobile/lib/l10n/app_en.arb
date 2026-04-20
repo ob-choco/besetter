@@ -93,6 +93,7 @@
   "agreeToTermsForService": "Please agree to the terms and conditions to use the service",
   "agreeToServiceTermsRequired": "Agree to the Terms of Service (Required)",
   "agreeToPrivacyPolicyRequired": "Agree to Privacy Policy (Required)",
+  "agreeToLocationTermsRequired": "Agree to Location-Based Services Terms (Required)",
   "agreeAndStart": "Agree and start",
   "sessionExpiredLogout": "Your session has expired and you have been logged out. Please log in again",
   "selectHoldsToReplaceOnImage": "Please select the holds to replace on the image",
