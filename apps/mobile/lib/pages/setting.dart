@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
 import '../providers/auth_provider.dart';
 import '../services/http_client.dart';
+import 'notification_settings_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -35,6 +36,17 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.language),
             title: Text(AppLocalizations.of(context)!.languageSettings),
             onTap: _openSystemLanguageSettings,
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: Text(AppLocalizations.of(context)!.notifications),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const NotificationSettingsPage(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.logout),
