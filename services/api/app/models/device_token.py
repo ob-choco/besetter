@@ -17,6 +17,7 @@ class DeviceToken(Document):
     platform: str = Field(..., description="'ios' | 'android'")
     app_version: Optional[str] = Field(None, description="앱 버전")
     locale: Optional[str] = Field(None, description="기기 로케일 (예: 'ko-KR')")
+    timezone: Optional[str] = Field(None, description="기기 IANA 타임존 (예: 'Asia/Seoul')")
     created_at: datetime = Field(..., description="최초 등록 시간")
     last_seen_at: datetime = Field(..., description="가장 최근에 본 시간")
 
