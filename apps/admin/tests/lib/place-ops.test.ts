@@ -1,7 +1,13 @@
 import { MongoClient, ObjectId } from "mongodb";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { getMergeCandidates, getPendingPlaces, getPlaceDetail } from "@/lib/place-ops";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("@/lib/notifications", () => ({
+  notify: vi.fn(async () => {}),
+}));
+
+import { getMergeCandidates, getPendingPlaces, getPlaceDetail, passPlace } from "@/lib/place-ops";
 import type { PlaceDoc } from "@/lib/db-types";
+import { notify } from "@/lib/notifications";
 
 const DB = "besetter_test";
 let client: MongoClient;
@@ -193,5 +199,54 @@ describe("getMergeCandidates", () => {
 
     const results = await getMergeCandidates({ lat: 0, lng: 0, q: "클라이밍" });
     expect(results.map((r) => r.name)).toEqual(["강남 클라이밍 파크"]);
+  });
+});
+
+describe("passPlace", () => {
+  test("pending → approved, emits place_review_passed", async () => {
+    vi.mocked(notify).mockClear();
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(),
+      name: "P",
+      normalizedName: "p",
+      type: "gym",
+      status: "pending",
+      createdBy: user._id,
+      createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+
+    await passPlace(place._id);
+
+    const updated = await db.collection("places").findOne({ _id: place._id });
+    expect(updated!.status).toBe("approved");
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user._id,
+        type: "place_review_passed",
+        params: expect.objectContaining({ place_name: "P" }),
+      }),
+    );
+  });
+
+  test("throws ConflictError when place is already approved", async () => {
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(),
+      name: "P",
+      normalizedName: "p",
+      type: "gym",
+      status: "approved",
+      createdBy: user._id,
+      createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+
+    await expect(passPlace(place._id)).rejects.toMatchObject({ code: "CONFLICT" });
   });
 });

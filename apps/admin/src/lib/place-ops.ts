@@ -1,6 +1,16 @@
 import type { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongo";
 import type { ActivityDoc, ImageDoc, PlaceDoc, UserDoc } from "@/lib/db-types";
+import { notify } from "@/lib/notifications";
+
+export class AdminOpError extends Error {
+  constructor(
+    public readonly code: "CONFLICT" | "BAD_REQUEST" | "NOT_FOUND",
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 export type PendingPlaceView = PlaceDoc & {
   creator?: { profileId: string; profileImageUrl?: string | null } | null;
@@ -179,5 +189,23 @@ export async function getMergeCandidates(args: {
       imageCount: imageCountByPlace.get(key) ?? 0,
       routeCount: routeCountByPlace.get(key) ?? 0,
     };
+  });
+}
+
+export async function passPlace(id: ObjectId): Promise<void> {
+  const db = await getDb();
+  const result = await db
+    .collection<PlaceDoc>("places")
+    .findOneAndUpdate(
+      { _id: id, status: "pending", type: "gym" },
+      { $set: { status: "approved" } },
+      { returnDocument: "before" },
+    );
+  if (!result) throw new AdminOpError("CONFLICT", "place is not pending");
+  await notify({
+    userId: result.createdBy,
+    type: "place_review_passed",
+    params: { place_name: result.name },
+    link: `/places/${id.toString()}`,
   });
 }
