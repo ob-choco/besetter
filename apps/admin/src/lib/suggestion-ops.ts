@@ -137,3 +137,28 @@ export async function approveSuggestion(suggestionId: ObjectId): Promise<void> {
     link: null,
   });
 }
+
+export async function rejectSuggestion(
+  suggestionId: ObjectId,
+  reason?: string,
+): Promise<void> {
+  const db = await getDb();
+  const result = await db
+    .collection<PlaceSuggestionDoc>("placeSuggestions")
+    .findOneAndUpdate(
+      { _id: suggestionId, status: "pending" },
+      { $set: { status: "rejected", reviewedAt: new Date() } },
+      { returnDocument: "before" },
+    );
+  if (!result) throw new AdminOpError("CONFLICT", "suggestion is not pending");
+  const place = await db.collection<PlaceDoc>("places").findOne({ _id: result.placeId });
+  await notify({
+    userId: result.requestedBy,
+    type: "place_suggestion_rejected",
+    params: {
+      place_name: place?.name ?? "",
+      reason_suffix: reason ? ` 사유: ${reason}` : "",
+    },
+    link: null,
+  });
+}

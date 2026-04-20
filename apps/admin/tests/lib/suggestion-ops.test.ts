@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/notifications", () => ({ notify: vi.fn(async () => {}) }));
 
-import { approveSuggestion, getPendingSuggestions, getSuggestionDetail } from "@/lib/suggestion-ops";
+import { approveSuggestion, getPendingSuggestions, getSuggestionDetail, rejectSuggestion } from "@/lib/suggestion-ops";
 import { notify } from "@/lib/notifications";
 
 const DB = "besetter_test";
@@ -137,5 +137,62 @@ describe("approveSuggestion", () => {
     expect(notify).toHaveBeenCalledWith(
       expect.objectContaining({ userId: user._id, type: "place_suggestion_approved" }),
     );
+  });
+});
+
+describe("rejectSuggestion", () => {
+  async function seedPending() {
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "s", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(), name: "P", normalizedName: "p",
+      type: "gym", status: "approved", createdBy: new ObjectId(), createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+    const suggestion = {
+      _id: new ObjectId(), placeId: place._id, requestedBy: user._id,
+      status: "pending", changes: { name: "Q" }, createdAt: new Date(),
+    };
+    await db.collection("placeSuggestions").insertOne(suggestion as any);
+    return { place, suggestion, user };
+  }
+
+  test("marks rejected + sets reviewedAt + notifies with reason_suffix", async () => {
+    vi.mocked(notify).mockClear();
+    const { suggestion, user } = await seedPending();
+    await rejectSuggestion(suggestion._id, "좌표 불일치");
+    const db = client.db(DB);
+    const s = await db.collection("placeSuggestions").findOne({ _id: suggestion._id });
+    expect(s!.status).toBe("rejected");
+    expect(s!.reviewedAt).toBeInstanceOf(Date);
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user._id,
+        type: "place_suggestion_rejected",
+        params: expect.objectContaining({ reason_suffix: " 사유: 좌표 불일치" }),
+      }),
+    );
+  });
+
+  test("no reason → empty reason_suffix", async () => {
+    vi.mocked(notify).mockClear();
+    const { suggestion } = await seedPending();
+    await rejectSuggestion(suggestion._id);
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({ reason_suffix: "" }),
+      }),
+    );
+  });
+
+  test("conflict when already reviewed", async () => {
+    const { suggestion } = await seedPending();
+    const db = client.db(DB);
+    await db.collection("placeSuggestions").updateOne(
+      { _id: suggestion._id },
+      { $set: { status: "approved" } },
+    );
+    await expect(rejectSuggestion(suggestion._id)).rejects.toMatchObject({ code: "CONFLICT" });
   });
 });
