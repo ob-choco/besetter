@@ -31,6 +31,9 @@ def _make_user(
         bio=bio,
         profile_image_url=profile_image_url,
         unread_notification_count=unread_notification_count,
+        marketing_push_consent=False,
+        marketing_push_consent_at=None,
+        marketing_push_consent_source=None,
     )
 
 
