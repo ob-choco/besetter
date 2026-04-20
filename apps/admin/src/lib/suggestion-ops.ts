@@ -1,0 +1,79 @@
+import type { ObjectId } from "mongodb";
+import { getDb } from "@/lib/mongo";
+import type {
+  PlaceDoc,
+  PlaceSuggestionDoc,
+  UserDoc,
+} from "@/lib/db-types";
+
+export type SuggestionListItem = PlaceSuggestionDoc & {
+  place: Pick<PlaceDoc, "_id" | "name" | "normalizedName" | "status" | "type" | "coverImageUrl">;
+  requester: { profileId: string; profileImageUrl?: string | null } | null;
+};
+
+export async function getPendingSuggestions(): Promise<SuggestionListItem[]> {
+  const db = await getDb();
+  const pending = await db
+    .collection<PlaceSuggestionDoc>("placeSuggestions")
+    .find({ status: "pending" })
+    .sort({ createdAt: 1 })
+    .toArray();
+  if (pending.length === 0) return [];
+  const placeIds = pending.map((s) => s.placeId);
+  const userIds = pending.map((s) => s.requestedBy);
+  const [places, users] = await Promise.all([
+    db.collection<PlaceDoc>("places").find({ _id: { $in: placeIds } }).toArray(),
+    db.collection<UserDoc>("users").find({ _id: { $in: userIds } }).toArray(),
+  ]);
+  const placeById = new Map(places.map((p) => [p._id.toString(), p]));
+  const userById = new Map(users.map((u) => [u._id.toString(), u]));
+  return pending
+    .map((s) => {
+      const p = placeById.get(s.placeId.toString());
+      if (!p) return null;
+      const u = userById.get(s.requestedBy.toString());
+      return {
+        ...s,
+        place: {
+          _id: p._id,
+          name: p.name,
+          normalizedName: p.normalizedName,
+          status: p.status,
+          type: p.type,
+          coverImageUrl: p.coverImageUrl ?? null,
+        },
+        requester: u
+          ? { profileId: u.profileId, profileImageUrl: u.profileImageUrl ?? null }
+          : null,
+      } satisfies SuggestionListItem;
+    })
+    .filter((x): x is SuggestionListItem => x !== null);
+}
+
+export type SuggestionDetail = SuggestionListItem & {
+  currentPlace: PlaceDoc;
+};
+
+export async function getSuggestionDetail(id: ObjectId): Promise<SuggestionDetail | null> {
+  const db = await getDb();
+  const s = await db.collection<PlaceSuggestionDoc>("placeSuggestions").findOne({ _id: id });
+  if (!s) return null;
+  const place = await db.collection<PlaceDoc>("places").findOne({ _id: s.placeId });
+  if (!place) return null;
+  const user = await db.collection<UserDoc>("users").findOne({ _id: s.requestedBy });
+  return {
+    ...s,
+    place: {
+      _id: place._id,
+      name: place.name,
+      normalizedName: place.normalizedName,
+      status: place.status,
+      type: place.type,
+      coverImageUrl: place.coverImageUrl ?? null,
+    },
+    requester: user
+      ? { profileId: user.profileId, profileImageUrl: user.profileImageUrl ?? null }
+      : null,
+    currentPlace: place,
+  };
+}
