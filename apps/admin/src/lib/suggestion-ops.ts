@@ -10,8 +10,15 @@ import { normalizeName } from "@/lib/normalize";
 import { AdminOpError } from "@/lib/place-ops";
 
 export type SuggestionListItem = PlaceSuggestionDoc & {
-  place: Pick<PlaceDoc, "_id" | "name" | "normalizedName" | "status" | "type" | "coverImageUrl">;
-  requester: { profileId: string; profileImageUrl?: string | null } | null;
+  place: {
+    _id: PlaceDoc["_id"];
+    name: string;
+    normalizedName: string;
+    status: PlaceDoc["status"];
+    type: PlaceDoc["type"];
+    coverImageUrl: string | null;
+  };
+  requester: { profileId: string; profileImageUrl: string | null } | null;
 };
 
 export async function getPendingSuggestions(): Promise<SuggestionListItem[]> {
