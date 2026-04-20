@@ -38,6 +38,9 @@ class UserProfileResponse(BaseModel):
     bio: Optional[str] = None
     profile_image_url: Optional[str] = None
     unread_notification_count: int = 0
+    marketing_push_consent: bool = False
+    marketing_push_consent_at: Optional[datetime] = None
+    marketing_push_consent_source: Optional[str] = None
 
 
 class UpdateProfileIdRequest(BaseModel):
@@ -156,6 +159,9 @@ def _build_profile_response(user: User) -> UserProfileResponse:
         bio=user.bio,
         profile_image_url=signed_url,
         unread_notification_count=max(0, user.unread_notification_count),
+        marketing_push_consent=user.marketing_push_consent,
+        marketing_push_consent_at=user.marketing_push_consent_at,
+        marketing_push_consent_source=user.marketing_push_consent_source,
     )
 
 
