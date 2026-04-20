@@ -46,6 +46,35 @@ class UpdateProfileIdRequest(BaseModel):
     profile_id: str
 
 
+USER_NAME_MAX_LENGTH = 32
+USER_BIO_MAX_LENGTH = 300
+
+
+class UpdateMyProfileRequest(BaseModel):
+    """Validation schema for PATCH /users/me form fields (name, bio)."""
+
+    model_config = model_config
+
+    name: Optional[str] = Field(None, max_length=USER_NAME_MAX_LENGTH)
+    bio: Optional[str] = Field(None, max_length=USER_BIO_MAX_LENGTH)
+
+
+def _validate_user_name_or_raise(name: str) -> None:
+    if len(name) > USER_NAME_MAX_LENGTH:
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"name must be {USER_NAME_MAX_LENGTH} characters or fewer",
+        )
+
+
+def _validate_user_bio_or_raise(bio: str) -> None:
+    if len(bio) > USER_BIO_MAX_LENGTH:
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"bio must be {USER_BIO_MAX_LENGTH} characters or fewer",
+        )
+
+
 _PROFILE_ID_ERROR_MESSAGES: dict[ProfileIdError, str] = {
     ProfileIdError.TOO_SHORT: "6자 이상 입력해 주세요",
     ProfileIdError.TOO_LONG: "30자 이하로 입력해 주세요",
@@ -150,9 +179,11 @@ async def update_my_profile(
 ):
     """인증된 유저의 프로필을 수정한다. multipart/form-data를 지원한다."""
     if name is not None:
+        _validate_user_name_or_raise(name)
         current_user.name = name
 
     if bio is not None:
+        _validate_user_bio_or_raise(bio)
         current_user.bio = bio
 
     if profile_image is not None and profile_image.filename:

@@ -7,6 +7,8 @@ import '../animations/shake_animation_widget.dart';
 import '../place_pending_badge.dart';
 import 'place_selection_sheet.dart';
 
+const int kWallNameMaxLength = 32;
+
 class SprayWallInformationInput extends StatefulWidget {
   final PlaceData? selectedPlace;
   final Function(PlaceData?) onPlaceChanged;
@@ -84,6 +86,7 @@ class _SprayWallInformationInputState extends State<SprayWallInformationInput> {
                     SizedBox(height: 16),
                     TextField(
                       controller: tempWallNameController,
+                      maxLength: kWallNameMaxLength,
                       decoration: InputDecoration(
                         labelText: AppLocalizations.of(context)!.wallLocation,
                         hintText: AppLocalizations.of(context)!.enterWallLocation,

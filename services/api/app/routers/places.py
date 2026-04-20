@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import List, Literal, Optional
 
 from beanie.odm.fields import PydanticObjectId
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from fastapi import status
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,7 @@ from app.models.notification import Notification
 from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
 from app.models.route import Route
 from app.models.user import User
+from app.services import push_sender
 from beanie.odm.operators.find.comparison import In
 
 logger = logging.getLogger(__name__)
@@ -31,12 +32,15 @@ router = APIRouter(prefix="/places", tags=["places"])
 # ---------------------------------------------------------------------------
 
 
+PLACE_NAME_MAX_LENGTH = 64
+
+
 class CreatePlaceRequest(BaseModel):
     model_config = model_config
 
-    name: str = Field(..., description="장소 이름")
-    latitude: Optional[float] = Field(None, description="위도")
-    longitude: Optional[float] = Field(None, description="경도")
+    name: str = Field(..., description="장소 이름", min_length=1, max_length=PLACE_NAME_MAX_LENGTH)
+    latitude: Optional[float] = Field(None, description="위도", ge=-90, le=90)
+    longitude: Optional[float] = Field(None, description="경도", ge=-180, le=180)
     type: str = Field("gym", description="장소 유형 (gym | private-gym)")
 
 
@@ -95,6 +99,28 @@ def place_to_view(place: Place, distance: Optional[float] = None) -> PlaceView:
 # ---------------------------------------------------------------------------
 
 
+def _validate_place_name_or_raise(name: str) -> None:
+    length = len(name)
+    if length < 1 or length > PLACE_NAME_MAX_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"name must be 1..{PLACE_NAME_MAX_LENGTH} characters",
+        )
+
+
+def _validate_coord_or_raise(latitude: Optional[float], longitude: Optional[float]) -> None:
+    if latitude is not None and not -90 <= latitude <= 90:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="latitude must be within [-90, 90]",
+        )
+    if longitude is not None and not -180 <= longitude <= 180:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="longitude must be within [-180, 180]",
+        )
+
+
 def _upload_place_image(content: bytes, file_ext: str) -> str:
     """Upload the place cover image to GCS and return its public URL."""
     unique_name = str(uuid.uuid4())
@@ -106,6 +132,7 @@ def _upload_place_image(content: bytes, file_ext: str) -> str:
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=PlaceView)
 async def create_place(
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     type: str = Form("gym"),
     latitude: Optional[float] = Form(None),
@@ -124,6 +151,9 @@ async def create_place(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="latitude and longitude are required for type 'gym'",
         )
+
+    _validate_place_name_or_raise(name)
+    _validate_coord_or_raise(latitude, longitude)
 
     # 이미지 처리
     cover_image_url = None
@@ -166,6 +196,9 @@ async def create_place(
             await User.get_pymongo_collection().update_one(
                 {"_id": current_user.id},
                 {"$inc": {"unreadNotificationCount": 1}},
+            )
+            background_tasks.add_task(
+                push_sender.send_to_user, current_user.id, notif
             )
         except Exception as exc:
             logger.warning(
@@ -293,9 +326,11 @@ async def update_place(
         )
 
     if name is not None:
+        _validate_place_name_or_raise(name)
         place.name = name
         place.normalized_name = normalize_name(name)
 
+    _validate_coord_or_raise(latitude, longitude)
     new_lat = latitude if latitude is not None else place.latitude
     new_lng = longitude if longitude is not None else place.longitude
     place.set_location_from(new_lat, new_lng)
@@ -392,6 +427,7 @@ async def delete_place(
 
 @router.post("/suggestions", status_code=status.HTTP_201_CREATED, response_model=PlaceSuggestionView)
 async def create_place_suggestion(
+    background_tasks: BackgroundTasks,
     place_id: str = Form(...),
     name: Optional[str] = Form(None),
     latitude: Optional[float] = Form(None),
@@ -414,6 +450,10 @@ async def create_place_suggestion(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Suggestions are only allowed for approved places",
         )
+
+    if name is not None:
+        _validate_place_name_or_raise(name)
+    _validate_coord_or_raise(latitude, longitude)
 
     # Upload image if provided
     cover_image_url: Optional[str] = None
@@ -465,6 +505,9 @@ async def create_place_suggestion(
         await User.get_pymongo_collection().update_one(
             {"_id": current_user.id},
             {"$inc": {"unreadNotificationCount": 1}},
+        )
+        background_tasks.add_task(
+            push_sender.send_to_user, current_user.id, notif
         )
     except Exception as exc:  # best-effort; do not block suggestion creation
         logger.warning(

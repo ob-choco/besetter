@@ -39,6 +39,19 @@ from app.core.gcs import get_base_url, bucket, storage_client, generate_signed_u
 router = APIRouter(prefix="/hold-polygons", tags=["hold-polygons"])
 
 
+WALL_NAME_MAX_LENGTH = 32
+
+
+def _validate_wall_name(value: Optional[str]) -> None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError("wall_name must be a string")
+    if len(value) > WALL_NAME_MAX_LENGTH:
+        raise ValueError(f"wall_name must be {WALL_NAME_MAX_LENGTH} characters or fewer")
+    return None
+
+
 class HoldPolygonResponse(BaseModel):
     """HoldPolygon + Image 메타데이터를 합친 응답 모델"""
     model_config = model_config
@@ -264,7 +277,15 @@ async def update_hold_polygon(
         await hold_polygon.save()
 
         # Image 메타데이터 업데이트 (정본)
-        image.wall_name = patched_data.get("wallName")
+        new_wall_name = patched_data.get("wallName")
+        try:
+            _validate_wall_name(new_wall_name)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(exc),
+            )
+        image.wall_name = new_wall_name
         wall_exp = patched_data.get("wallExpirationDate")
         image.wall_expiration_date = datetime.fromisoformat(wall_exp) if wall_exp else None
         image.place_id = resolved_place_id

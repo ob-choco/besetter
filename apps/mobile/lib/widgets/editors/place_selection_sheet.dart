@@ -837,6 +837,7 @@ class _PlaceSelectionSheetState extends ConsumerState<PlaceSelectionSheet> {
                 TextField(
                   controller: _registerNameController,
                   autofocus: true,
+                  maxLength: kPlaceNameMaxLength,
                   decoration: InputDecoration(
                     labelText: l10n.gymName,
                     hintText: l10n.enterGymName,

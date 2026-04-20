@@ -11,6 +11,8 @@ import '../../models/place_data.dart';
 import '../../services/place_service.dart';
 import '../place_not_usable_dialog.dart';
 
+const int kPlaceNameMaxLength = 64;
+
 class PlaceEditPane extends StatefulWidget {
   final PlaceData place;
   final bool isDirectEdit;
@@ -279,6 +281,7 @@ class _PlaceEditPaneState extends State<PlaceEditPane> {
                 ],
                 TextField(
                   controller: _nameController,
+                  maxLength: kPlaceNameMaxLength,
                   decoration: InputDecoration(
                     hintText: _isSuggest ? l10n.placeNewNameHint : l10n.gymName,
                     border: OutlineInputBorder(

@@ -1,13 +1,15 @@
 import base64
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
+
+import zoneinfo
 
 from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import status as http_status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.core.geo import haversine_distance
 from app.dependencies import get_current_user
@@ -36,15 +38,41 @@ LOCATION_VERIFICATION_RADIUS_M = 300
 # ---------------------------------------------------------------------------
 
 
+ACTIVITY_MAX_DURATION = timedelta(hours=12)
+# Allow small client-clock skew for "no future times" check.
+ACTIVITY_FUTURE_SKEW = timedelta(minutes=5)
+
+
 class CreateActivityRequest(BaseModel):
     model_config = model_config
 
-    latitude: float
-    longitude: float
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
     status: ActivityStatus
     started_at: datetime
     ended_at: datetime
     timezone: str
+
+    @field_validator("timezone")
+    @classmethod
+    def _validate_timezone(cls, value: str) -> str:
+        try:
+            zoneinfo.ZoneInfo(value)
+        except (zoneinfo.ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"Invalid IANA timezone: {value}") from exc
+        return value
+
+    @model_validator(mode="after")
+    def _validate_time_range(self) -> "CreateActivityRequest":
+        if self.ended_at <= self.started_at:
+            raise ValueError("ended_at must be after started_at")
+        now = datetime.now(tz=timezone.utc)
+        started = self.started_at if self.started_at.tzinfo else self.started_at.replace(tzinfo=timezone.utc)
+        if started > now + ACTIVITY_FUTURE_SKEW:
+            raise ValueError("started_at must not be in the future")
+        if self.ended_at - self.started_at > ACTIVITY_MAX_DURATION:
+            raise ValueError("activity duration must be 12 hours or less")
+        return self
 
 
 class ActivityResponse(BaseModel):

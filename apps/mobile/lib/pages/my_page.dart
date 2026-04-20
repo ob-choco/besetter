@@ -19,6 +19,9 @@ import '../widgets/common/owner_badge.dart';
 import '../widgets/editors/profile_id_edit_dialog.dart';
 import 'setting.dart';
 
+const int kUserNameMaxLength = 32;
+const int kUserBioMaxLength = 300;
+
 class MyPage extends HookConsumerWidget {
   final int refreshSignal;
   const MyPage({this.refreshSignal = 0, super.key});
@@ -525,6 +528,7 @@ class _ProfileHeader extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: nameController,
+                    maxLength: kUserNameMaxLength,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
@@ -534,6 +538,7 @@ class _ProfileHeader extends StatelessWidget {
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(vertical: 8),
                       border: UnderlineInputBorder(),
+                      counterText: '',
                     ),
                   ),
                 ),
@@ -610,6 +615,7 @@ class _ProfileHeader extends StatelessWidget {
                       controller: bioController,
                       maxLines: 4,
                       minLines: 3,
+                      maxLength: kUserBioMaxLength,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF595C5D),
@@ -816,7 +822,13 @@ class _DailyRoutes extends StatelessWidget {
   });
 
   String _formatDuration(double totalSeconds) {
-    final minutes = (totalSeconds / 60).floor().toString().padLeft(2, '0');
+    final totalMinutes = (totalSeconds / 60).floor();
+    if (totalMinutes >= 60) {
+      final hours = totalMinutes ~/ 60;
+      final minutes = totalMinutes % 60;
+      return '${hours}h ${minutes}m';
+    }
+    final minutes = totalMinutes.toString().padLeft(2, '0');
     final seconds = (totalSeconds % 60).floor().toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
@@ -1116,14 +1128,26 @@ class _StatBox extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: valueColor ?? const Color(0xFF2C2F30), height: 1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: valueColor ?? const Color(0xFF2C2F30), height: 1),
+          ),
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
+          ),
         ),
       ],
     );

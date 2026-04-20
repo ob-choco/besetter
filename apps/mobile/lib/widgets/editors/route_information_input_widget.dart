@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+const int kRouteTitleMaxLength = 50;
+const int kRouteDescriptionMaxLength = 500;
+const int kRouteGradeScoreMax = 10000;
 
 enum GradeType {
   yds('YDS', 'yds'),
@@ -240,6 +245,7 @@ class _RouteInformationInputState extends State<RouteInformationInput> {
                 SizedBox(height: 16),
                 TextField(
                   controller: tempTitleController,
+                  maxLength: kRouteTitleMaxLength,
                   decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.title,
                     hintText: AppLocalizations.of(context)!.enterTitle,
@@ -249,6 +255,7 @@ class _RouteInformationInputState extends State<RouteInformationInput> {
                 TextField(
                   controller: tempDescriptionController,
                   maxLines: 3,
+                  maxLength: kRouteDescriptionMaxLength,
                   decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.description,
                     hintText: AppLocalizations.of(context)!.enterDescription,
@@ -432,9 +439,21 @@ class _RouteInformationInputState extends State<RouteInformationInput> {
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (value) {
-              final score = int.tryParse(value);
-              widget.onGradeScoreChanged(score);
+              final parsed = int.tryParse(value);
+              if (parsed == null) {
+                widget.onGradeScoreChanged(null);
+                return;
+              }
+              final clamped = parsed.clamp(0, kRouteGradeScoreMax);
+              if (clamped != parsed) {
+                _scoreController.text = clamped.toString();
+                _scoreController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _scoreController.text.length),
+                );
+              }
+              widget.onGradeScoreChanged(clamped);
             },
           ),
           Divider(height: 16),
