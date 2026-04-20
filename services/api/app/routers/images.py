@@ -356,6 +356,43 @@ async def get_image(
     )
 
 
+@router.delete("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_image(
+    image_id: str,
+    confirm: bool = Query(False, description="route_count>0 일 때 삭제를 강제로 진행"),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        object_id = ObjectId(image_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="유효하지 않은 이미지 ID입니다.",
+        )
+
+    outcome = await _soft_delete_image(
+        object_id,
+        current_user.id,
+        confirm=confirm,
+        now=datetime.now(timezone.utc),
+    )
+
+    if outcome.status == "not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="이미지를 찾을 수 없습니다.",
+        )
+    if outcome.status == "needs_confirmation":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "IMAGE_HAS_ROUTES",
+                "route_count": outcome.route_count,
+            },
+        )
+    return None
+
+
 @router.get("/count", response_model=ImageCountResponse)
 async def get_image_count(
     current_user: User = Depends(get_current_user),

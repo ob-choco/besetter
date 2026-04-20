@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone as dt_tz
+from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
 from beanie import init_beanie
 from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
+from fastapi import HTTPException
 from mongomock_motor import AsyncMongoMockClient
 
 from app.models.image import Image, ImageMetadata
-from app.routers.images import ImageDeleteOutcome, _soft_delete_image
+from app.routers.images import ImageDeleteOutcome, _soft_delete_image, delete_image
 
 
 pytestmark = pytest.mark.asyncio
@@ -147,3 +149,70 @@ async def test_soft_delete_proceeds_with_confirm_true_when_routes_exist(mongo_db
     assert refreshed.is_deleted is True
     assert refreshed.deleted_at.replace(tzinfo=dt_tz.utc) == now
     assert refreshed.route_count == 3  # confirm does not touch route_count
+
+
+def _mock_user(user_id: PydanticObjectId) -> MagicMock:
+    user = MagicMock()
+    user.id = user_id
+    return user
+
+
+async def test_delete_image_endpoint_returns_none_on_success(mongo_db):
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id)
+    await image.insert()
+
+    result = await delete_image(
+        image_id=str(image.id),
+        confirm=False,
+        current_user=_mock_user(user_id),
+    )
+
+    assert result is None
+    refreshed = await Image.get(image.id)
+    assert refreshed.is_deleted is True
+
+
+async def test_delete_image_endpoint_raises_400_on_bad_object_id(mongo_db):
+    user_id = PydanticObjectId()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_image(
+            image_id="not-a-valid-object-id",
+            confirm=False,
+            current_user=_mock_user(user_id),
+        )
+
+    assert exc_info.value.status_code == 400
+
+
+async def test_delete_image_endpoint_raises_404_when_missing(mongo_db):
+    user_id = PydanticObjectId()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_image(
+            image_id=str(ObjectId()),
+            confirm=False,
+            current_user=_mock_user(user_id),
+        )
+
+    assert exc_info.value.status_code == 404
+
+
+async def test_delete_image_endpoint_raises_409_with_route_count(mongo_db):
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id, route_count=5)
+    await image.insert()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_image(
+            image_id=str(image.id),
+            confirm=False,
+            current_user=_mock_user(user_id),
+        )
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == {
+        "code": "IMAGE_HAS_ROUTES",
+        "route_count": 5,
+    }
