@@ -110,9 +110,9 @@ class _RecentClimbedRouteCardState
 
     final typeLabel =
         route.type == RouteType.bouldering ? l10n.bouldering : l10n.endurance;
-    final completed = route.myCompletedCount ?? 0;
-    final attempts = route.myTotalCount ?? 0;
-    final lastAt = route.myLastActivityAt ?? route.createdAt;
+    final completed = route.completedCount ?? 0;
+    final attempts = route.attemptedCount ?? 0;
+    final lastAt = route.lastActivityAt ?? route.createdAt;
 
     final placeText = [route.place?.name, route.wallName]
         .whereType<String>()

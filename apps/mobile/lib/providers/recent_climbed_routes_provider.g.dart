@@ -7,7 +7,7 @@ part of 'recent_climbed_routes_provider.dart';
 // **************************************************************************
 
 String _$recentClimbedRoutesHash() =>
-    r'26fdb9f70143202dfd23079fa63226494f037845';
+    r'df8bfc982bff71cf5e357af8142a4d7c5ccfb94b';
 
 /// See also [recentClimbedRoutes].
 @ProviderFor(recentClimbedRoutes)

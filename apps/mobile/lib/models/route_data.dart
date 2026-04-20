@@ -83,9 +83,10 @@ class RouteData {
   final String visibility;
   final bool? hasOtherUserActivities;
 
-  final int? myTotalCount;
-  final int? myCompletedCount;
-  final DateTime? myLastActivityAt;
+  final int? totalCount;
+  final int? completedCount;
+  final int? attemptedCount;
+  final DateTime? lastActivityAt;
 
   final OwnerInfo? owner;
   final bool isDeleted;
@@ -114,9 +115,10 @@ class RouteData {
     this.polygons,
     this.visibility = 'public',
     this.hasOtherUserActivities,
-    this.myTotalCount,
-    this.myCompletedCount,
-    this.myLastActivityAt,
+    this.totalCount,
+    this.completedCount,
+    this.attemptedCount,
+    this.lastActivityAt,
     this.owner,
     this.isDeleted = false,
   });
@@ -156,10 +158,11 @@ class RouteData {
           : null,
       visibility: json['visibility'] as String? ?? 'public',
       hasOtherUserActivities: json['hasOtherUserActivities'] as bool?,
-      myTotalCount: json['myTotalCount'] as int?,
-      myCompletedCount: json['myCompletedCount'] as int?,
-      myLastActivityAt:
-          json['myLastActivityAt'] != null ? DateTime.parse(json['myLastActivityAt']) : null,
+      totalCount: json['totalCount'] as int?,
+      completedCount: json['completedCount'] as int?,
+      attemptedCount: json['attemptedCount'] as int?,
+      lastActivityAt:
+          json['lastActivityAt'] != null ? DateTime.parse(json['lastActivityAt']) : null,
       owner: json['owner'] != null
           ? OwnerInfo.fromJson(json['owner'] as Map<String, dynamic>)
           : null,
@@ -191,9 +194,10 @@ class RouteData {
         'polygons': polygons?.map((polygon) => polygon.toJson()).toList(),
         'visibility': visibility,
         'hasOtherUserActivities': hasOtherUserActivities,
-        'myTotalCount': myTotalCount,
-        'myCompletedCount': myCompletedCount,
-        'myLastActivityAt': myLastActivityAt?.toIso8601String(),
+        'totalCount': totalCount,
+        'completedCount': completedCount,
+        'attemptedCount': attemptedCount,
+        'lastActivityAt': lastActivityAt?.toIso8601String(),
         if (owner != null) 'owner': owner!.toJson(),
         'isDeleted': isDeleted,
       };

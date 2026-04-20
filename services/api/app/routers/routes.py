@@ -212,9 +212,10 @@ class RouteServiceView(BaseModel):
     wall_name: Optional[str] = Field(None, description="벽 이름")
     wall_expiration_date: Optional[datetime] = Field(None, description="벽 만료 일자")
 
-    my_total_count: Optional[int] = Field(None, description="내 총 시도 횟수 (projection=stats)")
-    my_completed_count: Optional[int] = Field(None, description="내 총 완등 횟수 (projection=stats)")
-    my_last_activity_at: Optional[datetime] = Field(None, description="내 마지막 활동 시각 (projection=stats)")
+    total_count: Optional[int] = Field(None, description="내 총 활동 횟수 (시도+완등, projection=stats)")
+    completed_count: Optional[int] = Field(None, description="내 총 완등 횟수 (projection=stats)")
+    attempted_count: Optional[int] = Field(None, description="내 순수 시도 횟수 = total - completed (projection=stats)")
+    last_activity_at: Optional[datetime] = Field(None, description="내 마지막 활동 시각 (projection=stats)")
 
 
 class RouteListMeta(BaseModel):
@@ -394,9 +395,10 @@ async def get_routes(
             place=place_view,
             wall_name=image.wall_name if image else None,
             wall_expiration_date=image.wall_expiration_date if image else None,
-            my_total_count=stats.total_count if stats else (0 if include_stats else None),
-            my_completed_count=stats.completed_count if stats else (0 if include_stats else None),
-            my_last_activity_at=stats.last_activity_at if stats else None,
+            total_count=stats.total_count if stats else (0 if include_stats else None),
+            completed_count=stats.completed_count if stats else (0 if include_stats else None),
+            attempted_count=(stats.total_count - stats.completed_count) if stats else (0 if include_stats else None),
+            last_activity_at=stats.last_activity_at if stats else None,
         ))
 
     return RouteListResponse(data=routes, meta=RouteListMeta(next_token=next_token))

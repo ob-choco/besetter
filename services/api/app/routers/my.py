@@ -190,9 +190,10 @@ class RecentRouteView(BaseModel):
 
     owner: OwnerView
 
-    my_total_count: int
-    my_completed_count: int
-    my_last_activity_at: datetime
+    total_count: int
+    completed_count: int
+    attempted_count: int
+    last_activity_at: datetime
 
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -600,9 +601,10 @@ async def _build_recently_climbed_routes(
             wall_name=image.wall_name,
             wall_expiration_date=image.wall_expiration_date,
             owner=owner_view,
-            my_total_count=urs.total_count,
-            my_completed_count=urs.completed_count,
-            my_last_activity_at=urs.last_activity_at,
+            total_count=urs.total_count,
+            completed_count=urs.completed_count,
+            attempted_count=urs.total_count - urs.completed_count,
+            last_activity_at=urs.last_activity_at,
             created_at=route.created_at,
             updated_at=route.updated_at,
         ))

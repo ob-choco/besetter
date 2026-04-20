@@ -23,7 +23,7 @@ final routesTotalCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RoutesTotalCountRef = AutoDisposeFutureProviderRef<int>;
-String _$routesHash() => r'a6c47c703396e3e61f3ba1017a2319b7d5d4e583';
+String _$routesHash() => r'010fc9b6574f5c6a077cde9fb874d4e3c000c914';
 
 /// Copied from Dart SDK
 class _SystemHash {
