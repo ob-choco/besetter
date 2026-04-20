@@ -72,6 +72,10 @@ class User(Document):
     bio: Optional[str] = None
     unread_notification_count: int = 0
 
+    marketing_push_consent: bool = False
+    marketing_push_consent_at: Optional[datetime] = None
+    marketing_push_consent_source: Optional[str] = None  # 'signup' | 'settings' | 'reconfirm'
+
     refresh_token: Optional[str] = None
 
     line: Optional[LineUser] = None
