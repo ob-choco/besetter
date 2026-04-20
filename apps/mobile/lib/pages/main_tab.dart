@@ -41,7 +41,11 @@ class MainTabPage extends HookConsumerWidget {
         },
         items: [
           BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
+            icon: Badge.count(
+              count: unreadCount,
+              isLabelVisible: unreadCount > 0,
+              child: const Icon(Icons.home),
+            ),
             label: AppLocalizations.of(context)!.navHome,
           ),
           BottomNavigationBarItem(
@@ -49,11 +53,7 @@ class MainTabPage extends HookConsumerWidget {
             label: AppLocalizations.of(context)!.navRoutes,
           ),
           BottomNavigationBarItem(
-            icon: Badge.count(
-              count: unreadCount,
-              isLabelVisible: unreadCount > 0,
-              child: const Icon(Icons.person),
-            ),
+            icon: const Icon(Icons.person),
             label: AppLocalizations.of(context)!.navMy,
           ),
         ],

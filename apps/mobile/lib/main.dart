@@ -9,6 +9,7 @@ import 'package:flutter_line_sdk/flutter_line_sdk.dart';
 import 'pages/image_list_page.dart';
 import 'services/http_client.dart';
 import 'services/deep_link_service.dart';
+import 'services/push_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -38,6 +39,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await PushService.init();
+
   await LineSDK.instance.setup('2006504173');
 
   KakaoSdk.init(
@@ -61,6 +64,7 @@ void main() async {
       next.whenData((user) {
         if (prev?.value?.id != user.id) {
           PosthogService.identify(userId: user.id);
+          PushService.registerWithServer();
         }
       });
     },

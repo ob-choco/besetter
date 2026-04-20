@@ -497,6 +497,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.21.0"
+  firebase_messaging:
+    dependency: "direct main"
+    description:
+      name: firebase_messaging
+      sha256: "8755a083a20bac4485e8b46d223f6f2eab34e659a76a75f8cf3cded53bc98a15"
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.2.3"
+  firebase_messaging_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_messaging_platform_interface
+      sha256: "8cc771079677460de53ad8fcca5bc3074d58c5fc4f9d89b19585e5bfd9c64292"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.6.3"
+  firebase_messaging_web:
+    dependency: transitive
+    description:
+      name: firebase_messaging_web
+      sha256: caa73059b0396c97f691683c4cfc3f897c8543801579b7dd4851c431d8e4e091
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.10.3"
   fixnum:
     dependency: transitive
     description:
@@ -1257,10 +1281,10 @@ packages:
     dependency: "direct main"
     description:
       name: photo_manager
-      sha256: "0bc7548fd3111eb93a3b0abf1c57364e40aeda32512c100085a48dade60e574f"
+      sha256: fb3bc8ea653370f88742b3baa304700107c83d12748aa58b2b9f2ed3ef15e6c2
       url: "https://pub.dev"
     source: hosted
-    version: "3.6.4"
+    version: "3.9.0"
   platform:
     dependency: transitive
     description:

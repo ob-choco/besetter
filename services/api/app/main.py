@@ -14,6 +14,7 @@ from app.models.activity import Activity as ActivityModel
 from app.models.activity import UserRouteStats as UserRouteStatsModel
 from app.models.user_stats import UserStats as UserStatsModel
 from app.models.notification import Notification as NotificationModel
+from app.models.device_token import DeviceToken as DeviceTokenModel
 from contextlib import asynccontextmanager
 from logging import info
 from app.routers import images
@@ -31,7 +32,7 @@ async def lifespan(app: FastAPI):
     app.database = app.mongodb_client.get_database(get("mongodb.name"))
     await init_beanie(
         database=app.database,
-        document_models=[OpenIdNonceModel, UserModel, HoldPolygonModel, ImageModel, RouteModel, PlaceModel, PlaceSuggestionModel, ActivityModel, UserRouteStatsModel, NotificationModel, UserStatsModel],
+        document_models=[OpenIdNonceModel, UserModel, HoldPolygonModel, ImageModel, RouteModel, PlaceModel, PlaceSuggestionModel, ActivityModel, UserRouteStatsModel, NotificationModel, UserStatsModel, DeviceTokenModel],
     )
     ping_response = await app.database.command("ping")
     if int(ping_response["ok"]) != 1:

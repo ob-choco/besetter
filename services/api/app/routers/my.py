@@ -12,6 +12,7 @@ from app.core.gcs import to_public_url
 from app.dependencies import get_current_user
 from app.models import model_config
 from app.models.activity import Activity, ActivityStatus, RouteSnapshot, UserRouteStats
+from app.models.device_token import DeviceToken
 from app.models.image import Image
 from app.models.place import Place
 from app.models.route import Route, RouteType, Visibility
@@ -633,3 +634,61 @@ async def get_recently_climbed_routes(
     current_user: User = Depends(get_current_user),
 ):
     return await _build_recently_climbed_routes(current_user.id, limit)
+
+
+# ---------------------------------------------------------------------------
+# Push notification device tokens
+# ---------------------------------------------------------------------------
+
+
+class RegisterDeviceRequest(BaseModel):
+    model_config = model_config
+
+    token: str = Field(..., min_length=1)
+    platform: str = Field(..., description="'ios' | 'android'")
+    app_version: Optional[str] = None
+    locale: Optional[str] = None
+
+
+@router.post("/devices", status_code=status.HTTP_204_NO_CONTENT)
+async def register_device(
+    payload: RegisterDeviceRequest,
+    current_user: User = Depends(get_current_user),
+):
+    if payload.platform not in ("ios", "android"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="platform must be 'ios' or 'android'",
+        )
+
+    now = datetime.now(timezone.utc)
+    existing = await DeviceToken.find_one(DeviceToken.token == payload.token)
+    if existing is not None:
+        existing.user_id = current_user.id
+        existing.platform = payload.platform
+        existing.app_version = payload.app_version
+        existing.locale = payload.locale
+        existing.last_seen_at = now
+        await existing.save()
+        return
+
+    await DeviceToken(
+        user_id=current_user.id,
+        token=payload.token,
+        platform=payload.platform,
+        app_version=payload.app_version,
+        locale=payload.locale,
+        created_at=now,
+        last_seen_at=now,
+    ).insert()
+
+
+@router.delete("/devices/{token}", status_code=status.HTTP_204_NO_CONTENT)
+async def unregister_device(
+    token: str = Path(..., min_length=1),
+    current_user: User = Depends(get_current_user),
+):
+    await DeviceToken.find_one(
+        DeviceToken.token == token,
+        DeviceToken.user_id == current_user.id,
+    ).delete()

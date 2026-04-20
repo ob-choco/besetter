@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/push_service.dart';
+
 part 'auth_provider.g.dart';
 
 class AuthState {
@@ -64,9 +66,11 @@ class Auth extends _$Auth {
     );
     await _saveAuthState(newState);
     state = AsyncData(newState);
+    await PushService.registerWithServer();
   }
 
   Future<void> logout() async {
+    await PushService.unregisterFromServer();
     final newState = const AuthState(
       isLoggedIn: false,
       isInitialized: true,
