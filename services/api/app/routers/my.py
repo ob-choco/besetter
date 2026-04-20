@@ -179,6 +179,8 @@ class RecentRouteView(BaseModel):
     grade: str
     grade_color: Optional[str] = None
 
+    image_id: PydanticObjectId
+    hold_polygon_id: PydanticObjectId
     image_url: str
     overlay_image_url: Optional[str] = None
 
@@ -590,6 +592,8 @@ async def _build_recently_climbed_routes(
             grade_type=route.grade_type,
             grade=route.grade,
             grade_color=route.grade_color,
+            image_id=route.image_id,
+            hold_polygon_id=route.hold_polygon_id,
             image_url=to_public_url(str(route.image_url)),
             overlay_image_url=to_public_url(str(route.overlay_image_url)) if route.overlay_image_url else None,
             place=place_view,
