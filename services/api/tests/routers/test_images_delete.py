@@ -105,3 +105,45 @@ async def test_soft_delete_returns_not_found_when_already_deleted(mongo_db):
     )
 
     assert outcome == ImageDeleteOutcome(status="not_found")
+
+
+async def test_soft_delete_requires_confirmation_when_routes_exist(mongo_db):
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id, route_count=3)
+    await image.insert()
+
+    outcome = await _soft_delete_image(
+        image.id,
+        user_id,
+        confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    assert outcome == ImageDeleteOutcome(
+        status="needs_confirmation", route_count=3
+    )
+
+    refreshed = await Image.get(image.id)
+    assert refreshed.is_deleted is False
+    assert refreshed.deleted_at is None
+
+
+async def test_soft_delete_proceeds_with_confirm_true_when_routes_exist(mongo_db):
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id, route_count=3)
+    await image.insert()
+
+    now = datetime(2026, 4, 20, 9, 0, tzinfo=dt_tz.utc)
+    outcome = await _soft_delete_image(
+        image.id,
+        user_id,
+        confirm=True,
+        now=now,
+    )
+
+    assert outcome == ImageDeleteOutcome(status="deleted", route_count=0)
+
+    refreshed = await Image.get(image.id)
+    assert refreshed.is_deleted is True
+    assert refreshed.deleted_at.replace(tzinfo=dt_tz.utc) == now
+    assert refreshed.route_count == 3  # confirm does not touch route_count
