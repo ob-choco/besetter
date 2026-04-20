@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Literal
+from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from app.models.image import Image, ImageMetadata, LocationMetadata, CameraMetadata
@@ -22,6 +24,36 @@ from app.core.gcs import get_public_url as gcs_get_public_url
 
 from app.models import model_config
 from app.routers.places import PlaceView, place_to_view
+
+@dataclass
+class ImageDeleteOutcome:
+    status: Literal["deleted", "not_found", "needs_confirmation"]
+    route_count: int = 0
+
+
+async def _soft_delete_image(
+    image_id: ObjectId,
+    user_id: PydanticObjectId,
+    *,
+    confirm: bool,
+    now: datetime,
+) -> ImageDeleteOutcome:
+    image = await Image.find_one(
+        Image.id == image_id,
+        Image.user_id == user_id,
+        Image.is_deleted != True,
+    )
+    if image is None:
+        return ImageDeleteOutcome(status="not_found")
+    if image.route_count > 0 and not confirm:
+        return ImageDeleteOutcome(
+            status="needs_confirmation", route_count=image.route_count
+        )
+    image.is_deleted = True
+    image.deleted_at = now
+    await image.save()
+    return ImageDeleteOutcome(status="deleted")
+
 
 router = APIRouter(prefix="/images", tags=["images"])
 
