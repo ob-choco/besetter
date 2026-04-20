@@ -12,6 +12,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone as _tz
 from typing import Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import aiohttp
 import google.auth
@@ -30,9 +31,26 @@ _FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 _FCM_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
 CONSENT_TTL = timedelta(days=730)
+_NIGHT_FALLBACK_TZ = "Asia/Seoul"
 
 _credentials = None
 _project_id: Optional[str] = None
+
+
+def _is_night_hour_for_device(device, now: Optional[datetime] = None) -> bool:
+    """True when the device's local hour falls in 21:00–07:59 (inclusive).
+
+    Uses DeviceToken.timezone; falls back to Asia/Seoul when missing or
+    unknown.
+    """
+    tz_name = getattr(device, "timezone", None) or _NIGHT_FALLBACK_TZ
+    try:
+        tz = ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        tz = ZoneInfo(_NIGHT_FALLBACK_TZ)
+    now = now or datetime.now(_tz.utc)
+    local_hour = now.astimezone(tz).hour
+    return local_hour >= 21 or local_hour < 8
 
 
 def _is_consent_active(user, now: Optional[datetime] = None) -> bool:

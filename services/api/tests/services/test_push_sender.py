@@ -109,3 +109,57 @@ def test_is_consent_active_ttl_boundary_inside_true():
 def test_is_consent_active_ttl_expired_false():
     user = _FakeUser(consent=True, consent_at=_now() - timedelta(days=731))
     assert _is_consent_active(user, now=_now()) is False
+
+
+# ---------------------------------------------------------------------------
+# _is_night_hour_for_device
+# ---------------------------------------------------------------------------
+
+from app.services.push_sender import _is_night_hour_for_device
+
+
+class _FakeDevice:
+    def __init__(self, timezone_name):
+        self.timezone = timezone_name
+
+
+# 2026-04-21 13:00 UTC → Asia/Seoul 22:00 (night),
+# Europe/Paris 15:00 (day), America/Los_Angeles 06:00 (night)
+_FIXED_UTC = datetime(2026, 4, 21, 13, 0, 0, tzinfo=timezone.utc)
+
+
+def test_is_night_hour_kst_22h_true():
+    d = _FakeDevice("Asia/Seoul")
+    assert _is_night_hour_for_device(d, now=_FIXED_UTC) is True
+
+
+def test_is_night_hour_paris_15h_false():
+    d = _FakeDevice("Europe/Paris")
+    assert _is_night_hour_for_device(d, now=_FIXED_UTC) is False
+
+
+def test_is_night_hour_la_6h_true():
+    d = _FakeDevice("America/Los_Angeles")
+    assert _is_night_hour_for_device(d, now=_FIXED_UTC) is True
+
+
+def test_is_night_hour_fallback_when_missing():
+    d = _FakeDevice(None)
+    assert _is_night_hour_for_device(d, now=_FIXED_UTC) is True
+
+
+def test_is_night_hour_invalid_timezone_falls_back():
+    d = _FakeDevice("Not/AZone")
+    assert _is_night_hour_for_device(d, now=_FIXED_UTC) is True
+
+
+def test_is_night_hour_boundary_21h_true():
+    now = datetime(2026, 4, 21, 12, 0, 0, tzinfo=timezone.utc)
+    d = _FakeDevice("Asia/Seoul")
+    assert _is_night_hour_for_device(d, now=now) is True
+
+
+def test_is_night_hour_boundary_8h_false():
+    now = datetime(2026, 4, 20, 23, 0, 0, tzinfo=timezone.utc)
+    d = _FakeDevice("Asia/Seoul")
+    assert _is_night_hour_for_device(d, now=now) is False
