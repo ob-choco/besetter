@@ -133,6 +133,7 @@ async def signin(
 async def signup(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     nonce_id: str = Body(embed=True, alias="nonceId"),
+    marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
     nonce = await OpenIdNonce.find_one(OpenIdNonce.id == PydanticObjectId(nonce_id))
@@ -186,6 +187,9 @@ async def signup(
         name=result["name"],
         email=result.get("email"),
         profile_image_url=result.get("picture"),
+        marketing_push_consent=marketing_push_consent,
+        marketing_push_consent_at=(now if marketing_push_consent else None),
+        marketing_push_consent_source=("signup" if marketing_push_consent else None),
         created_at=now,
         updated_at=now,
     )
@@ -241,6 +245,7 @@ async def signin(
 @router.post("/sign-up/kakao", status_code=status.HTTP_201_CREATED)
 async def signup(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
     # access-token으로 사용자 정보 가져오기
@@ -283,6 +288,9 @@ async def signup(
         name=result.get("nickname"),
         email=result.get("email"),
         profile_image_url=result.get("picture"),
+        marketing_push_consent=marketing_push_consent,
+        marketing_push_consent_at=(now if marketing_push_consent else None),
+        marketing_push_consent_source=("signup" if marketing_push_consent else None),
         created_at=now,
         updated_at=now,
     )
@@ -335,6 +343,7 @@ async def signin_apple(
 @router.post("/sign-up/apple", status_code=status.HTTP_201_CREATED)
 async def signup_apple(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
     # authorization code 검증
@@ -406,6 +415,9 @@ async def signup_apple(
             signed_up_at=now,
         ),
         email=payload.get("email"),
+        marketing_push_consent=marketing_push_consent,
+        marketing_push_consent_at=(now if marketing_push_consent else None),
+        marketing_push_consent_source=("signup" if marketing_push_consent else None),
         created_at=now,
         updated_at=now,
     )
@@ -447,6 +459,7 @@ async def signin_google(
 @router.post("/sign-up/google", status_code=status.HTTP_201_CREATED)
 async def signup_google(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
     # identityToken(jwt) 검증
@@ -480,6 +493,9 @@ async def signup_google(
         email=id_info.get("email"),
         name=id_info.get("name"),
         profile_image_url=id_info.get("picture"),
+        marketing_push_consent=marketing_push_consent,
+        marketing_push_consent_at=(now if marketing_push_consent else None),
+        marketing_push_consent_source=("signup" if marketing_push_consent else None),
         created_at=now,
         updated_at=now,
     )
