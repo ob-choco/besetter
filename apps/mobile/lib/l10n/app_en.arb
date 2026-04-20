@@ -87,6 +87,7 @@
   "selectPhoto": "Select photo",
   "selectWall": "Select wall",
   "errorSelectingImage": "An error occurred while selecting the image",
+  "photoPermissionHint": "Allow photo access to auto-detect the crag location and use all app features smoothly.",
   "signupError": "An error occurred during sign-up",
   "agreeToTerms": "Agree to terms",
   "agreeToTermsForService": "Please agree to the terms and conditions to use the service",
@@ -382,5 +383,13 @@
       "name": {"type": "String"}
     }
   },
-  "homeGreetingSub": "Ready to send it today?"
+  "homeGreetingSub": "Ready to send it today?",
+  "deleteImageConfirmTitle": "Delete this image?",
+  "deleteImageConfirmBody": "This image will be removed.",
+  "deleteImageWithRoutesBody": "{count} route(s) are attached to this image.\nExisting routes will stay, but no new routes can be created from it.",
+  "@deleteImageWithRoutesBody": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

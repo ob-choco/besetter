@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:ui' as ui; // Flutter UI 패키지
 import 'package:device_info_plus/device_info_plus.dart';
 import '../pages/image_preview_page.dart';
-import '../pages/image_picker_page.dart';
+import '../services/exif_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HoldEditorButton extends StatefulWidget {
@@ -89,18 +89,15 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
           }
         }
       } else {
-        final result = await Navigator.push<List<SelectedImage>>(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ImagePickerPage(initialSelectedImages: const [], allowMultiple: false),
-          ),
+        final ImagePicker picker = ImagePicker();
+        final XFile? pickedFile = await picker.pickImage(
+          source: ImageSource.gallery,
+          requestFullMetadata: true,
+          imageQuality: 95,
         );
 
-        if (result != null && result.isNotEmpty) {
-          final selected = result.first;
-          selectedImage = selected.file;
-          selectedLatitude = selected.latitude;
-          selectedLongitude = selected.longitude;
+        if (pickedFile != null) {
+          selectedImage = File(pickedFile.path);
           final image = await decodeImageFromList(await selectedImage.readAsBytes());
 
           // 이미지 최소 해상도 검사 (가로/세로 방향 모두 고려)
@@ -135,6 +132,16 @@ class _HoldEditorButtonState extends State<HoldEditorButton> {
               );
             }
             return;
+          }
+
+          final gps = await ExifService.extractGpsFromFile(selectedImage);
+          if (gps != null) {
+            selectedLatitude = gps.latitude;
+            selectedLongitude = gps.longitude;
+          } else if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context)!.photoPermissionHint)),
+            );
           }
         }
       }

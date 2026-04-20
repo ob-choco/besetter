@@ -48,7 +48,6 @@ dependencies:
   image_picker: ^1.0.7
   image_editor: ^1.3.0
   path_provider: ^2.0.11
-  photo_manager: ^3.5.0
   flutter_line_sdk: ^2.3.8
   http: ^1.2.2
   flutter_secure_storage: ^9.2.2

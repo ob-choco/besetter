@@ -87,6 +87,7 @@
   "selectPhoto": "写真選択",
   "selectWall": "壁を選択",
   "errorSelectingImage": "画像選択中にエラーが発生しました",
+  "photoPermissionHint": "写真アクセスを許可すると、クラッグの位置を自動で検出でき、アプリの機能をスムーズに利用できます。",
   "signupError": "会員登録中にエラーが発生しました",
   "agreeToTerms": "利用規約に同意する",
   "agreeToTermsForService": "サービスを利用するために、利用規約に同意してください",
@@ -382,5 +383,13 @@
       "name": {"type": "String"}
     }
   },
-  "homeGreetingSub": "今日も登りに行こう？"
+  "homeGreetingSub": "今日も登りに行こう？",
+  "deleteImageConfirmTitle": "この画像を削除しますか？",
+  "deleteImageConfirmBody": "この画像を削除します。",
+  "deleteImageWithRoutesBody": "この画像に{count}件のルートが紐づいています。\n既存のルートは残りますが、この画像から新しいルートは作れなくなります。",
+  "@deleteImageWithRoutesBody": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

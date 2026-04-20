@@ -87,6 +87,7 @@
   "selectPhoto": "Seleccionar foto",
   "selectWall": "Seleccionar pared",
   "errorSelectingImage": "Se produjo un error al seleccionar la imagen",
+  "photoPermissionHint": "Permite el acceso a las fotos para detectar automáticamente la ubicación del rocódromo y usar todas las funciones de la app sin problemas.",
   "signupError": "Se produjo un error durante el registro",
   "agreeToTerms": "Aceptar términos",
   "agreeToTermsForService": "Para usar el servicio, por favor acepta los términos y condiciones",
@@ -383,5 +384,13 @@
       "name": {"type": "String"}
     }
   },
-  "homeGreetingSub": "¿Listo para escalar hoy?"
+  "homeGreetingSub": "¿Listo para escalar hoy?",
+  "deleteImageConfirmTitle": "¿Eliminar esta imagen?",
+  "deleteImageConfirmBody": "Esta imagen se eliminará.",
+  "deleteImageWithRoutesBody": "Hay {count} ruta(s) vinculadas a esta imagen.\nLas rutas existentes se conservan, pero no se podrán crear nuevas a partir de ella.",
+  "@deleteImageWithRoutesBody": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

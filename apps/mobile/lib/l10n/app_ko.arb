@@ -87,6 +87,7 @@
   "selectPhoto": "사진 선택",
   "selectWall": "벽 선택",
   "errorSelectingImage": "이미지 선택 중 오류가 발생했습니다",
+  "photoPermissionHint": "사진 권한을 허용하면 암장 위치를 자동 인식하고 앱 기능을 원활히 사용할 수 있어요.",
   "signupError": "회원가입 중 오류가 발생했습니다",
   "agreeToTerms": "약관 동의",
   "agreeToTermsForService": "서비스 이용을 위해 약관에 동의해주세요",
@@ -383,5 +384,13 @@
       "name": {"type": "String"}
     }
   },
-  "homeGreetingSub": "오늘도 올라가볼까요?"
+  "homeGreetingSub": "오늘도 올라가볼까요?",
+  "deleteImageConfirmTitle": "이미지를 삭제할까요?",
+  "deleteImageConfirmBody": "이 이미지를 삭제합니다.",
+  "deleteImageWithRoutesBody": "이 이미지에 루트 {count}개가 연결되어 있어요.\n삭제해도 기존 루트는 남지만, 이 이미지로 새 루트는 만들지 못합니다.",
+  "@deleteImageWithRoutesBody": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

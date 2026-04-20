@@ -591,6 +591,59 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
     }
   }
 
+  Future<void> _deleteImage() async {
+    if (_isSaving) return;
+
+    final imageId = widget.image?.id ?? widget.polygonData.imageId;
+    final routeCount = widget.image?.routeCount ?? 0;
+
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(l10n.deleteImageConfirmTitle),
+        content: Text(
+          routeCount > 0
+              ? l10n.deleteImageWithRoutesBody(routeCount)
+              : l10n.deleteImageConfirmBody,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F)),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final path = routeCount > 0
+          ? '/images/$imageId?confirm=true'
+          : '/images/$imageId';
+      final response = await AuthorizedHttpClient.delete(path);
+      if (response.statusCode == 204) {
+        container.invalidate(imagesProvider);
+        if (!mounted) return;
+        Navigator.pop(context);
+        return;
+      }
+      throw Exception('status ${response.statusCode}');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.deleteFailedWithError(e.toString()))),
+      );
+    }
+  }
+
   // 홀드 추가 모드 토글 메서드
   void _handleAddHoldButton() {
     setState(() {
@@ -896,25 +949,13 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
               },
             ),
             actions: [
-              PopupMenuButton<String>(
-                icon: Icon(Icons.menu),
-                onSelected: (String value) {
-                  if (value == 'add_hold') {
-                    _handleAddHoldButton();
-                  }
-                },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'add_hold',
-                    child: Row(
-                      children: [
-                        Icon(Icons.add_circle_outline),
-                        SizedBox(width: 8),
-                        Text(AppLocalizations.of(context)!.addHold),
-                      ],
-                    ),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: TextButton.icon(
+                  onPressed: _handleAddHoldButton,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: Text(AppLocalizations.of(context)!.addHold),
+                ),
               ),
             ],
           ),
@@ -1128,33 +1169,68 @@ class _SprayWallEditorPageState extends State<SprayWallEditorPage> {
                             ),
                             Padding(
                               padding: const EdgeInsets.all(16.0),
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: FilledButton(
-                                  onPressed: _isSaving ? null : _saveChanges,
-                                  style: FilledButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: FilledButton(
+                                        onPressed: _isSaving ? null : _saveChanges,
+                                        style: FilledButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        ),
+                                        child: _isSaving
+                                            ? const SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                ),
+                                              )
+                                            : FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  AppLocalizations.of(context)!.sprayWallEditComplete,
+                                                  maxLines: 1,
+                                                  softWrap: false,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
                                     ),
                                   ),
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                          ),
-                                        )
-                                      : Text(
-                                          AppLocalizations.of(context)!.sprayWallEditComplete,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                  const SizedBox(width: 8),
+                                  SizedBox(
+                                    height: 48,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _isSaving ? null : _deleteImage,
+                                      icon: const Icon(Icons.delete_outline, size: 20),
+                                      label: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          AppLocalizations.of(context)!.delete,
+                                          maxLines: 1,
+                                          softWrap: false,
                                         ),
-                                ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(0xFFD32F2F),
+                                        side: const BorderSide(color: Color(0xFFE0C0C0)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
