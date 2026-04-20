@@ -107,21 +107,20 @@ def _is_invalid_token_error(status: int, body_text: str) -> bool:
     return False
 
 
-async def _send_one(
+async def _send_one_raw(
     session: aiohttp.ClientSession,
     project_id: str,
     access_token: str,
     device: DeviceToken,
-    notif: Notification,
+    title: str,
+    body: str,
+    link: Optional[str],
+    extra_data: Optional[dict[str, str]],
 ) -> None:
-    title, body = render(notif, _primary_locale(device.locale))
     url = f"https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
-    data_payload: dict[str, str] = {
-        "type": notif.type,
-        "notificationId": str(notif.id),
-    }
-    if notif.link:
-        data_payload["link"] = notif.link
+    data_payload: dict[str, str] = dict(extra_data or {})
+    if link:
+        data_payload["link"] = link
     payload = {
         "message": {
             "token": device.token,
@@ -148,6 +147,20 @@ async def _send_one(
                 ).delete()
     except Exception:
         logger.exception("FCM send exception token=%s", device.token[:16])
+
+
+async def _send_one(
+    session: aiohttp.ClientSession,
+    project_id: str,
+    access_token: str,
+    device: DeviceToken,
+    notif: Notification,
+) -> None:
+    title, body = render(notif, _primary_locale(device.locale))
+    extra = {"type": notif.type, "notificationId": str(notif.id)}
+    await _send_one_raw(
+        session, project_id, access_token, device, title, body, notif.link, extra,
+    )
 
 
 async def send_to_user(user_id: PydanticObjectId, notif: Notification) -> None:
