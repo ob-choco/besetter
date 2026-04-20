@@ -393,5 +393,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "marketingPushConsentOptional": "Recibir notificaciones promocionales (opcional)",
+  "marketingPushConsentHint": "Las notificaciones promocionales no se envían por la noche (21:00–08:00) y puedes cambiarlo en cualquier momento en ajustes.",
+  "notifications": "Notificaciones",
+  "marketingPushSettingTitle": "Notificaciones promocionales",
+  "marketingPushSettingSubtitleOn": "Aceptado ({date})",
+  "@marketingPushSettingSubtitleOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "marketingPushSettingSubtitleOff": "No aceptado",
+  "marketingPushSettingsNoticeOperational": "Las notificaciones operativas (p. ej. respuestas a lugares que sugieres) se envían independientemente de este ajuste.",
+  "marketingPushSettingsNoticeNight": "Las notificaciones promocionales no se envían entre las 21:00 y las 08:00."
 }

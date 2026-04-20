@@ -392,5 +392,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "marketingPushConsentOptional": "Marketing notifications (optional)",
+  "marketingPushConsentHint": "Marketing pushes are never sent at night (9pm–8am) and you can change this anytime in settings.",
+  "notifications": "Notifications",
+  "marketingPushSettingTitle": "Marketing notifications",
+  "marketingPushSettingSubtitleOn": "Opted in ({date})",
+  "@marketingPushSettingSubtitleOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "marketingPushSettingSubtitleOff": "Opted out",
+  "marketingPushSettingsNoticeOperational": "Operational notifications (e.g. responses to places you submit) are sent regardless of this setting.",
+  "marketingPushSettingsNoticeNight": "Marketing notifications are not sent between 9pm and 8am."
 }

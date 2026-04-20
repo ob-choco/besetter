@@ -392,5 +392,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "marketingPushConsentOptional": "広告通知を受け取る（任意）",
+  "marketingPushConsentHint": "広告通知は夜間（21時～翌8時）には送信されず、設定でいつでも変更できます。",
+  "notifications": "通知",
+  "marketingPushSettingTitle": "広告通知を受け取る",
+  "marketingPushSettingSubtitleOn": "同意済み（{date}）",
+  "@marketingPushSettingSubtitleOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "marketingPushSettingSubtitleOff": "未同意",
+  "marketingPushSettingsNoticeOperational": "運営関連の通知（例：スポット提案の処理結果）は本設定に関わらず送信されます。",
+  "marketingPushSettingsNoticeNight": "広告通知は21時〜翌8時には送信されません。"
 }
