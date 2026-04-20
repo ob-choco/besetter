@@ -1,10 +1,13 @@
 import type { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongo";
+import { getDb, getMongoClient } from "@/lib/mongo";
 import type {
   PlaceDoc,
   PlaceSuggestionDoc,
   UserDoc,
 } from "@/lib/db-types";
+import { notify } from "@/lib/notifications";
+import { normalizeName } from "@/lib/normalize";
+import { AdminOpError } from "@/lib/place-ops";
 
 export type SuggestionListItem = PlaceSuggestionDoc & {
   place: Pick<PlaceDoc, "_id" | "name" | "normalizedName" | "status" | "type" | "coverImageUrl">;
@@ -76,4 +79,61 @@ export async function getSuggestionDetail(id: ObjectId): Promise<SuggestionDetai
       : null,
     currentPlace: place,
   };
+}
+
+export async function approveSuggestion(suggestionId: ObjectId): Promise<void> {
+  const client = await getMongoClient();
+  const db = client.db(process.env.MONGODB_DB);
+  const session = client.startSession();
+  let createdPlaceName = "";
+  let requestedBy: ObjectId | null = null;
+  try {
+    await session.withTransaction(async () => {
+      const s = await db
+        .collection<PlaceSuggestionDoc>("placeSuggestions")
+        .findOne({ _id: suggestionId, status: "pending" }, { session });
+      if (!s) throw new AdminOpError("CONFLICT", "suggestion is not pending");
+      const place = await db
+        .collection<PlaceDoc>("places")
+        .findOne({ _id: s.placeId, status: "approved" }, { session });
+      if (!place) throw new AdminOpError("CONFLICT", "target place is not approved");
+
+      const changes = s.changes ?? {};
+      const set: Record<string, unknown> = {};
+      if (changes.name != null) {
+        set.name = changes.name;
+        set.normalizedName = normalizeName(changes.name);
+      }
+      if (changes.latitude != null && changes.longitude != null) {
+        set.location = {
+          type: "Point",
+          coordinates: [changes.longitude, changes.latitude],
+        };
+      }
+      if (changes.coverImageUrl != null) {
+        set.coverImageUrl = changes.coverImageUrl;
+      }
+      if (Object.keys(set).length === 0) {
+        throw new AdminOpError("BAD_REQUEST", "suggestion has no changes");
+      }
+      await db.collection<PlaceDoc>("places").updateOne({ _id: place._id }, { $set: set }, { session });
+      await db.collection<PlaceSuggestionDoc>("placeSuggestions").updateOne(
+        { _id: suggestionId, status: "pending" },
+        { $set: { status: "approved", reviewedAt: new Date() } },
+        { session },
+      );
+      createdPlaceName = (set.name as string | undefined) ?? place.name;
+      requestedBy = s.requestedBy;
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  if (!requestedBy) return;
+  await notify({
+    userId: requestedBy,
+    type: "place_suggestion_approved",
+    params: { place_name: createdPlaceName },
+    link: null,
+  });
 }
