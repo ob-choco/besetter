@@ -46,12 +46,20 @@ class PushService {
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       debugPrint('[Push] opened from background: data=${message.data}');
+      _routeToHome();
     });
 
     final initial = await messaging.getInitialMessage();
     if (initial != null) {
       debugPrint('[Push] opened from terminated: data=${initial.data}');
+      _routeToHome();
     }
+  }
+
+  static void _routeToHome() {
+    final nav = AuthorizedHttpClient.navigatorKey.currentState;
+    if (nav == null) return;
+    nav.pushNamedAndRemoveUntil('/home', (route) => false);
   }
 
   static Future<void> registerWithServer() async {
