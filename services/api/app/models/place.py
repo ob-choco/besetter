@@ -44,6 +44,10 @@ class Place(Document):
         default=None,
         description="merged 상태일 때 병합 대상 place의 ID. 검수 툴이 설정.",
     )
+    rejected_reason: Optional[str] = Field(
+        default=None,
+        description="FAIL 시 운영자가 남긴 반려 사유 (선택).",
+    )
 
     def set_location_from(self, latitude: Optional[float], longitude: Optional[float]):
         """lat/lng으로 GeoJSON location 설정"""
