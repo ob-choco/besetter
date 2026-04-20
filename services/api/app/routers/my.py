@@ -695,3 +695,26 @@ async def unregister_device(
         DeviceToken.token == token,
         DeviceToken.user_id == current_user.id,
     ).delete()
+
+
+# ---------------------------------------------------------------------------
+# Marketing push consent
+# ---------------------------------------------------------------------------
+
+
+class MarketingConsentRequest(BaseModel):
+    model_config = model_config
+
+    consent: bool = Field(...)
+
+
+@router.patch("/marketing-consent", status_code=status.HTTP_204_NO_CONTENT)
+async def update_marketing_consent(
+    payload: MarketingConsentRequest,
+    current_user: User = Depends(get_current_user),
+):
+    now = datetime.now(timezone.utc)
+    current_user.marketing_push_consent = payload.consent
+    current_user.marketing_push_consent_at = now
+    current_user.marketing_push_consent_source = "settings"
+    await current_user.save()
