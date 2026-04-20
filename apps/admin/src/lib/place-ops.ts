@@ -1,5 +1,5 @@
 import type { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongo";
+import { getDb, getMongoClient } from "@/lib/mongo";
 import type { ActivityDoc, ImageDoc, PlaceDoc, UserDoc } from "@/lib/db-types";
 import { notify } from "@/lib/notifications";
 
@@ -230,5 +230,64 @@ export async function failPlace(id: ObjectId, reason?: string): Promise<void> {
       reason_suffix: reason ? ` 사유: ${reason}` : "",
     },
     link: `/places/${id.toString()}`,
+  });
+}
+
+export async function mergePlace(sourceId: ObjectId, targetId: ObjectId): Promise<void> {
+  if (sourceId.equals(targetId)) {
+    throw new AdminOpError("BAD_REQUEST", "source and target are the same");
+  }
+  const client = await getMongoClient();
+  const db = client.db(process.env.MONGODB_DB);
+  const session = client.startSession();
+  let sourceName = "";
+  let targetName = "";
+  let createdBy: ObjectId | null = null;
+  try {
+    await session.withTransaction(async () => {
+      const src = await db
+        .collection<PlaceDoc>("places")
+        .findOne({ _id: sourceId, type: "gym", status: "pending" }, { session });
+      if (!src) throw new AdminOpError("CONFLICT", "source place is not pending");
+      const tgt = await db
+        .collection<PlaceDoc>("places")
+        .findOne({ _id: targetId, type: "gym", status: "approved" }, { session });
+      if (!tgt) throw new AdminOpError("BAD_REQUEST", "target must be an approved gym");
+
+      sourceName = src.name;
+      targetName = tgt.name;
+      createdBy = src.createdBy;
+
+      await db
+        .collection<ImageDoc>("images")
+        .updateMany({ placeId: sourceId }, { $set: { placeId: targetId } }, { session });
+      await db
+        .collection<ActivityDoc>("activities")
+        .updateMany(
+          { "routeSnapshot.placeId": sourceId },
+          { $set: { "routeSnapshot.placeId": targetId, "routeSnapshot.placeName": tgt.name } },
+          { session },
+        );
+      const updateResult = await db
+        .collection<PlaceDoc>("places")
+        .updateOne(
+          { _id: sourceId, status: "pending" },
+          { $set: { status: "merged", mergedIntoPlaceId: targetId } },
+          { session },
+        );
+      if (updateResult.modifiedCount === 0) {
+        throw new AdminOpError("CONFLICT", "source place is not pending");
+      }
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  if (!createdBy) return;
+  await notify({
+    userId: createdBy,
+    type: "place_merged",
+    params: { place_name: sourceName, target_name: targetName },
+    link: `/places/${targetId.toString()}`,
   });
 }

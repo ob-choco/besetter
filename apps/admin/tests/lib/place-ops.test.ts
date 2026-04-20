@@ -5,7 +5,7 @@ vi.mock("@/lib/notifications", () => ({
   notify: vi.fn(async () => {}),
 }));
 
-import { failPlace, getMergeCandidates, getPendingPlaces, getPlaceDetail, passPlace } from "@/lib/place-ops";
+import { failPlace, getMergeCandidates, getPendingPlaces, getPlaceDetail, mergePlace, passPlace } from "@/lib/place-ops";
 import type { PlaceDoc } from "@/lib/db-types";
 import { notify } from "@/lib/notifications";
 
@@ -19,6 +19,9 @@ beforeEach(async () => {
   await Promise.all([
     db.collection("places").deleteMany({}),
     db.collection("users").deleteMany({}),
+    db.collection("images").deleteMany({}),
+    db.collection("routes").deleteMany({}),
+    db.collection("activities").deleteMany({}),
   ]);
 });
 afterEach(async () => { await client.close(); });
@@ -309,5 +312,97 @@ describe("failPlace", () => {
     };
     await db.collection("places").insertOne(place as any);
     await expect(failPlace(place._id, "any")).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+});
+
+describe("mergePlace", () => {
+  async function seedMergeScenario() {
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const source = {
+      _id: new ObjectId(), name: "Src", normalizedName: "src",
+      type: "gym", status: "pending", createdBy: user._id, createdAt: new Date(),
+    };
+    const target = {
+      _id: new ObjectId(), name: "Tgt", normalizedName: "tgt",
+      type: "gym", status: "approved", createdBy: user._id, createdAt: new Date(),
+    };
+    await db.collection("places").insertMany([source, target] as any);
+    const imageId = new ObjectId();
+    await db.collection("images").insertOne({
+      _id: imageId, url: "u", filename: "f", userId: user._id,
+      placeId: source._id, isDeleted: false, uploadedAt: new Date(),
+    } as any);
+    await db.collection("activities").insertOne({
+      _id: new ObjectId(), routeId: new ObjectId(), userId: user._id,
+      routeSnapshot: { gradeType: "v", grade: "v3", placeId: source._id, placeName: "Src" },
+    } as any);
+    return { source, target, user, imageId };
+  }
+
+  test("happy path: re-parents images + activity snapshots, marks source merged, notifies", async () => {
+    vi.mocked(notify).mockClear();
+    const { source, target, user, imageId } = await seedMergeScenario();
+
+    await mergePlace(source._id, target._id);
+
+    const db = client.db(DB);
+    const updatedSource = await db.collection("places").findOne({ _id: source._id });
+    expect(updatedSource!.status).toBe("merged");
+    expect(updatedSource!.mergedIntoPlaceId!.equals(target._id)).toBe(true);
+
+    const img = await db.collection("images").findOne({ _id: imageId });
+    expect(img!.placeId!.equals(target._id)).toBe(true);
+
+    const act = await db.collection("activities").findOne({});
+    expect(act!.routeSnapshot.placeId.equals(target._id)).toBe(true);
+    expect(act!.routeSnapshot.placeName).toBe("Tgt");
+
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user._id,
+        type: "place_merged",
+        params: { place_name: "Src", target_name: "Tgt" },
+      }),
+    );
+  });
+
+  test("400 when source == target", async () => {
+    const { source } = await seedMergeScenario();
+    await expect(mergePlace(source._id, source._id)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  test("409 when source not pending", async () => {
+    const { target } = await seedMergeScenario();
+    const db = client.db(DB);
+    const staleSource = {
+      _id: new ObjectId(), name: "S2", normalizedName: "s2",
+      type: "gym", status: "approved", createdBy: new ObjectId(), createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(staleSource as any);
+    await expect(mergePlace(staleSource._id, target._id)).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  test("400 when target not approved gym", async () => {
+    const { source } = await seedMergeScenario();
+    const db = client.db(DB);
+    const badTarget = {
+      _id: new ObjectId(), name: "T2", normalizedName: "t2",
+      type: "gym", status: "pending", createdBy: new ObjectId(), createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(badTarget as any);
+    await expect(mergePlace(source._id, badTarget._id)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  test("400 when target is private-gym", async () => {
+    const { source } = await seedMergeScenario();
+    const db = client.db(DB);
+    const badTarget = {
+      _id: new ObjectId(), name: "T3", normalizedName: "t3",
+      type: "private-gym", status: "approved", createdBy: new ObjectId(), createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(badTarget as any);
+    await expect(mergePlace(source._id, badTarget._id)).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
