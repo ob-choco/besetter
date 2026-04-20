@@ -48,6 +48,7 @@ class _TermsPageState extends ConsumerState<TermsPage> {
   bool _isServiceTermsAgreed = false;
   bool _isPrivacyPolicyAgreed = false;
   bool _isLocationTermsAgreed = false;
+  bool _isMarketingConsentAgreed = false;
 
   bool get _canProceed =>
       _isServiceTermsAgreed && _isPrivacyPolicyAgreed && _isLocationTermsAgreed;
@@ -65,6 +66,7 @@ class _TermsPageState extends ConsumerState<TermsPage> {
           },
           body: jsonEncode({
             'nonceId': widget.nonceId,
+            'marketingPushConsent': _isMarketingConsentAgreed,
           }),
         );
 
@@ -93,6 +95,9 @@ class _TermsPageState extends ConsumerState<TermsPage> {
             'Authorization': 'Bearer ${widget.kakaoAccessToken}',
             'Content-Type': 'application/json',
           },
+          body: jsonEncode({
+            'marketingPushConsent': _isMarketingConsentAgreed,
+          }),
         );
 
         if (response.statusCode == 201) {
@@ -120,6 +125,9 @@ class _TermsPageState extends ConsumerState<TermsPage> {
             'Authorization': 'Bearer ${widget.appleAuthorizationCode}',
             'Content-Type': 'application/json',
           },
+          body: jsonEncode({
+            'marketingPushConsent': _isMarketingConsentAgreed,
+          }),
         );
         if (response.statusCode == 201) {
           final data = jsonDecode(response.body);
@@ -146,6 +154,9 @@ class _TermsPageState extends ConsumerState<TermsPage> {
             'Authorization': 'Bearer ${widget.googleIdToken}',
             'Content-Type': 'application/json',
           },
+          body: jsonEncode({
+            'marketingPushConsent': _isMarketingConsentAgreed,
+          }),
         );
         if (response.statusCode == 201) {
           final data = jsonDecode(response.body);
@@ -277,6 +288,21 @@ class _TermsPageState extends ConsumerState<TermsPage> {
               onChanged: (value) {
                 setState(() {
                   _isLocationTermsAgreed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text(
+                AppLocalizations.of(context)!.marketingPushConsentOptional,
+              ),
+              subtitle: Text(
+                AppLocalizations.of(context)!.marketingPushConsentHint,
+                style: const TextStyle(fontSize: 12),
+              ),
+              value: _isMarketingConsentAgreed,
+              onChanged: (value) {
+                setState(() {
+                  _isMarketingConsentAgreed = value ?? false;
                 });
               },
             ),
