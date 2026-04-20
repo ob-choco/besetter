@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { getPendingPlaces } from "@/lib/place-ops";
+import { getPendingPlaces, getPlaceDetail } from "@/lib/place-ops";
 
 const DB = "besetter_test";
 let client: MongoClient;
@@ -64,5 +64,70 @@ describe("getPendingPlaces", () => {
     const result = await getPendingPlaces();
     expect(result.map((r) => r.name)).toEqual(["Older", "Newer"]);
     expect(result[0]!.creator?.profileId).toBe("climber");
+  });
+});
+
+describe("getPlaceDetail", () => {
+  test("returns place + counts + nearby approved", async () => {
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "climber", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const source = {
+      _id: new ObjectId(),
+      name: "New Gym",
+      normalizedName: "newgym",
+      type: "gym",
+      status: "pending",
+      createdBy: user._id,
+      createdAt: new Date(),
+      location: { type: "Point", coordinates: [127.0276, 37.4981] },
+    };
+    const nearby = {
+      _id: new ObjectId(),
+      name: "Existing Gym",
+      normalizedName: "existinggym",
+      type: "gym",
+      status: "approved",
+      createdBy: user._id,
+      createdAt: new Date(),
+      location: { type: "Point", coordinates: [127.0275, 37.4983] },
+    };
+    await db.collection("places").insertMany([source, nearby] as any);
+    await db.collection("places").createIndex({ location: "2dsphere" });
+
+    const imageId = new ObjectId();
+    await db.collection("images").insertOne({
+      _id: imageId,
+      url: "https://example/x.jpg",
+      filename: "x.jpg",
+      userId: user._id,
+      placeId: source._id,
+      isDeleted: false,
+      uploadedAt: new Date(),
+    } as any);
+    await db.collection("routes").insertOne({
+      _id: new ObjectId(),
+      imageId,
+      userId: user._id,
+    } as any);
+    await db.collection("activities").insertOne({
+      _id: new ObjectId(),
+      routeId: new ObjectId(),
+      userId: user._id,
+      routeSnapshot: { gradeType: "v", grade: "v3", placeId: source._id, placeName: "New Gym" },
+    } as any);
+
+    const detail = await getPlaceDetail(source._id);
+    expect(detail).not.toBeNull();
+    expect(detail!.place.name).toBe("New Gym");
+    expect(detail!.counts).toEqual({ imageCount: 1, routeCount: 1, activityCount: 1 });
+    expect(detail!.nearbyApproved).toHaveLength(1);
+    expect(detail!.nearbyApproved[0]!.name).toBe("Existing Gym");
+    expect(detail!.nearbyApproved[0]!.distanceMeters).toBeGreaterThanOrEqual(0);
+  });
+
+  test("returns null for unknown id", async () => {
+    const detail = await getPlaceDetail(new ObjectId());
+    expect(detail).toBeNull();
   });
 });
