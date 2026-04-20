@@ -5,7 +5,7 @@ vi.mock("@/lib/notifications", () => ({
   notify: vi.fn(async () => {}),
 }));
 
-import { getMergeCandidates, getPendingPlaces, getPlaceDetail, passPlace } from "@/lib/place-ops";
+import { failPlace, getMergeCandidates, getPendingPlaces, getPlaceDetail, passPlace } from "@/lib/place-ops";
 import type { PlaceDoc } from "@/lib/db-types";
 import { notify } from "@/lib/notifications";
 
@@ -248,5 +248,66 @@ describe("passPlace", () => {
     await db.collection("places").insertOne(place as any);
 
     await expect(passPlace(place._id)).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+});
+
+describe("failPlace", () => {
+  test("pending → rejected, stores reason when provided, notifies with reason_suffix", async () => {
+    vi.mocked(notify).mockClear();
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(), name: "P", normalizedName: "p",
+      type: "gym", status: "pending", createdBy: user._id, createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+
+    await failPlace(place._id, "중복 등록");
+
+    const updated = await db.collection("places").findOne({ _id: place._id });
+    expect(updated!.status).toBe("rejected");
+    expect(updated!.rejectedReason).toBe("중복 등록");
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user._id,
+        type: "place_review_failed",
+        params: { place_name: "P", reason_suffix: " 사유: 중복 등록" },
+      }),
+    );
+  });
+
+  test("omits reason_suffix when no reason provided, does not set rejectedReason", async () => {
+    vi.mocked(notify).mockClear();
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(), name: "Q", normalizedName: "q",
+      type: "gym", status: "pending", createdBy: user._id, createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+
+    await failPlace(place._id);
+
+    const updated = await db.collection("places").findOne({ _id: place._id });
+    expect(updated!.rejectedReason ?? null).toBeNull();
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: { place_name: "Q", reason_suffix: "" },
+      }),
+    );
+  });
+
+  test("conflict when not pending", async () => {
+    const db = client.db(DB);
+    const user = { _id: new ObjectId(), profileId: "c", unreadNotificationCount: 0 };
+    await db.collection("users").insertOne(user as any);
+    const place = {
+      _id: new ObjectId(), name: "R", normalizedName: "r",
+      type: "gym", status: "approved", createdBy: user._id, createdAt: new Date(),
+    };
+    await db.collection("places").insertOne(place as any);
+    await expect(failPlace(place._id, "any")).rejects.toMatchObject({ code: "CONFLICT" });
   });
 });

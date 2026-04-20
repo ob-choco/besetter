@@ -209,3 +209,26 @@ export async function passPlace(id: ObjectId): Promise<void> {
     link: `/places/${id.toString()}`,
   });
 }
+
+export async function failPlace(id: ObjectId, reason?: string): Promise<void> {
+  const db = await getDb();
+  const set: Record<string, unknown> = { status: "rejected" };
+  if (reason) set.rejectedReason = reason;
+  const result = await db
+    .collection<PlaceDoc>("places")
+    .findOneAndUpdate(
+      { _id: id, status: "pending", type: "gym" },
+      { $set: set },
+      { returnDocument: "before" },
+    );
+  if (!result) throw new AdminOpError("CONFLICT", "place is not pending");
+  await notify({
+    userId: result.createdBy,
+    type: "place_review_failed",
+    params: {
+      place_name: result.name,
+      reason_suffix: reason ? ` 사유: ${reason}` : "",
+    },
+    link: `/places/${id.toString()}`,
+  });
+}
