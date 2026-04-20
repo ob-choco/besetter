@@ -58,3 +58,50 @@ async def test_soft_delete_flips_flag_and_returns_deleted(mongo_db):
     refreshed = await Image.get(image.id)
     assert refreshed.is_deleted is True
     assert refreshed.deleted_at.replace(tzinfo=dt_tz.utc) == now
+
+
+async def test_soft_delete_returns_not_found_when_image_missing(mongo_db):
+    user_id = PydanticObjectId()
+    nonexistent = ObjectId()
+
+    outcome = await _soft_delete_image(
+        nonexistent,
+        user_id,
+        confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    assert outcome == ImageDeleteOutcome(status="not_found")
+
+
+async def test_soft_delete_returns_not_found_for_other_users_image(mongo_db):
+    owner_id = PydanticObjectId()
+    other_id = PydanticObjectId()
+    image = _make_image(user_id=owner_id)
+    await image.insert()
+
+    outcome = await _soft_delete_image(
+        image.id,
+        other_id,
+        confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    assert outcome == ImageDeleteOutcome(status="not_found")
+    refreshed = await Image.get(image.id)
+    assert refreshed.is_deleted is False
+
+
+async def test_soft_delete_returns_not_found_when_already_deleted(mongo_db):
+    user_id = PydanticObjectId()
+    image = _make_image(user_id=user_id, is_deleted=True)
+    await image.insert()
+
+    outcome = await _soft_delete_image(
+        image.id,
+        user_id,
+        confirm=False,
+        now=datetime(2026, 4, 20, tzinfo=dt_tz.utc),
+    )
+
+    assert outcome == ImageDeleteOutcome(status="not_found")
