@@ -10,6 +10,7 @@ deleted so stale rows do not accumulate.
 """
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone as _tz
 from typing import Optional
 
 import aiohttp
@@ -28,8 +29,27 @@ logger = logging.getLogger(__name__)
 _FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 _FCM_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
+CONSENT_TTL = timedelta(days=730)
+
 _credentials = None
 _project_id: Optional[str] = None
+
+
+def _is_consent_active(user, now: Optional[datetime] = None) -> bool:
+    """True if the user currently has a valid marketing push consent.
+
+    Valid when `marketing_push_consent` is True AND
+    `marketing_push_consent_at` is present AND within CONSENT_TTL of `now`.
+    """
+    if user is None:
+        return False
+    if not getattr(user, "marketing_push_consent", False):
+        return False
+    consent_at = getattr(user, "marketing_push_consent_at", None)
+    if consent_at is None:
+        return False
+    now = now or datetime.now(_tz.utc)
+    return (now - consent_at) <= CONSENT_TTL
 
 
 def _ensure_credentials() -> None:

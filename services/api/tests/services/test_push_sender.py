@@ -61,3 +61,51 @@ def test_is_invalid_token_500_is_not_invalid():
 
 def test_is_invalid_token_200_is_not_invalid():
     assert _is_invalid_token_error(200, "") is False
+
+
+# ---------------------------------------------------------------------------
+# _is_consent_active
+# ---------------------------------------------------------------------------
+
+from datetime import datetime, timedelta, timezone
+
+from app.services.push_sender import _is_consent_active
+
+
+class _FakeUser:
+    def __init__(self, consent: bool, consent_at):
+        self.marketing_push_consent = consent
+        self.marketing_push_consent_at = consent_at
+
+
+def _now():
+    return datetime(2026, 4, 21, 12, 0, 0, tzinfo=timezone.utc)
+
+
+def test_is_consent_active_none_user_false():
+    assert _is_consent_active(None, now=_now()) is False
+
+
+def test_is_consent_active_not_consented_false():
+    user = _FakeUser(consent=False, consent_at=None)
+    assert _is_consent_active(user, now=_now()) is False
+
+
+def test_is_consent_active_consent_at_missing_false():
+    user = _FakeUser(consent=True, consent_at=None)
+    assert _is_consent_active(user, now=_now()) is False
+
+
+def test_is_consent_active_recent_true():
+    user = _FakeUser(consent=True, consent_at=_now() - timedelta(days=30))
+    assert _is_consent_active(user, now=_now()) is True
+
+
+def test_is_consent_active_ttl_boundary_inside_true():
+    user = _FakeUser(consent=True, consent_at=_now() - timedelta(days=729, hours=23))
+    assert _is_consent_active(user, now=_now()) is True
+
+
+def test_is_consent_active_ttl_expired_false():
+    user = _FakeUser(consent=True, consent_at=_now() - timedelta(days=731))
+    assert _is_consent_active(user, now=_now()) is False
