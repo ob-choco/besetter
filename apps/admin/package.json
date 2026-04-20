@@ -11,12 +11,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
     "firebase-admin": "^12.5.0",
     "mongodb": "^6.10.0",
     "next": "^15.1.0",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "yaml": "^2.8.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

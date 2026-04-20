@@ -5,13 +5,18 @@ Local-only Next.js app for operators to review pending gyms and place suggestion
 ## Setup
 
 1. `cp .env.local.example .env.local` and fill in credentials.
-2. Ensure MongoDB is running as a replica set (required for MERGE transactions):
+2. Authenticate to GCP for Secret Manager (`mongodb.url` / `mongodb.name` are
+   pulled from `projects/371038003203/secrets/api-secret`):
+   ```bash
+   gcloud auth application-default login
+   ```
+3. Ensure MongoDB is running as a replica set (required for MERGE transactions):
    ```bash
    docker run --rm -p 27017:27017 mongo:7 --replSet rs0
    # in another shell:
    docker exec -it <container> mongosh --eval 'rs.initiate()'
    ```
-3. `pnpm install`
+4. `pnpm install`
 
 ## Dev loop
 

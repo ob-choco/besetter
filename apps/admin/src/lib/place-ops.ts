@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 import { getDb, getMongoClient } from "@/lib/mongo";
+import { get as getConfig } from "@/lib/config";
 import type { ActivityDoc, ImageDoc, PlaceDoc, UserDoc } from "@/lib/db-types";
 import { notify } from "@/lib/notifications";
 
@@ -238,7 +239,7 @@ export async function mergePlace(sourceId: ObjectId, targetId: ObjectId): Promis
     throw new AdminOpError("BAD_REQUEST", "source and target are the same");
   }
   const client = await getMongoClient();
-  const db = client.db(process.env.MONGODB_DB);
+  const db = client.db(await getConfig("mongodb.name"));
   const session = client.startSession();
   let sourceName = "";
   let targetName = "";

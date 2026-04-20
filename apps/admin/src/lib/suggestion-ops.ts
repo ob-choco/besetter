@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 import { getDb, getMongoClient } from "@/lib/mongo";
+import { get as getConfig } from "@/lib/config";
 import type {
   PlaceDoc,
   PlaceSuggestionDoc,
@@ -90,7 +91,7 @@ export async function getSuggestionDetail(id: ObjectId): Promise<SuggestionDetai
 
 export async function approveSuggestion(suggestionId: ObjectId): Promise<void> {
   const client = await getMongoClient();
-  const db = client.db(process.env.MONGODB_DB);
+  const db = client.db(await getConfig("mongodb.name"));
   const session = client.startSession();
   let createdPlaceName = "";
   let requestedBy: ObjectId | null = null;

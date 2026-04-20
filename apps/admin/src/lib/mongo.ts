@@ -1,18 +1,22 @@
 import { MongoClient, type Db } from "mongodb";
+import { get as getConfig } from "@/lib/config";
 
 let clientPromise: Promise<MongoClient> | null = null;
 
 export function getMongoClient(): Promise<MongoClient> {
   if (clientPromise) return clientPromise;
-  const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error("MONGODB_URI is not set");
-  clientPromise = new MongoClient(uri).connect();
+  clientPromise = (async () => {
+    const uri = await getConfig("mongodb.url");
+    return new MongoClient(uri).connect();
+  })().catch((err) => {
+    clientPromise = null;
+    throw err;
+  });
   return clientPromise;
 }
 
 export async function getDb(): Promise<Db> {
   const client = await getMongoClient();
-  const dbName = process.env.MONGODB_DB;
-  if (!dbName) throw new Error("MONGODB_DB is not set");
+  const dbName = await getConfig("mongodb.name");
   return client.db(dbName);
 }
