@@ -1,26 +1,43 @@
 {
   "project_info": {
-    "project_number": "558049274219",
-    "project_id": "besetter-8d458",
-    "storage_bucket": "besetter-8d458.firebasestorage.app"
+    "project_number": "371038003203",
+    "project_id": "regal-operand-451709-f4",
+    "storage_bucket": "regal-operand-451709-f4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:558049274219:android:3984f7c00486b412fc842e",
+        "mobilesdk_app_id": "1:371038003203:android:8e687c6ff763af0a7c2e36",
         "android_client_info": {
           "package_name": "com.olivebagel.besetter"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "371038003203-i5759b4egtaok127uvejh199679udu8m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyB2E_nBhtTKgciO_bx2rMfPRn4OM6K7DTM"
+          "current_key": "AIzaSyBgMrxAXhhHsBQ3YDP0fgyJIuXpEY0miw8"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "371038003203-i5759b4egtaok127uvejh199679udu8m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "371038003203-0fd1j7su17dr5btqf9cu7ppoksmg2bst.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.olivebagel.besetter"
+              }
+            }
+          ]
         }
       }
     }

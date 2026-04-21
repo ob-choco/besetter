@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB2E_nBhtTKgciO_bx2rMfPRn4OM6K7DTM',
-    appId: '1:558049274219:android:3984f7c00486b412fc842e',
-    messagingSenderId: '558049274219',
-    projectId: 'besetter-8d458',
-    storageBucket: 'besetter-8d458.firebasestorage.app',
+    apiKey: 'AIzaSyBgMrxAXhhHsBQ3YDP0fgyJIuXpEY0miw8',
+    appId: '1:371038003203:android:8e687c6ff763af0a7c2e36',
+    messagingSenderId: '371038003203',
+    projectId: 'regal-operand-451709-f4',
+    storageBucket: 'regal-operand-451709-f4.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCwfo1AWSGnW4WbW9HXswzHlgdg5xhPb90',
-    appId: '1:558049274219:ios:fd65979736d17d4afc842e',
-    messagingSenderId: '558049274219',
-    projectId: 'besetter-8d458',
-    storageBucket: 'besetter-8d458.firebasestorage.app',
+    apiKey: 'AIzaSyA3c98B9Ejgd1MC5LXmvg2fZcFGE6gJj04',
+    appId: '1:371038003203:ios:a8bbed5e8c8a818a7c2e36',
+    messagingSenderId: '371038003203',
+    projectId: 'regal-operand-451709-f4',
+    storageBucket: 'regal-operand-451709-f4.firebasestorage.app',
+    iosClientId: '371038003203-0fd1j7su17dr5btqf9cu7ppoksmg2bst.apps.googleusercontent.com',
     iosBundleId: 'com.olivebagel.besetter',
   );
 

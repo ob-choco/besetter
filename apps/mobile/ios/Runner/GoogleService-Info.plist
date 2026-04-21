@@ -2,18 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>371038003203-0fd1j7su17dr5btqf9cu7ppoksmg2bst.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.371038003203-0fd1j7su17dr5btqf9cu7ppoksmg2bst</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCwfo1AWSGnW4WbW9HXswzHlgdg5xhPb90</string>
+	<string>AIzaSyA3c98B9Ejgd1MC5LXmvg2fZcFGE6gJj04</string>
 	<key>GCM_SENDER_ID</key>
-	<string>558049274219</string>
+	<string>371038003203</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.olivebagel.besetter</string>
 	<key>PROJECT_ID</key>
-	<string>besetter-8d458</string>
+	<string>regal-operand-451709-f4</string>
 	<key>STORAGE_BUCKET</key>
-	<string>besetter-8d458.firebasestorage.app</string>
+	<string>regal-operand-451709-f4.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:558049274219:ios:fd65979736d17d4afc842e</string>
+	<string>1:371038003203:ios:a8bbed5e8c8a818a7c2e36</string>
 </dict>
 </plist>
