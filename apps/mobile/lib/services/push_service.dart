@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 
+import '../main.dart' show container;
+import '../providers/user_provider.dart';
 import 'http_client.dart';
 
 class PushService {
   static bool _initialized = false;
   static String? _fcmToken;
+  static Timer? _refetchTimer;
 
   static Future<void> init() async {
     if (_initialized) return;
@@ -42,6 +46,7 @@ class PushService {
         '[Push] foreground: title=${message.notification?.title} '
         'body=${message.notification?.body} data=${message.data}',
       );
+      _scheduleProfileRefetch();
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
@@ -54,6 +59,17 @@ class PushService {
       debugPrint('[Push] opened from terminated: data=${initial.data}');
       _routeToHome();
     }
+  }
+
+  static void _scheduleProfileRefetch() {
+    _refetchTimer?.cancel();
+    _refetchTimer = Timer(const Duration(seconds: 1), () {
+      try {
+        container.invalidate(userProfileProvider);
+      } catch (e) {
+        debugPrint('[Push] profile refetch trigger failed: $e');
+      }
+    });
   }
 
   static void _routeToHome() {
