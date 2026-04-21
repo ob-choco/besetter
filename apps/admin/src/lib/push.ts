@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { cert, getApps, initializeApp, type ServiceAccount } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import type { ObjectId } from "mongodb";
@@ -11,9 +13,9 @@ function fcmEnabled(): boolean {
 
 function ensureApp() {
   if (getApps().length > 0) return;
-  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!json) throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON is not set");
-  const parsed = JSON.parse(json) as ServiceAccount;
+  const file = process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
+  if (!file) throw new Error("FIREBASE_SERVICE_ACCOUNT_FILE is not set");
+  const parsed = JSON.parse(readFileSync(resolve(file), "utf8")) as ServiceAccount;
   initializeApp({
     credential: cert(parsed),
     projectId: process.env.FIREBASE_PROJECT_ID,
