@@ -19,7 +19,7 @@ from app.models.notification import Notification
 from app.models.place import Place, PlaceSuggestion, PlaceSuggestionChanges, normalize_name
 from app.models.route import Route
 from app.models.user import User
-from app.services import push_sender
+from app.services import push_sender, telegram_notifier
 from beanie.odm.operators.find.comparison import In
 
 logger = logging.getLogger(__name__)
@@ -207,6 +207,11 @@ async def create_place(
                 exc,
                 exc_info=True,
             )
+        background_tasks.add_task(
+            telegram_notifier.notify_place_registration_request,
+            place,
+            current_user,
+        )
 
     return place_to_view(created)
 
@@ -516,6 +521,12 @@ async def create_place_suggestion(
             exc,
             exc_info=True,
         )
+    background_tasks.add_task(
+        telegram_notifier.notify_place_improvement_request,
+        created,
+        place,
+        current_user,
+    )
 
     return PlaceSuggestionView(
         id=created.id,
