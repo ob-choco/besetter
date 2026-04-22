@@ -288,15 +288,45 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
           trailing: GestureDetector(
             onTap: _toggleFilter,
             behavior: HitTestBehavior.opaque,
-            child: Text(
-              l10n.completedOnly,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
                 color: _completedOnly
-                    ? const Color(0xFF0052D0)
-                    : const Color(0xFF6B7280),
+                    ? const Color(0xFF0052D0).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: _completedOnly
+                      ? const Color(0xFF0052D0)
+                      : const Color(0xFFD1D5DB),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _completedOnly
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    size: 11,
+                    color: _completedOnly
+                        ? const Color(0xFF0052D0)
+                        : const Color(0xFF6B7280),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    l10n.completedOnly,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: _completedOnly
+                          ? const Color(0xFF0052D0)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -445,17 +475,94 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     const dateHeaderHeight = 28.0;
 
     if (_activities.length <= 3) {
-      return Column(children: items);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items,
+      );
     }
 
     // Calculate height for 3.5 items visible
     const scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
     return SizedBox(
       height: scrollHeight,
-      child: ListView(
-        controller: _scrollController,
-        padding: EdgeInsets.zero,
-        children: items,
+      child: Stack(
+        children: [
+          ListView(
+            controller: _scrollController,
+            padding: EdgeInsets.zero,
+            children: items,
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _scrollController,
+                builder: (_, __) {
+                  final show = _scrollController.hasClients &&
+                      _scrollController.position.hasContentDimensions &&
+                      _scrollController.position.pixels > 0;
+                  return AnimatedOpacity(
+                    opacity: show ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.white, Color(0x00FFFFFF)],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _scrollController,
+                builder: (_, __) {
+                  final hasDim = _scrollController.hasClients &&
+                      _scrollController.position.hasContentDimensions;
+                  final show = !hasDim ||
+                      _scrollController.position.pixels <
+                          _scrollController.position.maxScrollExtent - 1;
+                  return AnimatedOpacity(
+                    opacity: show ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x00FFFFFF), Colors.white],
+                        ),
+                      ),
+                      child: const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 14,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -484,6 +591,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF2C2F30),
+                    fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -493,6 +601,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF595C5D),
+                    fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
                 if (isVerified && isCompleted) ...[
