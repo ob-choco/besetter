@@ -13,13 +13,20 @@ class ActivityConfirmation extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-  String _formatDuration(Duration d) {
+  String _formatDuration(BuildContext context, Duration d) {
+    final l10n = AppLocalizations.of(context)!;
     final minutes = d.inMinutes;
     final seconds = d.inSeconds % 60;
+    final centiseconds =
+        ((d.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0');
     if (minutes > 0) {
-      return '$minutes분 $seconds초';
+      return l10n.activityDurationWithMinutesDecimal(
+        minutes,
+        seconds,
+        centiseconds,
+      );
     }
-    return '$seconds초';
+    return l10n.activityDurationSecondsDecimal(seconds, centiseconds);
   }
 
   @override
@@ -69,7 +76,7 @@ class ActivityConfirmation extends StatelessWidget {
           const SizedBox(height: 4),
           // Duration
           Text(
-            l10n.activityDurationFormat(statusText, _formatDuration(elapsed)),
+            l10n.activityDurationFormat(statusText, _formatDuration(context, elapsed)),
             style: TextStyle(
               fontSize: 13,
               color: isCompleted ? const Color(0xFF16A34A) : const Color(0xFF64748B),
