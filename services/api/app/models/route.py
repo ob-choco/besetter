@@ -10,6 +10,14 @@ from . import model_config
 from app.models.activity import ActivityStats
 
 
+class CompleterStats(BaseModel):
+    model_config = model_config
+
+    participant_count: int = 0
+    completer_count: int = 0
+    verified_completer_count: int = 0
+
+
 class RouteType(str, Enum):
     BOULDERING = "bouldering"
     ENDURANCE = "endurance"
@@ -66,6 +74,7 @@ class Route(Document):
     overlay_completed_at: Optional[datetime] = Field(None, description="오버레이 작업 완료 시간")
 
     activity_stats: ActivityStats = Field(default_factory=ActivityStats)
+    completer_stats: CompleterStats = Field(default_factory=CompleterStats)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(None)

@@ -854,3 +854,29 @@ async def test_on_activity_deleted_sole_activity_still_deletes_urs_doc(mongo_db,
         UserRouteStats.route_id == route.id,
     )
     assert urs is None
+
+
+@pytest.mark.asyncio
+async def test_route_completer_stats_roundtrip(mongo_db):
+    from app.models.route import CompleterStats
+
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    assert route.completer_stats.participant_count == 0
+    assert route.completer_stats.completer_count == 0
+    assert route.completer_stats.verified_completer_count == 0
+
+    await Route.get_pymongo_collection().update_one(
+        {"_id": route.id},
+        {"$inc": {
+            "completerStats.participantCount": 3,
+            "completerStats.completerCount": 2,
+            "completerStats.verifiedCompleterCount": 1,
+        }},
+    )
+
+    refreshed = await Route.find_one(Route.id == route.id)
+    assert refreshed.completer_stats.participant_count == 3
+    assert refreshed.completer_stats.completer_count == 2
+    assert refreshed.completer_stats.verified_completer_count == 1
