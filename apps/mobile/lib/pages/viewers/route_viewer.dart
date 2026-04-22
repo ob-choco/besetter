@@ -20,6 +20,7 @@ import '../../providers/activity_refresh_provider.dart'; // activityDirtyProvide
 import '../../providers/recent_climbed_routes_provider.dart';
 import '../../widgets/viewers/activity_panel.dart';
 import '../../widgets/viewers/workout_log_panel.dart';
+import '../../widgets/viewers/verified_completers_row.dart';
 import '../../widgets/place_pending_badge.dart';
 
 
@@ -330,6 +331,11 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                   WorkoutLogPanel(
                     key: _workoutLogKey,
                     routeId: widget.routeData.id,
+                  ),
+                  VerifiedCompletersRow(
+                    routeId: widget.routeData.id,
+                    totalCount:
+                        widget.routeData.completerStats.verifiedCompleterCount,
                   ),
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 24),
