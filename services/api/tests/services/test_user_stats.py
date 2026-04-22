@@ -1009,3 +1009,9 @@ async def test_on_activity_created_swallows_route_inc_errors(mongo_db, monkeypat
     )
     assert urs is not None  # UserRouteStats upsert succeeded
     assert any("on_activity_created failed" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_user_route_stats_has_verified_completers_index(mongo_db):
+    indexes = await UserRouteStats.get_pymongo_collection().index_information()
+    assert "routeId_1_verifiedCompletedCount_-1_lastActivityAt_-1__id_-1" in indexes

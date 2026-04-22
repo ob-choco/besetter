@@ -87,5 +87,15 @@ class UserRouteStats(Document):
                 [("userId", ASCENDING), ("lastActivityAt", DESCENDING)],
                 name="userId_1_lastActivityAt_-1",
             ),
+            IndexModel(
+                [
+                    ("routeId", ASCENDING),
+                    ("verifiedCompletedCount", DESCENDING),
+                    ("lastActivityAt", DESCENDING),
+                    ("_id", DESCENDING),
+                ],
+                name="routeId_1_verifiedCompletedCount_-1_lastActivityAt_-1__id_-1",
+                partialFilterExpression={"verifiedCompletedCount": {"$gte": 1}},
+            ),
         ]
         keep_nulls = True
