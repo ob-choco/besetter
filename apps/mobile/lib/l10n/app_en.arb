@@ -187,6 +187,8 @@
   "@verifiedCompletersMore": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "verifiedCompletersEmpty": "No verified completers yet",
+  "verifiedCompletersEmptyCta": "Be the first to top it!",
   "failedToLoadData": "Failed to load data",
   "recentWallPhotos": "Recent Wall Photos",
   "viewAll": "View all",

@@ -188,6 +188,8 @@
   "@verifiedCompletersMore": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "verifiedCompletersEmpty": "Aún no hay nadie verificado",
+  "verifiedCompletersEmptyCta": "¡Sé el primero en completarla!",
   "failedToLoadData": "No se pudieron cargar los datos",
   "recentWallPhotos": "Fotos recientes del muro",
   "viewAll": "Ver todos",

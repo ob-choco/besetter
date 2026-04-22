@@ -188,6 +188,8 @@
   "@verifiedCompletersMore": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "verifiedCompletersEmpty": "아직 인증된 완등자가 없어요",
+  "verifiedCompletersEmptyCta": "첫 번째 완등자가 되어보세요!",
   "failedToLoadData": "데이터를 불러오지 못했습니다",
   "recentWallPhotos": "최근 벽 사진",
   "viewAll": "전체 보기",

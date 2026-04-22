@@ -187,6 +187,8 @@
   "@verifiedCompletersMore": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "verifiedCompletersEmpty": "まだ完登者がいません",
+  "verifiedCompletersEmptyCta": "最初の完登者になろう！",
   "failedToLoadData": "データの読み込みに失敗しました",
   "recentWallPhotos": "最近の壁の写真",
   "viewAll": "すべて表示",
