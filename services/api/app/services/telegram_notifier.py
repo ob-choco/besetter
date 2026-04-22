@@ -123,3 +123,33 @@ def _build_suggestion_text(suggestion: Any, place: Any, requester: Any) -> str:
         f"요청자: {_val(getattr(requester, 'name', None))} ({_val(getattr(requester, 'profile_id', None))})\n"
         f"Suggestion ID: {_val(getattr(suggestion, 'id', None))}"
     )
+
+
+async def notify_new_user(user: Any, provider: str) -> None:
+    """Send a Telegram alert for a new signup. Best-effort."""
+    try:
+        text = _build_signup_text(user, provider)
+    except Exception as exc:
+        logger.warning("telegram notify error: %s", exc, exc_info=True)
+        return
+    await _send(text)
+
+
+async def notify_place_registration_request(place: Any, requester: Any) -> None:
+    """Send a Telegram alert for a new gym registration request. Best-effort."""
+    try:
+        text = _build_place_request_text(place, requester)
+    except Exception as exc:
+        logger.warning("telegram notify error: %s", exc, exc_info=True)
+        return
+    await _send(text)
+
+
+async def notify_place_improvement_request(suggestion: Any, place: Any, requester: Any) -> None:
+    """Send a Telegram alert for a place improvement suggestion. Best-effort."""
+    try:
+        text = _build_suggestion_text(suggestion, place, requester)
+    except Exception as exc:
+        logger.warning("telegram notify error: %s", exc, exc_info=True)
+        return
+    await _send(text)
