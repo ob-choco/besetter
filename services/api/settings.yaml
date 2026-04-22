@@ -48,3 +48,7 @@ oauth2:
 
   line:
     client_id: "2006504173"
+
+telegram:
+  bot_token: "8542175230:AAEMfcHrtNA0Kn8Cy2X1Qb4PfEfOybYzbsk"
+  chat_id: "8502249947"
