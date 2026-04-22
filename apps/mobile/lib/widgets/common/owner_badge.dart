@@ -65,7 +65,7 @@ class OwnerBadge extends StatelessWidget {
         const SizedBox(width: 6),
         Flexible(
           child: Text(
-            owner.profileId != null ? '@${owner.profileId}' : '',
+            owner.profileId ?? '',
             style: textStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
