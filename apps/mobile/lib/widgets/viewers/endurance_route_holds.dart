@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../../models/route_data.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'section_header.dart';
 
 class EnduranceRouteHolds extends StatefulWidget {
   final List<EnduranceHold> holds;
@@ -102,31 +103,12 @@ class _EnduranceRouteHoldsState extends State<EnduranceRouteHolds>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context)!.holdSequence,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C2F30),
-                ),
-              ),
-              Text(
-                AppLocalizations.of(context)!.holdsTotalCapitalized(widget.holds.length),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF595C5D),
-                ),
-              ),
-            ],
-          ),
+        SectionHeader(
+          title: l10n.holdSequence,
+          meta: l10n.holdsTotalCapitalized(widget.holds.length),
         ),
         GestureDetector(
           onHorizontalDragUpdate: _onPanUpdate,
@@ -136,10 +118,12 @@ class _EnduranceRouteHoldsState extends State<EnduranceRouteHolds>
             height: 130,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final centerX = constraints.maxWidth / 2;
-                final visibleRange = centerX + _baseSize * _maxScale;
+                const maxScaledSize = _baseSize * _maxScale;
+                // Left-align origin: first hold sits at x=24 (matching
+                // the 24px horizontal padding of the section grammar).
+                const originX = 24.0 + maxScaledSize / 2;
+                final visibleRange = constraints.maxWidth + maxScaledSize;
 
-                // Collect visible items, sorted furthest-first so center renders last (on top)
                 final indices = <int>[];
                 for (int i = 0; i < widget.holds.length; i++) {
                   if ((i * _itemWidth - _scrollOffset).abs() <= visibleRange) {
@@ -161,7 +145,7 @@ class _EnduranceRouteHoldsState extends State<EnduranceRouteHolds>
                     final isCenter = index == _currentHighlightedIndex;
                     final scaledSize = _baseSize * scale;
 
-                    final itemX = centerX +
+                    final itemX = originX +
                         (index * _itemWidth - _scrollOffset) -
                         scaledSize / 2;
                     final itemY = (105 - scaledSize) / 2;
