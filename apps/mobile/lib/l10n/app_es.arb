@@ -251,6 +251,9 @@
   "activitySaveFailed": "Error al guardar la actividad",
   "ok": "OK",
   "workoutLog": "REGISTRO DE EJERCICIO",
+  "workoutLogStatSessions": "Sesiones",
+  "workoutLogStatAvg": "Promedio",
+  "workoutLogStatTotal": "Total",
   "totalSessionsCount": "Total: {count} sesiones",
   "@totalSessionsCount": {
     "placeholders": {

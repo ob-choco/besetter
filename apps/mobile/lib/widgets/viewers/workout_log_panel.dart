@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../providers/activity_refresh_provider.dart';
 import '../../providers/recent_climbed_routes_provider.dart';
 import '../../services/activity_service.dart';
+import 'section_header.dart';
 
 class WorkoutLogPanel extends StatefulWidget {
   final String routeId;
@@ -279,46 +280,53 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE6E8EA)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: l10n.workoutLog,
+          trailing: GestureDetector(
+            onTap: _toggleFilter,
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              l10n.completedOnly,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: _completedOnly
+                    ? const Color(0xFF0052D0)
+                    : const Color(0xFF6B7280),
+              ),
+            ),
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(l10n),
-            if (_activitiesLoading)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else if (_activities.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l10n.noWorkoutRecords,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF595C5D),
-                    ),
-                  ),
+        _buildStatsRow(l10n),
+        if (_activitiesLoading)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          )
+        else if (_activities.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                l10n.noWorkoutRecords,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF595C5D),
                 ),
-              )
-            else
-              _buildActivityList(),
-          ],
-        ),
-      ),
+              ),
+            ),
+          )
+        else
+          _buildActivityList(),
+      ],
     );
   }
 
-  Widget _buildHeader(AppLocalizations l10n) {
-    // Select stats based on filter
+  Widget _buildStatsRow(AppLocalizations l10n) {
     int count = 0;
     double duration = 0;
     if (_stats != null) {
@@ -330,53 +338,64 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
         duration = (_stats!['totalDuration'] as num).toDouble();
       }
     }
+    final avgSeconds = count > 0 ? duration / count : 0.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.workoutLog,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF595C5D),
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: _toggleFilter,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _completedOnly
-                        ? const Color(0xFF0066FF)
-                        : const Color(0xFFE6E8EA),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l10n.completedOnly,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _completedOnly ? Colors.white : const Color(0xFF595C5D),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          Expanded(
+            child: _statTile(
+              value: count.toString(),
+              label: l10n.workoutLogStatSessions.toUpperCase(),
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _statTile(
+              value: _formatDuration(avgSeconds),
+              label: l10n.workoutLogStatAvg.toUpperCase(),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _statTile(
+              value: _formatDuration(duration),
+              label: l10n.workoutLogStatTotal.toUpperCase(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statTile({required String value, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
           Text(
-            '${l10n.totalSessionsCount(count)} | ${l10n.avgDurationLabel(_formatDuration(count > 0 ? duration / count : 0))}',
+            value,
             style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF595C5D),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+              letterSpacing: 0.8,
             ),
           ),
         ],
@@ -430,7 +449,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     }
 
     // Calculate height for 3.5 items visible
-    final scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
+    const scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
     return SizedBox(
       height: scrollHeight,
       child: ListView(

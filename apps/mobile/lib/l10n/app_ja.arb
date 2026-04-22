@@ -250,6 +250,9 @@
   "activitySaveFailed": "アクティビティの保存に失敗しました",
   "ok": "OK",
   "workoutLog": "ワークアウトログ",
+  "workoutLogStatSessions": "セッション",
+  "workoutLogStatAvg": "平均",
+  "workoutLogStatTotal": "合計",
   "totalSessionsCount": "合計 {count}回",
   "@totalSessionsCount": {
     "placeholders": {

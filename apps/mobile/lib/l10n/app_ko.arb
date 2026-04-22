@@ -251,6 +251,9 @@
   "activitySaveFailed": "활동 저장에 실패했습니다",
   "ok": "확인",
   "workoutLog": "운동 기록",
+  "workoutLogStatSessions": "세션",
+  "workoutLogStatAvg": "평균",
+  "workoutLogStatTotal": "총 시간",
   "totalSessionsCount": "총 {count}회",
   "@totalSessionsCount": {
     "placeholders": {

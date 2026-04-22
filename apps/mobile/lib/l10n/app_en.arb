@@ -250,6 +250,9 @@
   "activitySaveFailed": "Failed to save activity",
   "ok": "OK",
   "workoutLog": "WORKOUT LOG",
+  "workoutLogStatSessions": "Sessions",
+  "workoutLogStatAvg": "Avg",
+  "workoutLogStatTotal": "Total",
   "totalSessionsCount": "Total: {count} sessions",
   "@totalSessionsCount": {
     "placeholders": {
