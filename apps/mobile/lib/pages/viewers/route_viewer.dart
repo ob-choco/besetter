@@ -21,6 +21,7 @@ import '../../providers/recent_climbed_routes_provider.dart';
 import '../../widgets/viewers/activity_panel.dart';
 import '../../widgets/viewers/workout_log_panel.dart';
 import '../../widgets/viewers/verified_completers_row.dart';
+import '../../widgets/viewers/section_header.dart';
 import '../../widgets/place_pending_badge.dart';
 
 
@@ -280,44 +281,34 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                       );
                     },
                   ),
-                  // 홀드 목록
-                  if (_imagesLoaded)
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1,
+                  if (_imagesLoaded) ...[
+                    const SectionDivider(),
+                    widget.routeData.type == RouteType.endurance
+                        ? EnduranceRouteHolds(
+                            holds: widget.routeData.enduranceHolds ?? [],
+                            croppedImages: _croppedImages,
+                            onHighlightHolds: (holdIds) {
+                              setState(() {
+                                _highlightedHoldIds = holdIds;
+                              });
+                            },
+                          )
+                        : BoulderingRouteHolds(
+                            holds: _getHoldProperties(),
+                            onHighlightHolds: (holdIds) {
+                              setState(() {
+                                _highlightedHoldIds = holdIds;
+                              });
+                            },
+                            selectedType: _selectedHoldType,
+                            onTypeSelected: (type) {
+                              setState(() {
+                                _selectedHoldType = type;
+                              });
+                            },
                           ),
-                        ),
-                      ),
-                      child: widget.routeData.type == RouteType.endurance
-                          ? EnduranceRouteHolds(
-                              holds: widget.routeData.enduranceHolds ?? [],
-                              croppedImages: _croppedImages,
-                              onHighlightHolds: (holdIds) {
-                                setState(() {
-                                  _highlightedHoldIds = holdIds;
-                                });
-                              },
-                            )
-                          : BoulderingRouteHolds(
-                              holds: _getHoldProperties(),
-                              onHighlightHolds: (holdIds) {
-                                setState(() {
-                                  _highlightedHoldIds = holdIds;
-                                });
-                              },
-                              selectedType: _selectedHoldType,
-                              onTypeSelected: (type) {
-                                setState(() {
-                                  _selectedHoldType = type;
-                                });
-                              },
-                            ),
-                    ),
-                  // Activity panel (slide-to-start / timer / confirmation)
+                    const SectionDivider(),
+                  ],
                   ActivityPanel(
                     routeId: widget.routeData.id,
                     onActivityCreated: (activityData) {
@@ -327,22 +318,18 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                       container.invalidate(recentClimbedRoutesProvider);
                     },
                   ),
-                  // Workout log (stats + activity list)
+                  const SectionDivider(),
                   WorkoutLogPanel(
                     key: _workoutLogKey,
                     routeId: widget.routeData.id,
                   ),
+                  const SectionDivider(),
                   VerifiedCompletersRow(
                     routeId: widget.routeData.id,
                     totalCount:
                         widget.routeData.completerStats.verifiedCompleterCount,
                   ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ),
-                  const SizedBox(height: 16),
+                  const SectionDivider(),
                   // Route information
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
