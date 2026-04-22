@@ -5,11 +5,11 @@ from fastapi import status
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, HttpUrl
-from datetime import datetime
+from datetime import datetime, timezone
 from beanie.odm.fields import PydanticObjectId
 from bson import ObjectId
 from app.dependencies import get_current_user
-from app.models.user import User
+from app.models.user import User, OwnerView
 from app.models.hold_polygon import HoldPolygon, HoldPolygonData
 from app.models.image import Image
 from app.models.place import Place
@@ -631,3 +631,146 @@ async def delete_route(route_id: str, current_user: User = Depends(get_current_u
     await route.save()
     await user_stats_service.on_route_soft_deleted(route)
     await _inc_image_route_count(route.image_id, -1)
+
+
+class VerifiedCompleterItem(BaseModel):
+    model_config = model_config
+
+    user: OwnerView
+    verified_completed_count: int
+    last_activity_at: datetime
+
+
+class VerifiedCompletersMeta(BaseModel):
+    model_config = model_config
+
+    next_token: Optional[str] = None
+
+
+class VerifiedCompletersResponse(BaseModel):
+    model_config = model_config
+
+    data: List[VerifiedCompleterItem]
+    meta: VerifiedCompletersMeta
+
+
+def _encode_verified_completers_cursor(
+    verified_count: int, last_activity_at: datetime, doc_id: str
+) -> str:
+    ts = last_activity_at.astimezone(timezone.utc).isoformat() if last_activity_at else ""
+    raw = f"{verified_count}|{ts}|{doc_id}"
+    return base64.b64encode(raw.encode()).decode()
+
+
+def _decode_verified_completers_cursor(cursor: str) -> tuple[int, datetime, ObjectId]:
+    try:
+        raw = base64.b64decode(cursor.encode()).decode()
+        verified_str, ts_str, id_str = raw.split("|")
+        return (
+            int(verified_str),
+            datetime.fromisoformat(ts_str),
+            ObjectId(id_str),
+        )
+    except Exception:
+        raise HTTPException(status_code=422, detail={"errorCode": "INVALID_CURSOR"})
+
+
+@router.get(
+    "/{route_id}/verified-completers",
+    response_model=VerifiedCompletersResponse,
+)
+async def get_verified_completers(
+    route_id: str,
+    limit: int = Query(20, ge=1, le=50),
+    cursor: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+):
+    route = await Route.find_one(
+        Route.id == ObjectId(route_id),
+        Route.is_deleted != True,
+    )
+    if not route:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route not found")
+    if not _can_access_route(route, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"reason": "private"},
+        )
+
+    match_stage: Dict[str, Any] = {
+        "routeId": ObjectId(route_id),
+        "verifiedCompletedCount": {"$gte": 1},
+    }
+    if cursor is not None:
+        c_count, c_ts, c_id = _decode_verified_completers_cursor(cursor)
+        match_stage["$or"] = [
+            {"verifiedCompletedCount": {"$lt": c_count}},
+            {"verifiedCompletedCount": c_count, "lastActivityAt": {"$lt": c_ts}},
+            {
+                "verifiedCompletedCount": c_count,
+                "lastActivityAt": c_ts,
+                "_id": {"$lt": c_id},
+            },
+        ]
+
+    pipeline: List[Dict[str, Any]] = [
+        {"$match": match_stage},
+        {"$sort": {
+            "verifiedCompletedCount": -1,
+            "lastActivityAt": -1,
+            "_id": -1,
+        }},
+        {"$limit": limit + 1},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "userId",
+                "foreignField": "_id",
+                "as": "_user",
+            }
+        },
+        {"$addFields": {"_user": {"$arrayElemAt": ["$_user", 0]}}},
+    ]
+
+    collection = UserRouteStats.get_pymongo_collection()
+    rows = [doc async for doc in collection.aggregate(pipeline)]
+
+    has_more = len(rows) > limit
+    rows = rows[:limit]
+
+    data: List[VerifiedCompleterItem] = []
+    for row in rows:
+        u = row.get("_user")
+        if u is None:
+            owner = OwnerView(
+                user_id=row["userId"],
+                profile_id=None,
+                profile_image_url=None,
+                is_deleted=True,
+            )
+        else:
+            is_deleted = bool(u.get("isDeleted", False))
+            owner = OwnerView(
+                user_id=u["_id"],
+                profile_id=None if is_deleted else u.get("profileId"),
+                profile_image_url=None if is_deleted else u.get("profileImageUrl"),
+                is_deleted=is_deleted,
+            )
+        data.append(
+            VerifiedCompleterItem(
+                user=owner,
+                verified_completed_count=row["verifiedCompletedCount"],
+                last_activity_at=row["lastActivityAt"],
+            )
+        )
+
+    next_token: Optional[str] = None
+    if has_more and rows:
+        last = rows[-1]
+        next_token = _encode_verified_completers_cursor(
+            last["verifiedCompletedCount"], last["lastActivityAt"], str(last["_id"])
+        )
+
+    return VerifiedCompletersResponse(
+        data=data, meta=VerifiedCompletersMeta(next_token=next_token)
+    )
