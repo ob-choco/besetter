@@ -258,6 +258,16 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
                 if route.user_id == activity.user_id and not route.is_deleted:
                     inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = -1
 
+        route_inc: dict[str, int] = {}
+        for bucket in BUCKET_FIELDS:
+            if before[bucket] >= 1 and after[bucket] == 0:
+                route_inc[_ROUTE_COMPLETER_DB_FIELDS[bucket]] = -1
+        if route_inc:
+            await Route.get_pymongo_collection().update_one(
+                {"_id": activity.route_id},
+                {"$inc": route_inc},
+            )
+
         # Drop an empty UserRouteStats doc. Conditional on current zero state to
         # avoid deleting a doc concurrently upserted by on_activity_created.
         urs_doc_dropped = False
