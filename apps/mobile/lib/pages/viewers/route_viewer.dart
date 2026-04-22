@@ -369,7 +369,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                                         Text(
                                           AppLocalizations.of(context)!.currentGrade,
                                           style: TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF0052D0),
                                             letterSpacing: 2,
