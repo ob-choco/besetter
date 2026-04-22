@@ -6,6 +6,7 @@ import '../../services/verified_completers_service.dart';
 import '../../models/route_data.dart';
 import '../common/user_avatar.dart';
 import '../sheets/verified_completers_sheet.dart';
+import 'section_header.dart';
 
 class VerifiedCompletersRow extends StatefulWidget {
   final String routeId;
@@ -75,30 +76,17 @@ class _VerifiedCompletersRowState extends State<VerifiedCompletersRow> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isEmpty = widget.totalCount <= 0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '${l10n.verifiedCompletersTitle} 🏅',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '· ${l10n.verifiedCompletersCount(widget.totalCount)}',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (isEmpty)
-            SizedBox(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: l10n.verifiedCompletersTitle,
+          meta: l10n.verifiedCompletersCount(widget.totalCount),
+        ),
+        if (isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+            child: SizedBox(
               height: _itemHeight,
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -125,29 +113,41 @@ class _VerifiedCompletersRowState extends State<VerifiedCompletersRow> {
                   ],
                 ),
               ),
-            )
-          else if (_loading)
-            const SizedBox(
+            ),
+          )
+        else if (_loading)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 14),
+            child: SizedBox(
               height: _itemHeight,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-            )
-          else if (_error != null)
-            SizedBox(
+            ),
+          )
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+            child: SizedBox(
               height: _itemHeight,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(l10n.failedToLoadData,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                child: Text(
+                  l10n.failedToLoadData,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
               ),
-            )
-          else
-            LayoutBuilder(builder: (ctx, constraints) {
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+            child: LayoutBuilder(builder: (ctx, constraints) {
               final width = constraints.maxWidth;
               final needsChip = widget.totalCount > _preview.length;
               final usable = needsChip ? (width - _chipReserve) : width;
@@ -200,8 +200,8 @@ class _VerifiedCompletersRowState extends State<VerifiedCompletersRow> {
                 ),
               );
             }),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
