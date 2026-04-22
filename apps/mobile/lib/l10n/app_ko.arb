@@ -233,6 +233,21 @@
       "duration": {"type": "String"}
     }
   },
+  "activityDurationWithMinutesDecimal": "{minutes}분 {seconds}.{centiseconds}초",
+  "@activityDurationWithMinutesDecimal": {
+    "placeholders": {
+      "minutes": {"type": "int"},
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
+  "activityDurationSecondsDecimal": "{seconds}.{centiseconds}초",
+  "@activityDurationSecondsDecimal": {
+    "placeholders": {
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
   "activitySaveFailed": "활동 저장에 실패했습니다",
   "ok": "확인",
   "workoutLog": "운동 기록",

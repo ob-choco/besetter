@@ -232,6 +232,21 @@
       "duration": {"type": "String"}
     }
   },
+  "activityDurationWithMinutesDecimal": "{minutes}分 {seconds}.{centiseconds}秒",
+  "@activityDurationWithMinutesDecimal": {
+    "placeholders": {
+      "minutes": {"type": "int"},
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
+  "activityDurationSecondsDecimal": "{seconds}.{centiseconds}秒",
+  "@activityDurationSecondsDecimal": {
+    "placeholders": {
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
   "activitySaveFailed": "アクティビティの保存に失敗しました",
   "ok": "OK",
   "workoutLog": "ワークアウトログ",

@@ -232,6 +232,21 @@
       "duration": {"type": "String"}
     }
   },
+  "activityDurationWithMinutesDecimal": "{minutes}m {seconds}.{centiseconds}s",
+  "@activityDurationWithMinutesDecimal": {
+    "placeholders": {
+      "minutes": {"type": "int"},
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
+  "activityDurationSecondsDecimal": "{seconds}.{centiseconds}s",
+  "@activityDurationSecondsDecimal": {
+    "placeholders": {
+      "seconds": {"type": "int"},
+      "centiseconds": {"type": "String"}
+    }
+  },
   "activitySaveFailed": "Failed to save activity",
   "ok": "OK",
   "workoutLog": "WORKOUT LOG",
