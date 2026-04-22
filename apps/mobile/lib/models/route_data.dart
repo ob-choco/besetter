@@ -29,6 +29,30 @@ class OwnerInfo {
       };
 }
 
+class CompleterStats {
+  final int participantCount;
+  final int completerCount;
+  final int verifiedCompleterCount;
+
+  const CompleterStats({
+    this.participantCount = 0,
+    this.completerCount = 0,
+    this.verifiedCompleterCount = 0,
+  });
+
+  factory CompleterStats.fromJson(Map<String, dynamic> json) => CompleterStats(
+        participantCount: (json['participantCount'] as int?) ?? 0,
+        completerCount: (json['completerCount'] as int?) ?? 0,
+        verifiedCompleterCount: (json['verifiedCompleterCount'] as int?) ?? 0,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'participantCount': participantCount,
+        'completerCount': completerCount,
+        'verifiedCompleterCount': verifiedCompleterCount,
+      };
+}
+
 enum RouteType {
   bouldering,
   endurance,
@@ -91,6 +115,7 @@ class RouteData {
 
   final OwnerInfo? owner;
   final bool isDeleted;
+  final CompleterStats completerStats;
 
   RouteData({
     required this.id,
@@ -123,6 +148,7 @@ class RouteData {
     this.lastActivityAt,
     this.owner,
     this.isDeleted = false,
+    this.completerStats = const CompleterStats(),
   });
 
   factory RouteData.fromJson(Map<String, dynamic> json) {
@@ -170,6 +196,9 @@ class RouteData {
           ? OwnerInfo.fromJson(json['owner'] as Map<String, dynamic>)
           : null,
       isDeleted: json['isDeleted'] as bool? ?? false,
+      completerStats: json['completerStats'] != null
+          ? CompleterStats.fromJson(json['completerStats'] as Map<String, dynamic>)
+          : const CompleterStats(),
     );
   }
 
@@ -204,6 +233,7 @@ class RouteData {
         'lastActivityAt': lastActivityAt?.toIso8601String(),
         if (owner != null) 'owner': owner!.toJson(),
         'isDeleted': isDeleted,
+        'completerStats': completerStats.toJson(),
       };
 }
 
