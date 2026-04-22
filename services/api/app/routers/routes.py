@@ -16,7 +16,7 @@ from app.models.place import Place
 from app.models import IdView
 from app.models.route import Route, BoulderingHold, EnduranceHold, Visibility, RouteType
 from app.models.activity import Activity, UserRouteStats
-from app.core.gcs import generate_signed_url, extract_blob_path_from_url
+from app.core.gcs import generate_signed_url, extract_blob_path_from_url, to_public_url
 
 
 from beanie.odm.operators.find.comparison import In
@@ -753,7 +753,7 @@ async def get_verified_completers(
             owner = OwnerView(
                 user_id=u["_id"],
                 profile_id=None if is_deleted else u.get("profileId"),
-                profile_image_url=None if is_deleted else u.get("profileImageUrl"),
+                profile_image_url=None if is_deleted else to_public_url(u.get("profileImageUrl")),
                 is_deleted=is_deleted,
             )
         data.append(

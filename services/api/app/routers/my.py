@@ -407,7 +407,7 @@ async def get_daily_routes(
         return OwnerView(
             user_id=owner_doc.id,
             profile_id=owner_doc.profile_id,
-            profile_image_url=owner_doc.profile_image_url,
+            profile_image_url=to_public_url(owner_doc.profile_image_url),
             is_deleted=False,
         )
 
@@ -595,7 +595,7 @@ async def _build_recently_climbed_routes(
             owner_view = OwnerView(
                 user_id=owner_doc.id,
                 profile_id=owner_doc.profile_id,
-                profile_image_url=owner_doc.profile_image_url,
+                profile_image_url=to_public_url(owner_doc.profile_image_url),
                 is_deleted=False,
             )
 
