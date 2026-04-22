@@ -982,3 +982,30 @@ async def test_on_activity_created_attempted_only_increments_participant(mongo_d
     assert refreshed.completer_stats.participant_count == 1
     assert refreshed.completer_stats.completer_count == 0
     assert refreshed.completer_stats.verified_completer_count == 0
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_swallows_route_inc_errors(mongo_db, monkeypatch, caplog):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    async def _boom(*args, **kwargs):
+        raise RuntimeError("simulated route inc failure")
+
+    # Patch only the Route collection's update_one; UserRouteStats flow stays healthy.
+    route_collection = Route.get_pymongo_collection()
+    monkeypatch.setattr(route_collection, "update_one", _boom)
+
+    activity = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+
+    with caplog.at_level("ERROR"):
+        await on_activity_created(activity, route)  # must not raise
+
+    urs = await UserRouteStats.find_one(
+        UserRouteStats.user_id == user_id,
+        UserRouteStats.route_id == route.id,
+    )
+    assert urs is not None  # UserRouteStats upsert succeeded
+    assert any("on_activity_created failed" in r.message for r in caplog.records)
