@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/route_data.dart';
+import '../../utils/thumbnail_url.dart';
 
 class UserAvatar extends StatelessWidget {
   final OwnerInfo owner;
@@ -33,7 +34,7 @@ class UserAvatar extends StatelessWidget {
         height: size,
         child: owner.profileImageUrl != null
             ? CachedNetworkImage(
-                imageUrl: owner.profileImageUrl!,
+                imageUrl: toThumbnailUrl(owner.profileImageUrl!, 's100'),
                 fit: BoxFit.cover,
                 placeholder: (_, __) => _initial(),
                 errorWidget: (_, __, ___) => _initial(),
