@@ -880,3 +880,61 @@ async def test_route_completer_stats_roundtrip(mongo_db):
     assert refreshed.completer_stats.participant_count == 3
     assert refreshed.completer_stats.completer_count == 2
     assert refreshed.completer_stats.verified_completer_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_increments_route_completer_stats_on_first_verified(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    activity = await _insert_activity(
+        user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True
+    )
+    await on_activity_created(activity, route)
+
+    refreshed = await Route.find_one(Route.id == route.id)
+    assert refreshed.completer_stats.participant_count == 1
+    assert refreshed.completer_stats.completer_count == 1
+    assert refreshed.completer_stats.verified_completer_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_second_activity_same_user_does_not_reincrement_route_counters(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(side_effect=[1, 2]))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    a1 = await _insert_activity(user_id, route.id, status=ActivityStatus.COMPLETED, location_verified=True)
+    await on_activity_created(a1, route)
+    a2 = await _insert_activity(
+        user_id, route.id,
+        status=ActivityStatus.COMPLETED, location_verified=True,
+        started_at=datetime(2026, 4, 18, 16, 0, tzinfo=dt_tz.utc),
+    )
+    await on_activity_created(a2, route)
+
+    refreshed = await Route.find_one(Route.id == route.id)
+    assert refreshed.completer_stats.participant_count == 1
+    assert refreshed.completer_stats.completer_count == 1
+    assert refreshed.completer_stats.verified_completer_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_activity_created_attempted_only_increments_participant(mongo_db, monkeypatch):
+    monkeypatch.setattr("app.services.user_stats._recount_local_day", AsyncMock(return_value=1))
+    user_id = PydanticObjectId()
+    route = _make_route(owner_id=PydanticObjectId())
+    await route.insert()
+
+    activity = await _insert_activity(
+        user_id, route.id, status=ActivityStatus.ATTEMPTED, location_verified=False
+    )
+    await on_activity_created(activity, route)
+
+    refreshed = await Route.find_one(Route.id == route.id)
+    assert refreshed.completer_stats.participant_count == 1
+    assert refreshed.completer_stats.completer_count == 0
+    assert refreshed.completer_stats.verified_completer_count == 0

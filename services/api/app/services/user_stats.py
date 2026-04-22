@@ -168,6 +168,11 @@ _ROUTES_CREATED_DB_FIELDS = {
     "bouldering_count": "routesCreated.boulderingCount",
     "endurance_count": "routesCreated.enduranceCount",
 }
+_ROUTE_COMPLETER_DB_FIELDS = {
+    "total_count": "completerStats.participantCount",
+    "completed_count": "completerStats.completerCount",
+    "verified_completed_count": "completerStats.verifiedCompleterCount",
+}
 
 
 async def _update_user_stats(user_id: PydanticObjectId, inc: dict[str, int]) -> None:
@@ -213,6 +218,16 @@ async def on_activity_created(activity: Activity, route: Route) -> None:
                 inc[_DISTINCT_ROUTES_DB_FIELDS[bucket]] = 1
                 if route.user_id == activity.user_id and not route.is_deleted:
                     inc[_OWN_ROUTES_ACTIVITY_DB_FIELDS[bucket]] = 1
+
+        route_inc: dict[str, int] = {}
+        for bucket in BUCKET_FIELDS:
+            if before[bucket] == 0 and after[bucket] >= 1:
+                route_inc[_ROUTE_COMPLETER_DB_FIELDS[bucket]] = 1
+        if route_inc:
+            await Route.get_pymongo_collection().update_one(
+                {"_id": activity.route_id},
+                {"$inc": route_inc},
+            )
 
         if await _recount_local_day(activity.user_id, _local_date_str(activity)) == 1:
             inc["distinctDays"] = 1
