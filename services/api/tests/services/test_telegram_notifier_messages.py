@@ -93,3 +93,51 @@ def test_build_place_request_text_escapes_place_name():
     place = _make_place(name="<Evil> & Gym")
     text = _build_place_request_text(place, _make_requester())
     assert "&lt;Evil&gt; &amp; Gym" in text
+
+
+from app.services.telegram_notifier import _build_suggestion_text
+
+
+def _make_changes(**overrides):
+    defaults = dict(
+        name=None,
+        latitude=None,
+        longitude=None,
+        cover_image_url=None,
+    )
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def _make_suggestion(changes):
+    return SimpleNamespace(id="sugg-xyz", changes=changes)
+
+
+def test_build_suggestion_text_name_only():
+    sugg = _make_suggestion(_make_changes(name="New Name"))
+    text = _build_suggestion_text(sugg, _make_place(), _make_requester())
+    assert "✏️ <b>장소 개선 요청</b>" in text
+    assert "장소: Climbing Park (place-abc)" in text
+    assert "이름: New Name" in text
+    assert "좌표: —" in text
+    assert "이미지: —" in text
+    assert "요청자: Requester (req123)" in text
+    assert "Suggestion ID: sugg-xyz" in text
+
+
+def test_build_suggestion_text_coords_both_set():
+    sugg = _make_suggestion(_make_changes(latitude=10.0, longitude=20.0))
+    text = _build_suggestion_text(sugg, _make_place(), _make_requester())
+    assert "좌표: 10.0, 20.0" in text
+
+
+def test_build_suggestion_text_coords_one_missing_still_renders():
+    sugg = _make_suggestion(_make_changes(latitude=10.0))
+    text = _build_suggestion_text(sugg, _make_place(), _make_requester())
+    assert "좌표: 10.0, —" in text
+
+
+def test_build_suggestion_text_image_only():
+    sugg = _make_suggestion(_make_changes(cover_image_url="https://example.com/x.jpg"))
+    text = _build_suggestion_text(sugg, _make_place(), _make_requester())
+    assert "이미지: https://example.com/x.jpg" in text

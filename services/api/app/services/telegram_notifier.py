@@ -104,3 +104,22 @@ def _build_place_request_text(place: Any, requester: Any) -> str:
         f"요청자: {_val(getattr(requester, 'name', None))} ({_val(getattr(requester, 'profile_id', None))})\n"
         f"커버: {_val(getattr(place, 'cover_image_url', None))}"
     )
+
+
+def _build_suggestion_text(suggestion: Any, place: Any, requester: Any) -> str:
+    changes = getattr(suggestion, "changes", None)
+    c_name = getattr(changes, "name", None)
+    c_lat = getattr(changes, "latitude", None)
+    c_lng = getattr(changes, "longitude", None)
+    c_img = getattr(changes, "cover_image_url", None)
+
+    return (
+        "✏️ <b>장소 개선 요청</b>\n"
+        f"장소: {_val(getattr(place, 'name', None))} ({_val(getattr(place, 'id', None))})\n"
+        "변경 제안:\n"
+        f"  • 이름: {_val(c_name)}\n"
+        f"  • 좌표: {_coord_line(c_lat, c_lng)}\n"
+        f"  • 이미지: {_val(c_img)}\n"
+        f"요청자: {_val(getattr(requester, 'name', None))} ({_val(getattr(requester, 'profile_id', None))})\n"
+        f"Suggestion ID: {_val(getattr(suggestion, 'id', None))}"
+    )
