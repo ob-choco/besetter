@@ -78,6 +78,12 @@ def _val(x: Any) -> str:
     return _html_escape(str(x))
 
 
+def _coord_line(lat: Any, lng: Any) -> str:
+    if lat is None and lng is None:
+        return "—"
+    return f"{_val(lat)}, {_val(lng)}"
+
+
 def _build_signup_text(user: Any, provider: str) -> str:
     return (
         "🆕 <b>새 유저 가입</b>\n"
@@ -86,4 +92,15 @@ def _build_signup_text(user: Any, provider: str) -> str:
         f"Provider: {_val(provider)}\n"
         f"Profile ID: {_val(getattr(user, 'profile_id', None))}\n"
         f"가입 시각: {_fmt_kst(getattr(user, 'created_at', None))}"
+    )
+
+
+def _build_place_request_text(place: Any, requester: Any) -> str:
+    return (
+        "📍 <b>장소 등록 요청</b>\n"
+        f"장소: {_val(getattr(place, 'name', None))}\n"
+        f"좌표: {_coord_line(getattr(place, 'latitude', None), getattr(place, 'longitude', None))}\n"
+        f"Place ID: {_val(getattr(place, 'id', None))}\n"
+        f"요청자: {_val(getattr(requester, 'name', None))} ({_val(getattr(requester, 'profile_id', None))})\n"
+        f"커버: {_val(getattr(place, 'cover_image_url', None))}"
     )
