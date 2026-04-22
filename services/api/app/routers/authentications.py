@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Annotated, Optional
 from pathlib import Path
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Body
 from beanie.odm.fields import PydanticObjectId
 
 
@@ -31,6 +31,7 @@ from google.auth.transport.requests import Request
 
 from app.core.config import get
 from app.core.profile_id import generate_unique_profile_id
+from app.services import telegram_notifier
 
 
 security = HTTPBearer()
@@ -132,6 +133,7 @@ async def signin(
 @router.post("/sign-up/line", status_code=status.HTTP_201_CREATED)
 async def signup(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    background_tasks: BackgroundTasks,
     nonce_id: str = Body(embed=True, alias="nonceId"),
     marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
@@ -198,6 +200,7 @@ async def signup(
 
     user.refresh_token = refresh_token.decode("utf-8")
     await user.save()
+    background_tasks.add_task(telegram_notifier.notify_new_user, user, "line")
     return SignInResponse(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -245,6 +248,7 @@ async def signin(
 @router.post("/sign-up/kakao", status_code=status.HTTP_201_CREATED)
 async def signup(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    background_tasks: BackgroundTasks,
     marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
@@ -299,6 +303,7 @@ async def signup(
 
     user.refresh_token = refresh_token.decode("utf-8")
     await user.save()
+    background_tasks.add_task(telegram_notifier.notify_new_user, user, "kakao")
     return SignInResponse(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -343,6 +348,7 @@ async def signin_apple(
 @router.post("/sign-up/apple", status_code=status.HTTP_201_CREATED)
 async def signup_apple(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    background_tasks: BackgroundTasks,
     marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
@@ -426,6 +432,7 @@ async def signup_apple(
 
     user.refresh_token = refresh_token.decode("utf-8")
     await user.save()
+    background_tasks.add_task(telegram_notifier.notify_new_user, user, "apple")
     return SignInResponse(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -459,6 +466,7 @@ async def signin_google(
 @router.post("/sign-up/google", status_code=status.HTTP_201_CREATED)
 async def signup_google(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    background_tasks: BackgroundTasks,
     marketing_push_consent: bool = Body(False, embed=True, alias="marketingPushConsent"),
     http_client: ClientSession = Depends(get_http_client),
 ):
@@ -504,6 +512,7 @@ async def signup_google(
 
     user.refresh_token = refresh_token.decode("utf-8")
     await user.save()
+    background_tasks.add_task(telegram_notifier.notify_new_user, user, "google")
     return SignInResponse(access_token=access_token, refresh_token=refresh_token)
 
 
