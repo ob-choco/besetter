@@ -178,6 +178,15 @@
   "errorLoadingImages": "Error loading images",
   "noWallPhotosYet": "No wall photos yet",
   "viewMore": "View More",
+  "verifiedCompletersTitle": "Verified Completers",
+  "verifiedCompletersCount": "{count}",
+  "@verifiedCompletersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "verifiedCompletersMore": "+{count} more",
+  "@verifiedCompletersMore": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "failedToLoadData": "Failed to load data",
   "recentWallPhotos": "Recent Wall Photos",
   "viewAll": "View all",

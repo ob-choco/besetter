@@ -179,6 +179,15 @@
   "errorLoadingImages": "이미지 로딩 오류",
   "noWallPhotosYet": "아직 벽 사진이 없습니다",
   "viewMore": "더 보기",
+  "verifiedCompletersTitle": "인증된 완등자",
+  "verifiedCompletersCount": "{count}명",
+  "@verifiedCompletersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "verifiedCompletersMore": "+{count} 더 보기",
+  "@verifiedCompletersMore": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "failedToLoadData": "데이터를 불러오지 못했습니다",
   "recentWallPhotos": "최근 벽 사진",
   "viewAll": "전체 보기",

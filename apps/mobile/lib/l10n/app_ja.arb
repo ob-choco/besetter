@@ -178,6 +178,15 @@
   "errorLoadingImages": "画像の読み込みエラー",
   "noWallPhotosYet": "まだ壁の写真がありません",
   "viewMore": "もっと見る",
+  "verifiedCompletersTitle": "認定完登者",
+  "verifiedCompletersCount": "{count}人",
+  "@verifiedCompletersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "verifiedCompletersMore": "+{count} もっと見る",
+  "@verifiedCompletersMore": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "failedToLoadData": "データの読み込みに失敗しました",
   "recentWallPhotos": "最近の壁の写真",
   "viewAll": "すべて表示",

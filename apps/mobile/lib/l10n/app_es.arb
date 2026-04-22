@@ -179,6 +179,15 @@
   "errorLoadingImages": "Error al cargar imágenes",
   "noWallPhotosYet": "Aún no hay fotos del muro",
   "viewMore": "Ver más",
+  "verifiedCompletersTitle": "Escaladores verificados",
+  "verifiedCompletersCount": "{count}",
+  "@verifiedCompletersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "verifiedCompletersMore": "+{count} más",
+  "@verifiedCompletersMore": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "failedToLoadData": "No se pudieron cargar los datos",
   "recentWallPhotos": "Fotos recientes del muro",
   "viewAll": "Ver todos",
