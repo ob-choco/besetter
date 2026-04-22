@@ -1,15 +1,14 @@
 """Best-effort Telegram DM notifier for operator-facing server events.
 
 All public functions swallow exceptions internally: callers do not need
-try/except. Failures are logged with logger.warning and the originating
-HTTP request is never affected.
+try/except. Transient failures log at warning level; misconfiguration
+(missing config keys) logs at error level. The originating HTTP request
+is never affected.
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 
-import aiohttp
 from aiohttp import ClientSession, ClientTimeout
 
 from app.core import config
@@ -40,7 +39,7 @@ async def _send(text: str) -> None:
     try:
         async with ClientSession(timeout=ClientTimeout(total=_HTTP_TIMEOUT_S)) as session:
             async with session.post(url, json=body) as resp:
-                if resp.status != 200:
+                if not (200 <= resp.status < 300):
                     response_text = await resp.text()
                     logger.warning(
                         "telegram send failed: status=%s body=%s",
@@ -54,5 +53,5 @@ async def _send(text: str) -> None:
                         "telegram send failed: ok=false description=%s",
                         data.get("description"),
                     )
-    except (aiohttp.ClientError, asyncio.TimeoutError, Exception) as exc:
+    except Exception as exc:
         logger.warning("telegram notify error: %s", exc, exc_info=True)
