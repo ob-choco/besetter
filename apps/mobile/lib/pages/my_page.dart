@@ -938,8 +938,7 @@ class _DailyRouteCard extends ConsumerWidget {
     final imageUrl = snapshot['overlayImageUrl'] as String? ?? snapshot['imageUrl'] as String?;
     final ownerJson = route['owner'] as Map<String, dynamic>?;
     final owner = ownerJson != null ? OwnerInfo.fromJson(ownerJson) : null;
-    final myId = ref.watch(userProfileProvider).valueOrNull?.id;
-    final showOwner = owner != null && owner.userId != myId;
+    final showOwner = owner != null;
 
     final routeVisibility = route['routeVisibility'] as String? ?? 'public';
     final isDeleted = route['isDeleted'] as bool? ?? false;
@@ -962,116 +961,134 @@ class _DailyRouteCard extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: const [BoxShadow(color: Color(0x0A2C2F30), blurRadius: 16, offset: Offset(0, 4))],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
-              child: Container(
-                width: thumbSize, height: thumbSize,
-                color: const Color(0xFFF0F0F0),
-                child: imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: toThumbnailUrl(imageUrl, 's200'),
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
-                        errorWidget: (_, __, ___) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
-                      )
-                    : const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
-              ),
-            ),
-            Expanded(
-              child: SizedBox(
-                height: thumbSize,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Top: grade + title + place + overflow menu
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                  decoration: BoxDecoration(color: gradeColor, borderRadius: BorderRadius.circular(6)),
-                                  child: Text(grade, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30))),
-                                const SizedBox(height: 2),
-                                Text(placeName, style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D))),
-                                if (showOwner) ...[
-                                  const SizedBox(height: 4),
-                                  OwnerBadge(owner: owner),
-                                ],
-                                if (isBlocked) ...[
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(blockedIcon, style: const TextStyle(fontSize: 11)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        blockedText,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF8A8F94),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
+            boxShadow: const [
+              BoxShadow(color: Color(0x0A2C2F30), blurRadius: 16, offset: Offset(0, 4)),
+            ],
+          ),
+          child: Stack(
+            children: [
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: thumbSize,
+                      height: thumbSize,
+                      child: ColoredBox(
+                        color: const Color(0xFFF0F0F0),
+                        child: imageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: toThumbnailUrl(imageUrl, 's200'),
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
+                                errorWidget: (_, __, ___) => const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
+                              )
+                            : const Icon(Icons.terrain, color: Color(0xFFDADDDF)),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: gradeColor,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                grade,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 32),
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C2F30)),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              placeName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF595C5D)),
+                            ),
+                            if (showOwner) ...[
+                              const SizedBox(height: 2),
+                              OwnerBadge(owner: owner),
+                            ],
+                            if (isBlocked) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(blockedIcon, style: const TextStyle(fontSize: 11)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    blockedText,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF8A8F94),
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ],
+                              ),
+                            ],
+                            const Spacer(),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase(), valueColor: const Color(0xFF0066FF))),
+                                Expanded(child: _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase())),
+                                Expanded(child: _StatBox(value: formatDuration(totalDuration), label: 'DURATION')),
                               ],
                             ),
-                          ),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: PopupMenuButton<String>(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF8A8F94)),
-                              onSelected: (value) {
-                                if (value == 'delete') {
-                                  _confirmAndDelete(context, routeId);
-                                }
-                              },
-                              itemBuilder: (_) => [
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: Text(l10n.doDelete, style: const TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      // Bottom: stat boxes row (A style)
-                      Row(
-                        children: [
-                          Expanded(child: _StatBox(value: '$completedCount', label: l10n.completed.toUpperCase(), valueColor: const Color(0xFF0066FF))),
-                          Expanded(child: _StatBox(value: '$attemptedCount', label: l10n.attempted.toUpperCase())),
-                          Expanded(child: _StatBox(value: formatDuration(totalDuration), label: 'DURATION')),
-                        ],
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF8A8F94)),
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        _confirmAndDelete(context, routeId);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(l10n.doDelete, style: const TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

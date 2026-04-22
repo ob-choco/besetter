@@ -118,8 +118,7 @@ class _RecentClimbedRouteCardState
         .whereType<String>()
         .join(' · ');
 
-    final showOwner = route.owner != null &&
-        route.owner!.userId != ref.read(userProfileProvider).valueOrNull?.id;
+    final showOwner = route.owner != null;
     final isBlocked = _isBlocked;
     final blockedIcon = route.isDeleted ? '🗑' : '🔒';
     final blockedText =
@@ -220,7 +219,7 @@ class _RecentClimbedRouteCardState
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Text(
                                   route.title ?? route.grade,
                                   style: const TextStyle(
@@ -234,7 +233,7 @@ class _RecentClimbedRouteCardState
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 if (placeText.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 2),
                                   Row(
                                     children: [
                                       Icon(
@@ -258,7 +257,7 @@ class _RecentClimbedRouteCardState
                                   ),
                                 ],
                                 if (showOwner) ...[
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 2),
                                   OwnerBadge(owner: route.owner!),
                                 ],
                                 if (isBlocked) ...[
@@ -283,6 +282,7 @@ class _RecentClimbedRouteCardState
                                   ),
                                 ],
                                 const Spacer(),
+                                const SizedBox(height: 12),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
