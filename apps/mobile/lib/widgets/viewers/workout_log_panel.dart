@@ -31,9 +31,6 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
   String? _nextCursor;
   bool _loadingMore = false;
 
-  // Filter
-  bool _completedOnly = true;
-
   late ScrollController _scrollController;
 
   @override
@@ -87,7 +84,6 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     try {
       final result = await ActivityService.getMyActivities(
         routeId: widget.routeId,
-        status: _completedOnly ? 'completed' : null,
       );
       if (!mounted) return;
       setState(() {
@@ -113,7 +109,6 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     try {
       final result = await ActivityService.getMyActivities(
         routeId: widget.routeId,
-        status: _completedOnly ? 'completed' : null,
         cursor: _nextCursor,
       );
       if (!mounted) return;
@@ -130,13 +125,6 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
         _loadingMore = false;
       });
     }
-  }
-
-  void _toggleFilter() {
-    setState(() {
-      _completedOnly = !_completedOnly;
-    });
-    _loadActivities();
   }
 
   Future<void> _deleteActivity(String activityId) async {
@@ -250,10 +238,8 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     final duration = (activityData['duration'] as num).toDouble();
 
     setState(() {
-      // Insert at the beginning (newest first) if it matches the filter
-      if (!_completedOnly || status == 'completed') {
-        _activities.insert(0, listItem);
-      }
+      // Insert at the beginning (newest first)
+      _activities.insert(0, listItem);
 
       // Update stats locally
       if (_stats != null) {
@@ -283,54 +269,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: l10n.workoutLog,
-          trailing: GestureDetector(
-            onTap: _toggleFilter,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _completedOnly
-                    ? const Color(0xFF0052D0).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: _completedOnly
-                      ? const Color(0xFF0052D0)
-                      : const Color(0xFFD1D5DB),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _completedOnly
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    size: 11,
-                    color: _completedOnly
-                        ? const Color(0xFF0052D0)
-                        : const Color(0xFF6B7280),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    l10n.completedOnly,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: _completedOnly
-                          ? const Color(0xFF0052D0)
-                          : const Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        SectionHeader(title: l10n.workoutLog),
         _buildHeadlineBlock(l10n),
         if (_activitiesLoading)
           const Padding(
