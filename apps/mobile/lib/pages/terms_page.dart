@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../services/legal_urls.dart';
 import '../services/token_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
@@ -27,24 +28,6 @@ class TermsPage extends ConsumerStatefulWidget {
 }
 
 class _TermsPageState extends ConsumerState<TermsPage> {
-  final Map<String, String> _terms = {
-    'ko': 'https://truth-crafter-0c7.notion.site/1f2ad66660f1809ca756d8425c829e9a',
-    'en': 'https://truth-crafter-0c7.notion.site/Terms-of-Use-1f2ad66660f18048b71eff109b16a3e0',
-    'es': 'https://truth-crafter-0c7.notion.site/T-rminos-y-Condiciones-de-Uso-1f2ad66660f1803d817dc40d21386327',
-    'ja': 'https://truth-crafter-0c7.notion.site/1f2ad66660f18036ba13d9c3947aa831',
-  };
-  final Map<String, String> _privacyPolicy = {
-    'ko': 'https://truth-crafter-0c7.notion.site/1abad66660f1800ca144d8645ac8fc75',
-    'en': 'https://truth-crafter-0c7.notion.site/Privacy-Policy-1f2ad66660f1808c9760d7b00c5d366f',
-    'es': 'https://truth-crafter-0c7.notion.site/Pol-tica-de-Privacidad-1f2ad66660f181fd9d87cb068b896248',
-    'ja': 'https://truth-crafter-0c7.notion.site/1f2ad66660f18161815ec804daaf4992',
-  };
-  final Map<String, String> _locationTerms = {
-    'ko': 'https://truth-crafter-0c7.notion.site/348ad66660f1812a8c56dd8b3bbb5da8',
-    'en': 'https://truth-crafter-0c7.notion.site/Location-Based-Services-Terms-of-Use-English-348ad66660f1818baab2e0c5bd7ad8dc',
-    'es': 'https://truth-crafter-0c7.notion.site/T-rminos-de-uso-del-Servicio-Basado-en-Ubicaci-n-Espa-ol-348ad66660f181dab567e03c8978e2d4',
-    'ja': 'https://truth-crafter-0c7.notion.site/348ad66660f18164b92ff73578a93362',
-  };
   bool _isServiceTermsAgreed = false;
   bool _isPrivacyPolicyAgreed = false;
   bool _isLocationTermsAgreed = false;
@@ -189,9 +172,9 @@ class _TermsPageState extends ConsumerState<TermsPage> {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
-    final termsUrl = _terms[locale] ?? _terms['en']!;
-    final privacyPolicyUrl = _privacyPolicy[locale] ?? _privacyPolicy['en']!;
-    final locationTermsUrl = _locationTerms[locale] ?? _locationTerms['en']!;
+    final termsUrl = legalDocumentUrl(LegalDocument.serviceTerms, locale);
+    final privacyPolicyUrl = legalDocumentUrl(LegalDocument.privacyPolicy, locale);
+    final locationTermsUrl = legalDocumentUrl(LegalDocument.locationTerms, locale);
 
     return Scaffold(
       appBar: AppBar(
@@ -321,23 +304,88 @@ class _TermsPageState extends ConsumerState<TermsPage> {
   }
 }
 
-class WebViewPage extends StatelessWidget {
+class WebViewPage extends StatefulWidget {
   final String url;
   final String title;
 
   const WebViewPage({super.key, required this.url, required this.title});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(url));
+  State<WebViewPage> createState() => _WebViewPageState();
+}
 
+class _WebViewPageState extends State<WebViewPage> {
+  late final WebViewController _controller;
+  int _progress = 0;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.white)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (p) {
+            if (mounted) setState(() => _progress = p);
+          },
+          onPageStarted: (_) {
+            if (mounted) setState(() => _errorMessage = null);
+          },
+          onPageFinished: (_) {
+            if (mounted) setState(() => _progress = 100);
+          },
+          onWebResourceError: (error) {
+            if (error.isForMainFrame == false) return;
+            if (mounted) {
+              setState(() {
+                _errorMessage = '${error.errorCode}: ${error.description}';
+              });
+            }
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
+      appBar: AppBar(title: Text(widget.title)),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_progress < 100)
+            LinearProgressIndicator(value: _progress / 100),
+          if (_errorMessage != null)
+            Container(
+              color: Colors.white,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                  const SizedBox(height: 12),
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF595C5D)),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() => _errorMessage = null);
+                      _controller.loadRequest(Uri.parse(widget.url));
+                    },
+                    child: Text(AppLocalizations.of(context)!.retry),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
-      body: WebViewWidget(controller: controller),
     );
   }
 }

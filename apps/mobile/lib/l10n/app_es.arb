@@ -435,5 +435,11 @@
   },
   "marketingPushSettingSubtitleOff": "No aceptado",
   "marketingPushSettingsNoticeOperational": "Las notificaciones operativas (p. ej. respuestas a lugares que sugieres) se envían independientemente de este ajuste.",
-  "marketingPushSettingsNoticeNight": "Las notificaciones promocionales no se envían entre las 21:00 y las 08:00."
+  "marketingPushSettingsNoticeNight": "Las notificaciones promocionales no se envían entre las 21:00 y las 08:00.",
+  "termsOfService": "Términos del Servicio",
+  "privacyPolicy": "Política de Privacidad",
+  "locationBasedServicesTerms": "Términos del Servicio Basado en Ubicación",
+  "contactUs": "Contáctanos",
+  "termsAndPolicies": "Términos y Políticas",
+  "openSourceLicenses": "Licencias de Código Abierto"
 }

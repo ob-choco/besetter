@@ -434,5 +434,11 @@
   },
   "marketingPushSettingSubtitleOff": "未同意",
   "marketingPushSettingsNoticeOperational": "運営関連の通知（例：スポット提案の処理結果）は本設定に関わらず送信されます。",
-  "marketingPushSettingsNoticeNight": "広告通知は21時〜翌8時には送信されません。"
+  "marketingPushSettingsNoticeNight": "広告通知は21時〜翌8時には送信されません。",
+  "termsOfService": "利用規約",
+  "privacyPolicy": "プライバシーポリシー",
+  "locationBasedServicesTerms": "位置情報サービス利用規約",
+  "contactUs": "お問い合わせ",
+  "termsAndPolicies": "規約・ポリシー",
+  "openSourceLicenses": "オープンソースライセンス"
 }

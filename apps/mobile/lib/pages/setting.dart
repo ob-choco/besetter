@@ -5,10 +5,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
 import '../providers/auth_provider.dart';
 import '../services/http_client.dart';
+import '../services/legal_urls.dart';
 import 'notification_settings_page.dart';
+import 'terms_and_policies_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({Key? key}) : super(key: key);
+
+  Future<void> _openContactEmail() async {
+    final uri = Uri(scheme: 'mailto', path: contactEmail);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 
   Future<void> _openSystemLanguageSettings() async {
     if (Platform.isIOS) {
@@ -48,6 +57,26 @@ class SettingsPage extends ConsumerWidget {
               );
             },
           ),
+          const Divider(height: 32),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: Text(AppLocalizations.of(context)!.termsAndPolicies),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const TermsAndPoliciesPage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.mail_outline),
+            title: Text(AppLocalizations.of(context)!.contactUs),
+            subtitle: const Text(contactEmail),
+            onTap: _openContactEmail,
+          ),
+          const Divider(height: 32),
           ListTile(
             leading: const Icon(Icons.logout),
             title: Text(AppLocalizations.of(context)!.logout),

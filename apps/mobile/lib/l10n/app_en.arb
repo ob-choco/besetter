@@ -434,5 +434,11 @@
   },
   "marketingPushSettingSubtitleOff": "Opted out",
   "marketingPushSettingsNoticeOperational": "Operational notifications (e.g. responses to places you submit) are sent regardless of this setting.",
-  "marketingPushSettingsNoticeNight": "Marketing notifications are not sent between 9pm and 8am."
+  "marketingPushSettingsNoticeNight": "Marketing notifications are not sent between 9pm and 8am.",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "locationBasedServicesTerms": "Location-Based Services Terms",
+  "contactUs": "Contact Us",
+  "termsAndPolicies": "Terms & Policies",
+  "openSourceLicenses": "Open Source Licenses"
 }
