@@ -276,7 +276,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_statsLoading) return const SizedBox.shrink();
-    if (_stats != null && (_stats!['totalCount'] as int) == 0) {
+    if (_stats == null || (_stats!['totalCount'] as int) == 0) {
       return const SizedBox.shrink();
     }
 
@@ -438,8 +438,13 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
   }
 
   /// Split `source` around the first occurrence of `number` and colour that
-  /// occurrence with `numberStyle`. If the digit string isn't found (should
-  /// not happen for ARB placeholders), return the whole source as a plain span.
+  /// occurrence with `numberStyle`. Assumes the ARB placeholder substitution
+  /// is the first occurrence of the digit string in the localized message —
+  /// true for the current four locales' `workoutLogHeadlineMixedLine1/2`
+  /// strings. If a future locale repeats the count digit earlier in the
+  /// string, the wrong occurrence would be coloured. Prefer splitting around
+  /// the placeholder at ARB-parse time if that ever becomes a concern.
+  /// If `number` isn't found at all, returns the whole source as a plain span.
   List<InlineSpan> _numberColoredSpans(
     String source,
     String number,
