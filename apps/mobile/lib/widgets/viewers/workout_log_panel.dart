@@ -492,10 +492,9 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     // Build flat list of widgets for the scrollable area
     final List<Widget> items = [];
     for (final group in groups) {
-      // Date header
       items.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
           child: Text(
             group.key,
             style: const TextStyle(
@@ -507,9 +506,15 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
           ),
         ),
       );
-      // Activity rows
-      for (final activity in group.value) {
-        items.add(_buildActivityRow(activity));
+      final rows = group.value;
+      for (int i = 0; i < rows.length; i++) {
+        items.add(
+          _buildActivityRow(
+            rows[i],
+            isFirst: i == 0,
+            isLast: i == rows.length - 1,
+          ),
+        );
       }
     }
 
@@ -527,91 +532,150 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     const itemHeight = 44.0; // single-line row (~12 vertical padding + content)
     const dateHeaderHeight = 28.0;
 
+    final Widget body;
     if (_activities.length <= 3) {
-      return Column(
+      body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: items,
       );
-    }
-
-    // Calculate height for 3.5 items visible
-    const scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
-    return SizedBox(
-      height: scrollHeight,
-      child: Stack(
-        children: [
-          ListView(
-            controller: _scrollController,
-            padding: EdgeInsets.zero,
-            children: items,
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _scrollController,
-                builder: (_, __) {
-                  final show = _scrollController.hasClients &&
-                      _scrollController.position.hasContentDimensions &&
-                      _scrollController.position.pixels > 0;
-                  return AnimatedOpacity(
-                    opacity: show ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 150),
-                    child: Container(
-                      height: 18,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.white, Color(0x00FFFFFF)],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+    } else {
+      const scrollHeight = (itemHeight * 3.5) + dateHeaderHeight;
+      body = SizedBox(
+        height: scrollHeight,
+        child: Stack(
+          children: [
+            ListView(
+              controller: _scrollController,
+              padding: EdgeInsets.zero,
+              children: items,
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _scrollController,
-                builder: (_, __) {
-                  final hasDim = _scrollController.hasClients &&
-                      _scrollController.position.hasContentDimensions;
-                  final show = !hasDim ||
-                      _scrollController.position.pixels <
-                          _scrollController.position.maxScrollExtent - 1;
-                  return AnimatedOpacity(
-                    opacity: show ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 150),
-                    child: Container(
-                      height: 22,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0x00FFFFFF), Colors.white],
-                        ),
-                      ),
-                      child: const Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 6),
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 14,
-                            color: Color(0xFF9CA3AF),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _scrollController,
+                  builder: (_, __) {
+                    final show = _scrollController.hasClients &&
+                        _scrollController.position.hasContentDimensions &&
+                        _scrollController.position.pixels > 0;
+                    return AnimatedOpacity(
+                      opacity: show ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Container(
+                        height: 18,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFFF9FAFB), Color(0x00F9FAFB)],
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _scrollController,
+                  builder: (_, __) {
+                    final hasDim = _scrollController.hasClients &&
+                        _scrollController.position.hasContentDimensions;
+                    final show = !hasDim ||
+                        _scrollController.position.pixels <
+                            _scrollController.position.maxScrollExtent - 1;
+                    return AnimatedOpacity(
+                      opacity: show ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Container(
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0x00F9FAFB), Color(0xFFF9FAFB)],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 6),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 14,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        child: body,
+      ),
+    );
+  }
+
+  Widget _buildRail({
+    required bool isFirst,
+    required bool isLast,
+    required bool isCompleted,
+  }) {
+    const lineColor = Color(0xFFE5E7EB);
+    return SizedBox(
+      width: 12,
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Container(
+                width: 2,
+                color: isFirst ? Colors.transparent : lineColor,
+              ),
+            ),
+          ),
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCompleted
+                  ? const Color(0xFF0052D0)
+                  : const Color(0xFFF9FAFB),
+              border: Border.all(
+                color: isCompleted
+                    ? const Color(0xFF0052D0)
+                    : const Color(0xFFD1D5DB),
+                width: 2,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Container(
+                width: 2,
+                color: isLast ? Colors.transparent : lineColor,
               ),
             ),
           ),
@@ -620,7 +684,11 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     );
   }
 
-  Widget _buildActivityRow(Map<String, dynamic> activity) {
+  Widget _buildActivityRow(
+    Map<String, dynamic> activity, {
+    required bool isFirst,
+    required bool isLast,
+  }) {
     final startedAt = DateTime.parse(activity['startedAt'] as String).toLocal();
     final timeStr = DateFormat.Hm().format(startedAt);
     final duration = (activity['duration'] as num).toDouble();
@@ -629,8 +697,8 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     final activityId = activity['id'] as String;
     final l10n = AppLocalizations.of(context)!;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    final rowContent = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -725,6 +793,21 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildRail(
+            isFirst: isFirst,
+            isLast: isLast,
+            isCompleted: isCompleted,
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: rowContent),
         ],
       ),
     );
