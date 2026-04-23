@@ -4,9 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../providers/activity_refresh_provider.dart';
-import '../../providers/recent_climbed_routes_provider.dart';
 import '../../services/activity_service.dart';
 import 'section_header.dart';
+import 'workout_log_headline.dart';
 
 class WorkoutLogPanel extends StatefulWidget {
   final String routeId;
@@ -198,9 +198,9 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
         }
       });
 
-      final container = ProviderScope.containerOf(context);
-      container.read(activityDirtyProvider.notifier).state = true;
-      container.invalidate(recentClimbedRoutesProvider);
+      ProviderScope.containerOf(context)
+          .read(activityDirtyProvider.notifier)
+          .state = true;
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -331,7 +331,7 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
             ),
           ),
         ),
-        _buildStatsRow(l10n),
+        _buildHeadlineBlock(l10n),
         if (_activitiesLoading)
           const Padding(
             padding: EdgeInsets.all(24),
@@ -356,80 +356,189 @@ class _WorkoutLogPanelState extends State<WorkoutLogPanel> {
     );
   }
 
-  Widget _buildStatsRow(AppLocalizations l10n) {
-    int count = 0;
-    double duration = 0;
-    if (_stats != null) {
-      if (_completedOnly) {
-        count = (_stats!['completedCount'] as num).toInt();
-        duration = (_stats!['completedDuration'] as num).toDouble();
-      } else {
-        count = (_stats!['totalCount'] as num).toInt();
-        duration = (_stats!['totalDuration'] as num).toDouble();
-      }
-    }
-    final avgSeconds = count > 0 ? duration / count : 0.0;
+  Widget _buildHeadlineBlock(AppLocalizations l10n) {
+    final completed = _stats == null ? 0 : (_stats!['completedCount'] as num).toInt();
+    final total = _stats == null ? 0 : (_stats!['totalCount'] as num).toInt();
+    final completedDuration = _stats == null ? 0.0 : (_stats!['completedDuration'] as num).toDouble();
+    final totalDuration = _stats == null ? 0.0 : (_stats!['totalDuration'] as num).toDouble();
+    final variant = selectHeadlineVariant(completed, total);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(24, 2, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _statTile(
-              value: count.toString(),
-              label: l10n.workoutLogStatSessions.toUpperCase(),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: _statTile(
-              value: _formatDuration(avgSeconds),
-              label: l10n.workoutLogStatAvg.toUpperCase(),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: _statTile(
-              value: _formatDuration(duration),
-              label: l10n.workoutLogStatTotal.toUpperCase(),
-            ),
+          _buildHeadline(variant, completed, total, l10n),
+          const SizedBox(height: 10),
+          Container(height: 1, color: const Color(0xFFEFF1F2)),
+          const SizedBox(height: 10),
+          _buildMetaRow(
+            completed: completed,
+            total: total,
+            completedDuration: completedDuration,
+            totalDuration: totalDuration,
+            l10n: l10n,
           ),
         ],
       ),
     );
   }
 
-  Widget _statTile({required String value, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
+  Widget _buildHeadline(
+    HeadlineVariant variant,
+    int completed,
+    int total,
+    AppLocalizations l10n,
+  ) {
+    const baseStyle = TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFF111827),
+      letterSpacing: -0.3,
+      height: 1.25,
+    );
+    const primaryNum = TextStyle(color: Color(0xFF0052D0));
+    const dimNum = TextStyle(color: Color(0xFF6B7280));
+
+    String text;
+    switch (variant) {
+      case HeadlineVariant.attemptsOnly:
+        text = l10n.workoutLogHeadlineAttemptsOnly(total);
+        break;
+      case HeadlineVariant.firstTry:
+        text = l10n.workoutLogHeadlineFirstTry;
+        break;
+      case HeadlineVariant.secondStreak:
+        text = l10n.workoutLogHeadlineSecondStreak;
+        break;
+      case HeadlineVariant.streakSmall:
+        text = l10n.workoutLogHeadlineStreakSmall(completed);
+        break;
+      case HeadlineVariant.allCompletedMid:
+        text = l10n.workoutLogHeadlineAllCompletedMid(completed);
+        break;
+      case HeadlineVariant.streakFire:
+        text = l10n.workoutLogHeadlineStreakFire(completed);
+        break;
+      case HeadlineVariant.mixed:
+        final line1 = l10n.workoutLogHeadlineMixedLine1(total);
+        final line2 = l10n.workoutLogHeadlineMixedLine2(completed);
+        return Text.rich(
+          TextSpan(
+            style: baseStyle,
+            children: [
+              ..._numberColoredSpans(line1, total.toString(), dimNum),
+              const TextSpan(text: '\n'),
+              ..._numberColoredSpans(line2, completed.toString(), primaryNum),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
+        );
+    }
+    return Text(text, style: baseStyle);
+  }
+
+  /// Split `source` around the first occurrence of `number` and colour that
+  /// occurrence with `numberStyle`. If the digit string isn't found (should
+  /// not happen for ARB placeholders), return the whole source as a plain span.
+  List<InlineSpan> _numberColoredSpans(
+    String source,
+    String number,
+    TextStyle numberStyle,
+  ) {
+    final idx = source.indexOf(number);
+    if (idx < 0) return [TextSpan(text: source)];
+    return [
+      if (idx > 0) TextSpan(text: source.substring(0, idx)),
+      TextSpan(text: number, style: numberStyle),
+      if (idx + number.length < source.length)
+        TextSpan(text: source.substring(idx + number.length)),
+    ];
+  }
+
+  Widget _buildMetaRow({
+    required int completed,
+    required int total,
+    required double completedDuration,
+    required double totalDuration,
+    required AppLocalizations l10n,
+  }) {
+    final avgCompleted = completed > 0 ? completedDuration / completed : 0.0;
+    final avgTotal = total > 0 ? totalDuration / total : 0.0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildMetaChunk(
+          label: l10n.workoutLogStatAvg.toUpperCase(),
+          completed: completed > 0 ? formatDurationHuman(avgCompleted) : null,
+          total: (completed == 0 || completed < total)
+              ? formatDurationHuman(avgTotal)
+              : null,
+        ),
+        const SizedBox(width: 18),
+        _buildMetaChunk(
+          label: l10n.workoutLogMetaTotal.toUpperCase(),
+          completed: completed > 0 ? formatDurationHuman(completedDuration) : null,
+          total: (completed == 0 || completed < total)
+              ? formatDurationHuman(totalDuration)
+              : null,
+        ),
+      ],
+    );
+  }
+
+  /// A single label + values chunk. `completed` is the primary (blue) value;
+  /// `total` is the dim secondary value. Pass `null` to omit either side.
+  /// - Both non-null: renders `completed · total` with a `·` separator.
+  /// - Only completed: renders `completed` alone.
+  /// - Only total: renders `total` alone in dim colour.
+  Widget _buildMetaChunk({
+    required String label,
+    required String? completed,
+    required String? total,
+  }) {
+    const labelStyle = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF9CA3AF),
+      letterSpacing: 0.6,
+    );
+    const primaryValue = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF0052D0),
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
+    const dimValue = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF9CA3AF),
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
+    const sepStyle = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFFD1D5DB),
+    );
+
+    final children = <InlineSpan>[];
+    if (completed != null) {
+      children.add(TextSpan(text: completed, style: primaryValue));
+    }
+    if (completed != null && total != null) {
+      children.add(const TextSpan(text: ' · ', style: sepStyle));
+    }
+    if (total != null) {
+      children.add(TextSpan(text: total, style: dimValue));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: labelStyle),
+        const SizedBox(height: 3),
+        Text.rich(TextSpan(children: children)),
+      ],
     );
   }
 
