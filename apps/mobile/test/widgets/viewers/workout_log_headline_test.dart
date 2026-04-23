@@ -42,4 +42,24 @@ void main() {
       expect(selectHeadlineVariant(5, 3), HeadlineVariant.streakSmall);
     });
   });
+
+  group('formatDurationHuman', () {
+    test('under one hour shows MM:SS.cs', () {
+      expect(formatDurationHuman(0), '00:00.00');
+      expect(formatDurationHuman(4 * 60 + 1), '04:01.00');
+      expect(formatDurationHuman(48 * 60 + 20), '48:20.00');
+      expect(formatDurationHuman(3599.99), '59:59.99');
+    });
+
+    test('one hour or more shows Hh MM:SS', () {
+      expect(formatDurationHuman(3600), '1h 00:00');
+      expect(formatDurationHuman(1 * 3600 + 32 * 60 + 45), '1h 32:45');
+      expect(formatDurationHuman(2 * 3600 + 0 * 60 + 5), '2h 00:05');
+      expect(formatDurationHuman(10 * 3600 + 59 * 60 + 59), '10h 59:59');
+    });
+
+    test('fractional seconds truncate (not round) in MM:SS.cs mode', () {
+      expect(formatDurationHuman(1.999), '00:01.99');
+    });
+  });
 }

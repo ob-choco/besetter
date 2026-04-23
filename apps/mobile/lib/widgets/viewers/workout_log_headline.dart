@@ -32,3 +32,26 @@ HeadlineVariant selectHeadlineVariant(int completedCount, int totalCount) {
   }
   return HeadlineVariant.mixed;
 }
+
+/// Human-friendly duration formatter for the workout-log meta row.
+///
+/// - Under 1 hour: `MM:SS.cs` (matches the per-activity row format).
+/// - 1 hour or longer: `Hh MM:SS` (drops centiseconds, which are irrelevant at
+///   that scale).
+///
+/// Fractional seconds truncate (floor), matching the convention in
+/// `_formatDuration` inside `workout_log_panel.dart`.
+String formatDurationHuman(double seconds) {
+  if (seconds < 0) seconds = 0;
+  if (seconds >= 3600) {
+    final hours = (seconds / 3600).floor();
+    final rem = seconds - hours * 3600;
+    final minutes = (rem / 60).floor().toString().padLeft(2, '0');
+    final secs = (rem % 60).floor().toString().padLeft(2, '0');
+    return '${hours}h $minutes:$secs';
+  }
+  final minutes = (seconds / 60).floor().toString().padLeft(2, '0');
+  final secs = (seconds % 60).floor().toString().padLeft(2, '0');
+  final cs = ((seconds * 100) % 100).floor().toString().padLeft(2, '0');
+  return '$minutes:$secs.$cs';
+}
