@@ -254,6 +254,45 @@
   "workoutLogStatSessions": "세션",
   "workoutLogStatAvg": "평균",
   "workoutLogStatTotal": "총 시간",
+  "workoutLogHeadlineAttemptsOnly": "{count}번 시도",
+  "@workoutLogHeadlineAttemptsOnly": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineFirstTry": "1번 만에 완등!",
+  "workoutLogHeadlineSecondStreak": "2번째도 완등!",
+  "workoutLogHeadlineStreakSmall": "{count}번 연속 완등!",
+  "@workoutLogHeadlineStreakSmall": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineAllCompletedMid": "{count}번 전부 완등!",
+  "@workoutLogHeadlineAllCompletedMid": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineStreakFire": "{count}번 연속 완등 🔥",
+  "@workoutLogHeadlineStreakFire": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine1": "{count}번 시도 중",
+  "@workoutLogHeadlineMixedLine1": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine2": "{count}번 완등",
+  "@workoutLogHeadlineMixedLine2": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogMetaTotal": "누적",
   "totalSessionsCount": "총 {count}회",
   "@totalSessionsCount": {
     "placeholders": {

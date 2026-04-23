@@ -254,6 +254,45 @@
   "workoutLogStatSessions": "Sesiones",
   "workoutLogStatAvg": "Promedio",
   "workoutLogStatTotal": "Total",
+  "workoutLogHeadlineAttemptsOnly": "{count} intentos",
+  "@workoutLogHeadlineAttemptsOnly": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineFirstTry": "¡Encadenada al primer intento!",
+  "workoutLogHeadlineSecondStreak": "¡Encadenada otra vez!",
+  "workoutLogHeadlineStreakSmall": "¡{count} encadenadas seguidas!",
+  "@workoutLogHeadlineStreakSmall": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineAllCompletedMid": "¡{count} encadenadas, sin fallos!",
+  "@workoutLogHeadlineAllCompletedMid": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineStreakFire": "{count} encadenadas seguidas 🔥",
+  "@workoutLogHeadlineStreakFire": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine1": "{count} intentos,",
+  "@workoutLogHeadlineMixedLine1": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine2": "{count} encadenadas",
+  "@workoutLogHeadlineMixedLine2": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogMetaTotal": "Acumulado",
   "totalSessionsCount": "Total: {count} sesiones",
   "@totalSessionsCount": {
     "placeholders": {

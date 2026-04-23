@@ -253,6 +253,45 @@
   "workoutLogStatSessions": "セッション",
   "workoutLogStatAvg": "平均",
   "workoutLogStatTotal": "合計",
+  "workoutLogHeadlineAttemptsOnly": "{count}回トライ",
+  "@workoutLogHeadlineAttemptsOnly": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineFirstTry": "1回目で完登！",
+  "workoutLogHeadlineSecondStreak": "2回目も完登！",
+  "workoutLogHeadlineStreakSmall": "{count}連続完登！",
+  "@workoutLogHeadlineStreakSmall": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineAllCompletedMid": "{count}回すべて完登！",
+  "@workoutLogHeadlineAllCompletedMid": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineStreakFire": "{count}連続完登 🔥",
+  "@workoutLogHeadlineStreakFire": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine1": "{count}回トライ中",
+  "@workoutLogHeadlineMixedLine1": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogHeadlineMixedLine2": "{count}回完登",
+  "@workoutLogHeadlineMixedLine2": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "workoutLogMetaTotal": "累計",
   "totalSessionsCount": "合計 {count}回",
   "@totalSessionsCount": {
     "placeholders": {
