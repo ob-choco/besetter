@@ -51,6 +51,27 @@ def _bucket_deltas(status: ActivityStatus, location_verified: bool, sign: int) -
     }
 
 
+def _duration_deltas(
+    status: ActivityStatus,
+    location_verified: bool,
+    duration: float,
+    sign: int,
+) -> dict[str, float]:
+    """Return {total_duration, completed_duration, verified_completed_duration} delta.
+
+    Mirrors ``_bucket_deltas`` gating: non-completed contributes only to
+    ``total_duration``; verified_completed_duration requires both completed and
+    a verified location.
+    """
+    completed = duration if status == ActivityStatus.COMPLETED else 0.0
+    verified_completed = completed if location_verified else 0.0
+    return {
+        "total_duration": sign * duration,
+        "completed_duration": sign * completed,
+        "verified_completed_duration": sign * verified_completed,
+    }
+
+
 def _local_date_str(activity: Activity) -> str:
     """Return the activity's started_at local date in ISO ``YYYY-MM-DD`` form.
 
@@ -70,6 +91,11 @@ _URS_BUCKET_DB_FIELDS = {
     "completed_count": "completedCount",
     "verified_completed_count": "verifiedCompletedCount",
 }
+_URS_DURATION_DB_FIELDS = {
+    "total_duration": "totalDuration",
+    "completed_duration": "completedDuration",
+    "verified_completed_duration": "verifiedCompletedDuration",
+}
 
 
 async def _apply_user_route_stats_delta(
@@ -77,6 +103,7 @@ async def _apply_user_route_stats_delta(
     route_id: PydanticObjectId,
     deltas: dict[str, int],
     *,
+    duration_deltas: dict[str, float] | None = None,
     last_activity_at: datetime | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Atomically apply ``$inc`` on UserRouteStats bucket counters for (user, route).
@@ -84,22 +111,26 @@ async def _apply_user_route_stats_delta(
     Upserts the doc if missing. Returns ``(before, after)`` bucket counts as
     snake_case-keyed dicts. ``before = after - deltas``.
 
+    When ``duration_deltas`` is provided, its values are applied as ``$inc`` on
+    the corresponding duration fields in the same atomic update. When omitted,
+    the duration fields are initialized to 0 on insert via ``$setOnInsert``
+    ($setOnInsert and $inc cannot target the same field in one update).
+
     When ``last_activity_at`` is provided, applies ``$max`` so the stored
     timestamp never regresses (late-arriving activities cannot overwrite a
     newer one).
     """
-    inc = {_URS_BUCKET_DB_FIELDS[k]: v for k, v in deltas.items()}
+    inc: dict[str, float] = {_URS_BUCKET_DB_FIELDS[k]: v for k, v in deltas.items()}
+    set_on_insert: dict = {"userId": user_id, "routeId": route_id}
+    if duration_deltas:
+        for k, v in duration_deltas.items():
+            inc[_URS_DURATION_DB_FIELDS[k]] = v
+    else:
+        set_on_insert["totalDuration"] = 0
+        set_on_insert["completedDuration"] = 0
+        set_on_insert["verifiedCompletedDuration"] = 0
 
-    update: dict = {
-        "$inc": inc,
-        "$setOnInsert": {
-            "userId": user_id,
-            "routeId": route_id,
-            "totalDuration": 0,
-            "completedDuration": 0,
-            "verifiedCompletedDuration": 0,
-        },
-    }
+    update: dict = {"$inc": inc, "$setOnInsert": set_on_insert}
     if last_activity_at is not None:
         update["$max"] = {"lastActivityAt": last_activity_at}
 
@@ -203,10 +234,14 @@ async def on_activity_created(activity: Activity, route: Route) -> None:
     """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=1)
+        duration_deltas = _duration_deltas(
+            activity.status, activity.location_verified, activity.duration, sign=1
+        )
         before, after = await _apply_user_route_stats_delta(
             activity.user_id,
             activity.route_id,
             deltas,
+            duration_deltas=duration_deltas,
             last_activity_at=activity.started_at,
         )
 
@@ -247,7 +282,15 @@ async def on_activity_deleted(activity: Activity, route: Route) -> None:
     """
     try:
         deltas = _bucket_deltas(activity.status, activity.location_verified, sign=-1)
-        before, after = await _apply_user_route_stats_delta(activity.user_id, activity.route_id, deltas)
+        duration_deltas = _duration_deltas(
+            activity.status, activity.location_verified, activity.duration, sign=-1
+        )
+        before, after = await _apply_user_route_stats_delta(
+            activity.user_id,
+            activity.route_id,
+            deltas,
+            duration_deltas=duration_deltas,
+        )
 
         inc: dict[str, int] = {}
         for bucket, delta in deltas.items():
