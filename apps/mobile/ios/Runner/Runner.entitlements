@@ -11,6 +11,7 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:olivebagel.com</string>
+		<string>applinks:api.besetter.olivebagel.com</string>
 		<string>applinks:besetter-api-371038003203.asia-northeast3.run.app</string>
 	</array>
 </dict>

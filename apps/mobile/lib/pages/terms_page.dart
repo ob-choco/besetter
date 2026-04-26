@@ -36,7 +36,7 @@ class _TermsPageState extends ConsumerState<TermsPage> {
   bool get _canProceed =>
       _isServiceTermsAgreed && _isPrivacyPolicyAgreed && _isLocationTermsAgreed;
 
-  static const String _host = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+  static const String _host = 'https://api.besetter.olivebagel.com';
 
   Future<void> _handleSignUp() async {
     try {

@@ -713,7 +713,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
   }
 
   void _handleShare() {
-    const baseUrl = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+    const baseUrl = 'https://api.besetter.olivebagel.com';
     final shareUrl = '$baseUrl/share/routes/${widget.routeData.id}';
     Share.share(shareUrl);
   }

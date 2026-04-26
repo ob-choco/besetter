@@ -27,9 +27,26 @@ class PushService {
     );
     debugPrint('[Push] permission: ${settings.authorizationStatus}');
 
+    if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+        settings.authorizationStatus != AuthorizationStatus.provisional) {
+      debugPrint('[Push] permission not granted, skipping FCM registration');
+      return;
+    }
+
     if (Platform.isIOS) {
-      final apnsToken = await messaging.getAPNSToken();
+      String? apnsToken;
+      for (var i = 0; i < 10; i++) {
+        apnsToken = await messaging.getAPNSToken();
+        if (apnsToken != null) break;
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
       debugPrint('[Push] APNs token: $apnsToken');
+      if (apnsToken == null) {
+        // iOS Simulator (and some provisioning issues on devices) never deliver
+        // an APNs token; calling getToken() in that state throws and blocks startup.
+        debugPrint('[Push] APNs token unavailable, skipping FCM registration');
+        return;
+      }
     }
 
     _fcmToken = await messaging.getToken();

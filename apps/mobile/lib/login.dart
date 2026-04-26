@@ -17,7 +17,7 @@ import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
 
-  static const String _host = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+  static const String _host = 'https://api.besetter.olivebagel.com';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

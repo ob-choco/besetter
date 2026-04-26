@@ -95,7 +95,7 @@ class _RecentClimbedRouteCardState
   }
 
   void _handleShare() {
-    const baseUrl = 'https://besetter-api-371038003203.asia-northeast3.run.app';
+    const baseUrl = 'https://api.besetter.olivebagel.com';
     Share.share('$baseUrl/share/routes/${widget.route.id}');
   }
 

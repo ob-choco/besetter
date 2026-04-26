@@ -10,7 +10,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class AuthorizedHttpClient {
   static const String _baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://besetter-api-371038003203.asia-northeast3.run.app',
+    defaultValue: 'https://api.besetter.olivebagel.com',
   );
 
   static String get baseUrl => _baseUrl;

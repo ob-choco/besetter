@@ -1,0 +1,22 @@
+{
+  "hosting": [
+    {
+      "target": "api",
+      "public": "sites/api/public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "besetter-api",
+            "region": "asia-northeast3"
+          }
+        }
+      ]
+    }
+  ]
+}

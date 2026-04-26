@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "regal-operand-451709-f4"
+  },
+  "targets": {
+    "regal-operand-451709-f4": {
+      "hosting": {
+        "api": [
+          "besetter-api"
+        ]
+      }
+    }
+  }
+}
