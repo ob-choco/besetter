@@ -16,8 +16,7 @@ import '../../widgets/viewers/bouldering_route_holds.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../providers/activity_refresh_provider.dart'; // activityDirtyProvider
-import '../../providers/recent_climbed_routes_provider.dart';
+import '../../providers/activity_refresh_provider.dart';
 import '../../widgets/viewers/activity_panel.dart';
 import '../../widgets/viewers/workout_log_panel.dart';
 import '../../widgets/viewers/verified_completers_row.dart';
@@ -200,7 +199,14 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          flushActivityDirty(ProviderScope.containerOf(context));
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.viewRoute),
         actions: [
@@ -313,9 +319,9 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
                     routeId: widget.routeData.id,
                     onActivityCreated: (activityData) {
                       (_workoutLogKey.currentState as dynamic)?.addActivity(activityData);
-                      final container = ProviderScope.containerOf(context);
-                      container.read(activityDirtyProvider.notifier).state = true;
-                      container.invalidate(recentClimbedRoutesProvider);
+                      ProviderScope.containerOf(context)
+                          .read(activityDirtyProvider.notifier)
+                          .state = true;
                     },
                   ),
                   const SectionDivider(),
@@ -478,6 +484,7 @@ class _RouteViewerState extends State<RouteViewer> with SingleTickerProviderStat
           : const Center(
               child: CircularProgressIndicator(),
             ),
+    ),
     );
   }
 

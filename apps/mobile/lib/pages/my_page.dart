@@ -23,12 +23,12 @@ const int kUserNameMaxLength = 32;
 const int kUserBioMaxLength = 300;
 
 class MyPage extends HookConsumerWidget {
-  final int refreshSignal;
-  const MyPage({this.refreshSignal = 0, super.key});
+  const MyPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider);
+    final refreshSignal = ref.watch(myPageRefreshCounterProvider);
     final isEditing = useState(false);
     final croppedImage = useState<File?>(null);
     final nameController = useTextEditingController();
@@ -370,17 +370,6 @@ class MyPage extends HookConsumerWidget {
                   loading: dailyRoutesLoading.value,
                   selectedDay: selectedDay.value,
                   onDeleteConfirmed: handleRouteGroupDelete,
-                  onReturn: () {
-                    if (ref.read(activityDirtyProvider)) {
-                      ref.read(activityDirtyProvider.notifier).state = false;
-                      monthlySummaryCache.value.clear();
-                      dailyRoutesCache.value.clear();
-                      loadMonthlySummary(calendarYear.value, calendarMonth.value);
-                      if (selectedDay.value != null) {
-                        loadDailyRoutes(calendarYear.value, calendarMonth.value, selectedDay.value!);
-                      }
-                    }
-                  },
                 ),
               ],
             ],
@@ -810,7 +799,6 @@ class _DailyRoutes extends StatelessWidget {
   final Map<String, dynamic>? data;
   final bool loading;
   final int? selectedDay;
-  final VoidCallback? onReturn;
   final Future<void> Function(String routeId) onDeleteConfirmed;
 
   const _DailyRoutes({
@@ -818,7 +806,6 @@ class _DailyRoutes extends StatelessWidget {
     required this.loading,
     required this.selectedDay,
     required this.onDeleteConfirmed,
-    this.onReturn,
   });
 
   String _formatDuration(double totalSeconds) {
@@ -878,7 +865,6 @@ class _DailyRoutes extends StatelessWidget {
         ...routes.map((route) => _DailyRouteCard(
           route: route,
           formatDuration: _formatDuration,
-          onReturn: onReturn,
           onDeleteConfirmed: onDeleteConfirmed,
         )),
       ],
@@ -889,14 +875,12 @@ class _DailyRoutes extends StatelessWidget {
 class _DailyRouteCard extends ConsumerWidget {
   final Map<String, dynamic> route;
   final String Function(double) formatDuration;
-  final VoidCallback? onReturn;
   final Future<void> Function(String routeId) onDeleteConfirmed;
 
   const _DailyRouteCard({
     required this.route,
     required this.formatDuration,
     required this.onDeleteConfirmed,
-    this.onReturn,
   });
 
   Future<void> _confirmAndDelete(BuildContext context, String routeId) async {
@@ -1105,7 +1089,6 @@ class _DailyRouteCard extends ConsumerWidget {
         await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => RouteViewer(routeData: routeData)),
         );
-        onReturn?.call();
         return;
       }
 

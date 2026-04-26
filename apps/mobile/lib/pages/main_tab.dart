@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/activity_refresh_provider.dart';
@@ -15,7 +14,6 @@ class MainTabPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainTabIndexProvider);
-    final myPageRefreshSignal = useState(0);
     final unreadCount = ref.watch(userProfileProvider).whenOrNull(
               data: (u) => u.unreadNotificationCount,
             ) ??
@@ -24,19 +22,16 @@ class MainTabPage extends HookConsumerWidget {
     return Scaffold(
       body: IndexedStack(
         index: currentIndex,
-        children: [
-          const HomePage(),
-          const RoutesPage(),
-          MyPage(refreshSignal: myPageRefreshSignal.value),
+        children: const [
+          HomePage(),
+          RoutesPage(),
+          MyPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {
-          if (index == 2 && ref.read(activityDirtyProvider)) {
-            ref.read(activityDirtyProvider.notifier).state = false;
-            myPageRefreshSignal.value++;
-          }
+          flushActivityDirty(ProviderScope.containerOf(context));
           ref.read(mainTabIndexProvider.notifier).set(index);
         },
         items: [

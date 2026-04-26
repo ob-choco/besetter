@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/route_data.dart';
 import '../../providers/routes_provider.dart';
@@ -115,11 +114,10 @@ class _RouteListItemState extends ConsumerState<RouteListItem> {
         : const Color(0xFF1E4BD8);
 
     final typeLabel = route.type == RouteType.bouldering ? l10n.bouldering : l10n.endurance;
-    final completed = route.completedCount ?? 0;
-    final attempts = route.attemptedCount ?? 0;
-    final lastAt = route.lastActivityAt ?? route.createdAt;
 
     final placeText = [route.place?.name, route.wallName].whereType<String>().join(' · ');
+    final description = route.description?.trim();
+    final hasDescription = description != null && description.isNotEmpty;
 
     return Material(
       color: Colors.white,
@@ -231,42 +229,16 @@ class _RouteListItemState extends ConsumerState<RouteListItem> {
                             ],
                           ),
                         ],
+                        if (hasDescription) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            '📝 $description',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.3),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                         const Spacer(),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline,
-                              size: 16,
-                              color: completed > 0 ? const Color(0xFF1EB980) : Colors.grey[400],
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              l10n.routeCardCompleted(completed),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: completed > 0 ? const Color(0xFF0F1A2E) : Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              l10n.routeCardAttempts(attempts),
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Spacer(),
-                            Text(
-                              timeago.format(lastAt),
-                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
                       ],
                     ),
                   ),
